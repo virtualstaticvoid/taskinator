@@ -1,0 +1,2 @@
+#!/bin/bash
+TERM_CHILD=1 QUEUE=* COUNT=5 bundle exec rake resque:workers

@@ -1,0 +1,70 @@
+# https://www.websequencediagrams.com
+title Taskinator Sequence
+
+User->+Web: Request process
+Web-->+Process(seq): Create sequential process
+Process(seq)-->-Web:
+Web-->+Queue: Enqueue process
+Queue-->-Web:
+Web-->-User:
+
+opt Sequential process
+  Queue->+Worker: Dequeue process
+  note right of Worker: Start sequential process
+  Worker->+Queue: Enqueue task
+  Queue-->-Worker:
+  Worker-->-Queue:
+
+  loop Sequential Tasks
+    Queue->+Worker: Dequeue task
+    note right of Worker: Start task
+    Worker->+Queue: Enqueue task
+    Queue-->-Worker:
+    Worker->Process(seq): Task completed
+    note left of Process(seq): All tasks complete?
+    Worker-->-Queue:
+  end
+
+  opt Sub Process Task
+    Queue->+Worker: Dequeue task
+    note right of Worker: Start task
+    Worker-->+Process(con): Create concurrent process
+    Process(con)-->-Worker:
+    Worker-->+Queue: Enqueue process
+    Queue-->-Worker:
+    Worker->Process(seq): Task completed
+    note left of Process(seq): All tasks complete?
+    Worker-->-Queue:
+  end
+
+  opt Concurrent process
+    Queue->+Worker: Dequeue process
+    note right of Worker: Start concurrent process
+    Worker->+Queue: Enqueue task
+    Queue-->-Worker:
+    Worker->+Queue: Enqueue task
+    Queue-->-Worker:
+    Worker->Process(seq): Task completed
+    note left of Process(seq): All tasks complete?
+    Worker-->-Queue:
+
+    opt Concurrent Tasks
+      Queue->+Worker: Dequeue task
+      Queue->+Worker: Dequeue task
+      Queue->+Worker: Dequeue task
+      Worker->Process(con): Task completed
+      note right of Process(con): All tasks complete?
+      Worker->Process(con): Task completed
+      note right of Process(con): All tasks complete?
+      Worker-->-Queue:
+      Worker-->-Queue:
+      Worker->Process(con): Task completed
+      Worker-->-Queue:
+    end
+
+    note right of Process(con): All tasks complete?
+    Process(con)->Process(seq): Process completed
+    note left of Process(seq): All tasks complete?
+
+  end
+end
