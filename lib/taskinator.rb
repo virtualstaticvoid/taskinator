@@ -32,7 +32,6 @@ module Taskinator
   LICENSE = 'See LICENSE.txt for licensing details.'
 
   DEFAULTS = {
-    :environment => nil
   }
 
   class << self
