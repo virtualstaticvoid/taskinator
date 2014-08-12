@@ -7,7 +7,6 @@ describe TestFlow, :redis => true do
     processB = Taskinator::Process.fetch(processA.uuid)
 
     expect(processB.uuid).to eq(processA.uuid)
-    expect(processB.name).to eq(processA.name)
     expect(processB.definition).to eq(processA.definition)
     expect(processB.options).to eq(processA.options)
 
@@ -18,7 +17,6 @@ describe TestFlow, :redis => true do
     tasks.each do |(taskB, taskA)|
       expect(taskA.process).to eq(taskB.process)
       expect(taskA.uuid).to eq(taskB.uuid)
-      expect(taskA.name).to eq(taskB.name)
       expect(taskA.options).to eq(taskB.options)
     end
   end

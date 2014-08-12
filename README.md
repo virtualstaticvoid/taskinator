@@ -77,8 +77,8 @@ module MyProcess
   extend Taskinator::Definition
 
   define_process do
-    task 'Step A', :first_work_step
-    task 'Step B', :second_work_step
+    task :first_work_step
+    task :second_work_step
   end
 
   def first_work_step
@@ -100,14 +100,14 @@ module MyProcess
   define_process do
     concurrent do
       # these tasks will be executed concurrently
-      task 'Step A1', :work_step_1
-      task 'Step A2', :work_step_2
+      task :work_step_1
+      task :work_step_2
     end
 
     sequential do
       # thes tasks will be executed sequentially
-      task 'Step B1', :work_step_3
-      task 'Step B2', :work_step_4
+      task :work_step_3
+      task :work_step_4
     end
   end
 
@@ -134,7 +134,7 @@ module MyProcess
 
   define_process do
     for_each :yield_data_elements do
-      task 'Data Element Step', :work_step
+      task :work_step
     end
   end
 
@@ -164,8 +164,8 @@ module MyProcess
   extend Taskinator::Definition
 
   define_process do
-    sub_process 'Process A', MySubProcessA
-    sub_process 'Process B', MySubProcessB
+    sub_process MySubProcessA
+    sub_process MySubProcessB
   end
 end
 ```
@@ -178,27 +178,28 @@ module MyProcess
 
   define_process do
     for_each :data_elements do
-      task '...', :work_step_begin
+      task :work_step_begin
 
       concurrent do
         for_each :sub_data_elements do
-          task '...', :work_step_all_at_once
+          task :work_step_all_at_once
         end
       end
 
-      sub_process '...', MySubProcess
+      sub_process MySubProcess
 
       sequential do
         for_each :sub_data_elements do
-          task '...', :work_step_one_by_one
+          task :work_step_one_by_one
         end
       end
 
-      task '...', :work_step_end
+      task :work_step_end
     end
   end
 
   # "task" and "iterator" methods omitted for brevity
+
 end
 ```
 
@@ -215,6 +216,10 @@ process = MyProcess.create_process
 process.enqueue!
 ```
 
+#### Arguments
+
+_TBD_
+
 ### Monitoring
 
 To monitor the state of the processes, use the `Taskinator::Api::Processes` class. This is still a work in progress.
@@ -224,11 +229,6 @@ processes = Taskinator::Api::Processes.new()
 processes.each do |process|
   # => output the unique process identifier and current state
   puts [:process, process.uuid, process.current_state.name]
-
-  process.tasks.each do |task|
-    # => output the task name and current state
-    puts [:task, task.name, task.current_state.name]
-  end
 end
 ```
 

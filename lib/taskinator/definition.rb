@@ -3,9 +3,9 @@ module Taskinator
     class UndefinedProcessError < RuntimeError; end
 
     # defines a process
-    def define_process(name=self.name, &block)
+    def define_process(&block)
       define_singleton_method :_create_process_ do |*args|
-        process = Process.define_sequential_process_for(name, self)
+        process = Process.define_sequential_process_for(self)
         Builder.new(process, self, args).instance_eval(&block)
         process.save
         process

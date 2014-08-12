@@ -2,33 +2,33 @@ module TestFlow
   extend Taskinator::Definition
 
   define_process do
-    task '~', :error_task, :continue_on_error => true
+    task :error_task, :continue_on_error => true
 
-    task 'A', :the_task
+    task :the_task
 
-    for_each 'Items', :iterator do
-      task 'B', :the_task
+    for_each :iterator do
+      task :the_task
     end
 
-    sequential 'C' do
-      task 'C1', :the_task
-      task 'C2', :the_task
-      task 'C3', :the_task
+    sequential do
+      task :the_task
+      task :the_task
+      task :the_task
     end
 
-    task 'D', :the_task
+    task :the_task
 
-    concurrent 'E' do
+    concurrent do
       20.times do |i|
-        task "E#{i+1}", :the_task
+        task :the_task
       end
-      task 'Ennnn', :the_task
+      task :the_task
     end
 
-    task 'F', :the_task
+    task :the_task
 
     # invoke the specified sub process
-    sub_process 'G', TestSubFlow
+    sub_process TestSubFlow
   end
 
   def error_task(*args)
@@ -53,9 +53,9 @@ module TestFlow
     extend Taskinator::Definition
 
     define_process do
-      task 'SubA', :the_task
-      task 'SubB', :the_task
-      task 'SubC', :the_task
+      task :the_task
+      task :the_task
+      task :the_task
     end
 
     def the_task(*args)

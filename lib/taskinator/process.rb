@@ -4,12 +4,12 @@ module Taskinator
     include ::Workflow
 
     class << self
-      def define_sequential_process_for(name, definition, options={})
-        Process::Sequential.new(name, definition, options)
+      def define_sequential_process_for(definition, options={})
+        Process::Sequential.new(definition, options)
       end
 
-      def define_concurrent_process_for(name, definition, complete_on=CompleteOn::Default, options={})
-        Process::Concurrent.new(name, definition, complete_on, options)
+      def define_concurrent_process_for(definition, complete_on=CompleteOn::Default, options={})
+        Process::Concurrent.new(definition, complete_on, options)
       end
 
       def base_key
@@ -18,19 +18,17 @@ module Taskinator
     end
 
     attr_reader :uuid
-    attr_reader :name
     attr_reader :definition
     attr_reader :options
 
     # in the case of sub process tasks, the containing task
     attr_accessor :parent
 
-    def initialize(name, definition, options={})
+    def initialize(definition, options={})
       raise ArgumentError, 'definition' if definition.nil?
       raise ArgumentError, "#{definition.name} does not extend the #{Definition.name} module" unless definition.kind_of?(Definition)
 
       @uuid = SecureRandom.uuid
-      @name = name
       @definition = definition
       @options = options
     end
@@ -42,7 +40,6 @@ module Taskinator
     def accept(visitor)
       visitor.visit_attribute(:uuid)
       visitor.visit_task_reference(:parent)
-      visitor.visit_attribute(:name)
       visitor.visit_type(:definition)
       visitor.visit_tasks(tasks)
       visitor.visit_args(:options)
@@ -53,7 +50,7 @@ module Taskinator
     end
 
     def to_s
-      "#<#{self.class.name}:#{uuid} @name=\"#{name}>\">"
+      "#<#{self.class.name}:#{uuid}>"
     end
 
     workflow do
@@ -84,11 +81,11 @@ module Taskinator
       state :failed
 
       on_transition do |from, to, event, *args|
-        Taskinator.logger.debug("PROCESS: #{self.class.name}:#{uuid} (#{name}) :: #{from} => #{to}")
+        Taskinator.logger.debug("PROCESS: #{self.class.name}:#{uuid} :: #{from} => #{to}")
       end
 
       on_error do |error, from, to, event, *args|
-        Taskinator.logger.error("PROCESS: #{self.class.name}:#{uuid} (#{name}) :: #{error.message}")
+        Taskinator.logger.error("PROCESS: #{self.class.name}:#{uuid} :: #{error.message}")
         fail!(error)
       end
     end
@@ -142,8 +139,8 @@ module Taskinator
     class Concurrent < Process
       attr_reader :complete_on
 
-      def initialize(name, definition, complete_on=CompleteOn::Default, options={})
-        super(name, definition, options)
+      def initialize(definition, complete_on=CompleteOn::Default, options={})
+        super(definition, options)
         @complete_on = complete_on
       end
 

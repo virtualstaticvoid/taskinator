@@ -75,7 +75,7 @@ describe Taskinator::Persistence, :redis => true do
       end
 
       describe "for processes" do
-        let(:process) { TestProcess.new('name', definition) }
+        let(:process) { TestProcess.new(definition) }
 
         it {
           process.save
@@ -84,8 +84,8 @@ describe Taskinator::Persistence, :redis => true do
       end
 
       describe "for tasks" do
-        let(:process) { TestProcess.new('name', definition) }
-        let(:task) { TestTask.new('name', process) }
+        let(:process) { TestProcess.new(definition) }
+        let(:task) { TestTask.new(process) }
 
         it {
           process.tasks << task

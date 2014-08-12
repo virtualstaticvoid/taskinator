@@ -10,11 +10,10 @@ describe Taskinator::Process do
 
   describe "Base" do
 
-    subject { Class.new(Taskinator::Process).new('name', definition) }
+    subject { Class.new(Taskinator::Process).new(definition) }
 
     describe "#initialize" do
       it { expect(subject.uuid).to_not be_nil }
-      it { expect(subject.name).to_not be_nil }
       it { expect(subject.definition).to_not be_nil }
       it { expect(subject.definition).to eq(definition) }
       it { expect(subject.options).to_not be_nil }
@@ -174,7 +173,6 @@ describe Taskinator::Process do
         visitor = double('visitor')
         expect(visitor).to receive(:visit_type).with(:definition)
         expect(visitor).to receive(:visit_attribute).with(:uuid)
-        expect(visitor).to receive(:visit_attribute).with(:name)
         expect(visitor).to receive(:visit_args).with(:options)
         expect(visitor).to receive(:visit_task_reference).with(:parent)
         expect(visitor).to receive(:visit_tasks)
@@ -187,28 +185,28 @@ describe Taskinator::Process do
   describe Taskinator::Process::Sequential do
 
     it_should_behave_like "a process", Taskinator::Process::Sequential do
-      let(:process) { Taskinator::Process.define_sequential_process_for('name', definition) }
+      let(:process) { Taskinator::Process.define_sequential_process_for(definition) }
     end
 
-    subject { Taskinator::Process.define_sequential_process_for('name', definition) }
+    subject { Taskinator::Process.define_sequential_process_for(definition) }
 
     let(:tasks) {
       [
-        Class.new(Taskinator::Task).new('task1', subject),
-        Class.new(Taskinator::Task).new('task2', subject)
+        Class.new(Taskinator::Task).new(subject),
+        Class.new(Taskinator::Task).new(subject)
       ]
     }
 
     describe ".define_sequential_process_for" do
       it "raise error for nil definition" do
         expect {
-          Taskinator::Process.define_sequential_process_for('name', nil)
+          Taskinator::Process.define_sequential_process_for(nil)
         }.to raise_error(ArgumentError)
       end
 
       it "raise error for invalid definition" do
         expect {
-          Taskinator::Process.define_sequential_process_for('name', Object)
+          Taskinator::Process.define_sequential_process_for(Object)
         }.to raise_error(ArgumentError)
       end
     end
@@ -282,7 +280,6 @@ describe Taskinator::Process do
         visitor = double('visitor')
         expect(visitor).to receive(:visit_type).with(:definition)
         expect(visitor).to receive(:visit_attribute).with(:uuid)
-        expect(visitor).to receive(:visit_attribute).with(:name)
         expect(visitor).to receive(:visit_args).with(:options)
         expect(visitor).to receive(:visit_task_reference).with(:parent)
         expect(visitor).to receive(:visit_tasks)
@@ -294,30 +291,30 @@ describe Taskinator::Process do
 
   describe Taskinator::Process::Concurrent do
     it_should_behave_like "a process", Taskinator::Process::Concurrent do
-      let(:process) { Taskinator::Process.define_concurrent_process_for('name', definition, Taskinator::CompleteOn::First) }
+      let(:process) { Taskinator::Process.define_concurrent_process_for(definition, Taskinator::CompleteOn::First) }
 
       it { expect(process.complete_on).to eq(Taskinator::CompleteOn::First)  }
     end
 
-    subject { Taskinator::Process.define_concurrent_process_for('name', definition) }
+    subject { Taskinator::Process.define_concurrent_process_for(definition) }
 
     let(:tasks) {
       [
-        Class.new(Taskinator::Task).new('task1', subject),
-        Class.new(Taskinator::Task).new('task2', subject)
+        Class.new(Taskinator::Task).new(subject),
+        Class.new(Taskinator::Task).new(subject)
       ]
     }
 
     describe ".define_concurrent_process_for" do
       it "raise error for nil definition" do
         expect {
-          Taskinator::Process.define_concurrent_process_for('name', nil)
+          Taskinator::Process.define_concurrent_process_for(nil)
         }.to raise_error(ArgumentError)
       end
 
       it "raise error for invalid definition" do
         expect {
-          Taskinator::Process.define_concurrent_process_for('name', Object)
+          Taskinator::Process.define_concurrent_process_for(Object)
         }.to raise_error(ArgumentError)
       end
     end
@@ -352,7 +349,7 @@ describe Taskinator::Process do
     describe "#tasks_completed?" do
 
       describe "complete on first" do
-        let(:process) { Taskinator::Process.define_concurrent_process_for('name', definition, Taskinator::CompleteOn::First) }
+        let(:process) { Taskinator::Process.define_concurrent_process_for(definition, Taskinator::CompleteOn::First) }
 
         it "yields false when no tasks have completed" do
           tasks.each {|t| process.tasks << t }
@@ -371,7 +368,7 @@ describe Taskinator::Process do
       end
 
       describe "complete on last" do
-        let(:process) { Taskinator::Process.define_concurrent_process_for('name', definition, Taskinator::CompleteOn::Last) }
+        let(:process) { Taskinator::Process.define_concurrent_process_for(definition, Taskinator::CompleteOn::Last) }
 
         it "yields false when no tasks have completed" do
           tasks.each {|t| process.tasks << t }
@@ -409,7 +406,6 @@ describe Taskinator::Process do
         visitor = double('visitor')
         expect(visitor).to receive(:visit_type).with(:definition)
         expect(visitor).to receive(:visit_attribute).with(:uuid)
-        expect(visitor).to receive(:visit_attribute).with(:name)
         expect(visitor).to receive(:visit_attribute).with(:complete_on)
         expect(visitor).to receive(:visit_args).with(:options)
         expect(visitor).to receive(:visit_task_reference).with(:parent)

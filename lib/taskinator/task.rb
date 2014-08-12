@@ -4,12 +4,12 @@ module Taskinator
     include ::Workflow
 
     class << self
-      def define_step_task(name, process, method, args, options={})
-        Step.new(name, process, method, args, options)
+      def define_step_task(process, method, args, options={})
+        Step.new(process, method, args, options)
       end
 
-      def define_sub_process_task(name, process, sub_process, options={})
-        SubProcess.new(name, process, sub_process, options)
+      def define_sub_process_task(process, sub_process, options={})
+        SubProcess.new(process, sub_process, options)
       end
 
       def base_key
@@ -19,25 +19,22 @@ module Taskinator
 
     attr_reader :process
     attr_reader :uuid
-    attr_reader :name
     attr_reader :options
 
     # the next task in the sequence
     attr_accessor :next
 
-    def initialize(name, process, options={})
+    def initialize(process, options={})
       raise ArgumentError, 'process' if process.nil? || !process.is_a?(Process)
 
       @uuid = SecureRandom.uuid
       @process = process
-      @name = name
       @options = options
     end
 
     def accept(visitor)
       visitor.visit_attribute(:uuid)
       visitor.visit_process_reference(:process)
-      visitor.visit_attribute(:name)
       visitor.visit_task_reference(:next)
       visitor.visit_args(:options)
     end
@@ -47,7 +44,7 @@ module Taskinator
     end
 
     def to_s
-      "#<#{self.class.name}:#{uuid} @name=\"#{name}\">"
+      "#<#{self.class.name}:#{uuid}>"
     end
 
     workflow do
@@ -69,11 +66,11 @@ module Taskinator
       state :failed
 
       on_transition do |from, to, event, *args|
-        Taskinator.logger.debug("TASK: #{self.class.name}:#{uuid} (#{name}) :: #{from} => #{to}")
+        Taskinator.logger.debug("TASK: #{self.class.name}:#{uuid} :: #{from} => #{to}")
       end
 
       on_error do |error, from, to, event, *args|
-        Taskinator.logger.error("TASK: #{self.class.name}:#{uuid} (#{name}) :: #{error.message}")
+        Taskinator.logger.error("TASK: #{self.class.name}:#{uuid} :: #{error.message}")
         fail!(error)
       end
     end
@@ -115,8 +112,8 @@ module Taskinator
       attr_reader :method
       attr_reader :args
 
-      def initialize(name, process, method, args, options={})
-        super(name, process, options)
+      def initialize(process, method, args, options={})
+        super(process, options)
         @definition = process.definition  # for convenience
 
         raise ArgumentError, 'method' if method.nil?
@@ -153,8 +150,8 @@ module Taskinator
     class SubProcess < Task
       attr_reader :sub_process
 
-      def initialize(name, process, sub_process, options={})
-        super(name, process, options)
+      def initialize(process, sub_process, options={})
+        super(process, options)
         raise ArgumentError, 'sub_process' if sub_process.nil? || !sub_process.is_a?(Process)
 
         @sub_process = sub_process

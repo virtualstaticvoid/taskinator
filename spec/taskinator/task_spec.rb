@@ -10,14 +10,13 @@ describe Taskinator::Task do
 
   describe "Base" do
 
-    let(:process) { Class.new(Taskinator::Process).new('name', definition) }
-    subject { Class.new(Taskinator::Task).new('name', process) }
+    let(:process) { Class.new(Taskinator::Process).new(definition) }
+    subject { Class.new(Taskinator::Task).new(process) }
 
     describe "#initialize" do
       it { expect(subject.process).to_not be_nil }
       it { expect(subject.process).to eq(process) }
       it { expect(subject.uuid).to_not be_nil }
-      it { expect(subject.name).to_not be_nil }
       it { expect(subject.options).to_not be_nil }
     end
 
@@ -136,7 +135,6 @@ describe Taskinator::Task do
       it {
         visitor = double('visitor')
         expect(visitor).to receive(:visit_attribute).with(:uuid)
-        expect(visitor).to receive(:visit_attribute).with(:name)
         expect(visitor).to receive(:visit_process_reference).with(:process)
         expect(visitor).to receive(:visit_task_reference).with(:next)
         expect(visitor).to receive(:visit_args).with(:options)
@@ -148,12 +146,12 @@ describe Taskinator::Task do
 
   describe Taskinator::Task::Step do
     it_should_behave_like "a task", Taskinator::Task::Step do
-      let(:process) { Class.new(Taskinator::Process).new('process', definition) }
-      let(:task) { Taskinator::Task.define_step_task('name', process, :method, {:a => 1, :b => 2}) }
+      let(:process) { Class.new(Taskinator::Process).new(definition) }
+      let(:task) { Taskinator::Task.define_step_task(process, :method, {:a => 1, :b => 2}) }
     end
 
-    let(:process) { Class.new(Taskinator::Process).new('process', definition) }
-    subject { Taskinator::Task.define_step_task('name', process, :method, {:a => 1, :b => 2}) }
+    let(:process) { Class.new(Taskinator::Process).new(definition) }
+    subject { Taskinator::Task.define_step_task(process, :method, {:a => 1, :b => 2}) }
 
     describe "#executor" do
       it { expect(subject.executor).to_not be_nil }
@@ -192,7 +190,6 @@ describe Taskinator::Task do
         visitor = double('visitor')
         expect(visitor).to receive(:visit_type).with(:definition)
         expect(visitor).to receive(:visit_attribute).with(:uuid)
-        expect(visitor).to receive(:visit_attribute).with(:name)
         expect(visitor).to receive(:visit_process_reference).with(:process)
         expect(visitor).to receive(:visit_task_reference).with(:next)
         expect(visitor).to receive(:visit_args).with(:options)
@@ -206,14 +203,14 @@ describe Taskinator::Task do
 
   describe Taskinator::Task::SubProcess do
     it_should_behave_like "a task", Taskinator::Task::SubProcess do
-      let(:process) { Class.new(Taskinator::Process).new('process', definition) }
-      let(:sub_process) { Class.new(Taskinator::Process).new('sub_process', definition) }
-      let(:task) { Taskinator::Task.define_sub_process_task('name', process, sub_process) }
+      let(:process) { Class.new(Taskinator::Process).new(definition) }
+      let(:sub_process) { Class.new(Taskinator::Process).new(definition) }
+      let(:task) { Taskinator::Task.define_sub_process_task(process, sub_process) }
     end
 
-    let(:process) { Class.new(Taskinator::Process).new('process', definition) }
-    let(:sub_process) { Class.new(Taskinator::Process).new('sub_process', definition) }
-    subject { Taskinator::Task.define_sub_process_task('name', process, sub_process) }
+    let(:process) { Class.new(Taskinator::Process).new(definition) }
+    let(:sub_process) { Class.new(Taskinator::Process).new(definition) }
+    subject { Taskinator::Task.define_sub_process_task(process, sub_process) }
 
     describe "#start!" do
       it "delegates to sub process" do
@@ -244,7 +241,6 @@ describe Taskinator::Task do
       it {
         visitor = double('visitor')
         expect(visitor).to receive(:visit_attribute).with(:uuid)
-        expect(visitor).to receive(:visit_attribute).with(:name)
         expect(visitor).to receive(:visit_process_reference).with(:process)
         expect(visitor).to receive(:visit_task_reference).with(:next)
         expect(visitor).to receive(:visit_args).with(:options)
