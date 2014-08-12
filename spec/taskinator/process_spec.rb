@@ -46,6 +46,14 @@ describe Taskinator::Process do
       it { expect(subject.current_state.name).to eq(:initial) }
     end
 
+    describe "#tasks_completed?" do
+      it {
+        expect {
+          subject.tasks_completed?
+        }.to raise_error(NotImplementedError)
+      }
+    end
+
     describe "workflow" do
       describe "#enqueue!" do
         it { expect(subject).to respond_to(:enqueue!) }
