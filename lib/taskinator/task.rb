@@ -78,7 +78,7 @@ module Taskinator
       end
     end
 
-    def can_complete_task?
+    def can_complete_task?(*args)
       # subclasses must implement this method
       raise NotImplementedError
     end
