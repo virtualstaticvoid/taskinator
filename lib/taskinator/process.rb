@@ -58,11 +58,13 @@ module Taskinator
         event :enqueue, :transitions_to => :enqueued
         event :start, :transitions_to => :processing
         event :cancel, :transitions_to => :cancelled
+        event :fail, :transitions_to => :failed
       end
 
       state :enqueued do
         event :start, :transitions_to => :processing
         event :cancel, :transitions_to => :cancelled
+        event :fail, :transitions_to => :failed
       end
 
       state :processing do
@@ -74,6 +76,7 @@ module Taskinator
       state :paused do
         event :resume, :transitions_to => :processing
         event :cancel, :transitions_to => :cancelled
+        event :fail, :transitions_to => :failed
       end
 
       state :cancelled

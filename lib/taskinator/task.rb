@@ -51,10 +51,12 @@ module Taskinator
       state :initial do
         event :enqueue, :transitions_to => :enqueued
         event :start, :transitions_to => :processing
+        event :fail, :transitions_to => :failed
       end
 
       state :enqueued do
         event :start, :transitions_to => :processing
+        event :fail, :transitions_to => :failed
       end
 
       state :processing do
