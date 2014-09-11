@@ -168,8 +168,24 @@ module Taskinator
       end
 
       def visit_args(attribute)
-        value = @instance.send(attribute)
-        @hmset += [attribute, YAML.dump(value)] if value
+        values = @instance.send(attribute)
+
+        # special case, convert models to global id's
+        if values.is_a?(Array)
+
+          values = values.collect {|value|
+            value.respond_to?(:global_id) ? value.global_id : value
+          }
+
+        elsif values.is_a?(Hash)
+
+          values.each {|key, value|
+            values[key] = value.global_id if value.respond_to?(:global_id)
+          }
+
+        end
+
+        @hmset += [attribute, YAML.dump(values)]
       end
     end
 
@@ -258,10 +274,26 @@ module Taskinator
 
       # deserializes the arguments using YAML#load method
       def visit_args(attribute)
-        value = @attribute_values[attribute]
-        if value
-          args = YAML.load(value)
-          @instance.instance_variable_set("@#{attribute}", args)
+        yaml = @attribute_values[attribute]
+        if yaml
+          values = YAML.load(yaml)
+
+          # special case for models, so find model
+          if values.is_a?(Array)
+
+            values = values.collect {|value|
+              value.respond_to?(:find) ? value.find : value
+            }
+
+          elsif values.is_a?(Hash)
+
+            values.each {|key, value|
+              values[key] = value.find if value.respond_to?(:find)
+            }
+
+          end
+
+          @instance.instance_variable_set("@#{attribute}", values)
         end
       end
 
