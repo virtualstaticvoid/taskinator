@@ -11,7 +11,8 @@ module Taskinator
       def initialize(config={})
         config = {
           :process_queue => :default,
-          :task_queue => :default
+          :task_queue => :default,
+          :job_queue => :default
         }.merge(config)
 
         ProcessWorker.class_eval do
@@ -20,6 +21,10 @@ module Taskinator
 
         TaskWorker.class_eval do
           @queue = config[:task_queue]
+        end
+
+        JobWorker.class_eval do
+          @queue = config[:job_queue]
         end
       end
 
@@ -31,6 +36,14 @@ module Taskinator
         Resque.enqueue(TaskWorker, task.uuid)
       end
 
+      def enqueue_job(job)
+        # get the queue name
+        queue = Resque.queue_from_class(job.job) ||
+                  Resque.queue_from_class(JobWorker)
+
+        Resque.enqueue_to(queue, JobWorker, job.uuid)
+      end
+
       class ProcessWorker
         def self.perform(process_uuid)
           Taskinator::ProcessWorker.new(process_uuid).perform
@@ -40,6 +53,14 @@ module Taskinator
       class TaskWorker
         def self.perform(task_uuid)
           Taskinator::TaskWorker.new(task_uuid).perform
+        end
+      end
+
+      class JobWorker
+        def self.perform(job_uuid)
+          Taskinator::JobWorker.new(job_uuid).perform do |job, args|
+            job.perform(*args)
+          end
         end
       end
     end

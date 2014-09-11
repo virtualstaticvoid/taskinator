@@ -29,6 +29,8 @@ module TestFlow
 
     # invoke the specified sub process
     sub_process TestSubFlow
+
+    job TestWorkerJob
   end
 
   def error_task(*args)
@@ -62,6 +64,14 @@ module TestFlow
       t = rand(1..11)
       Taskinator.logger.info "Executing sub task '#{task}' with [#{args}] for #{t} secs..."
       sleep 1 # t
+    end
+  end
+
+  module TestWorkerJob
+    def self.perform(*args)
+    end
+
+    def perform(*args)
     end
   end
 

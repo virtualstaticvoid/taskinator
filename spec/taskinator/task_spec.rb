@@ -201,6 +201,51 @@ describe Taskinator::Task do
     end
   end
 
+  describe Taskinator::Task::Job do
+
+    module TestJob
+      def self.perform(*args)
+      end
+    end
+
+    it_should_behave_like "a task", Taskinator::Task::Job do
+      let(:process) { Class.new(Taskinator::Process).new(definition) }
+      let(:task) { Taskinator::Task.define_job_task(process, TestJob, {:a => 1, :b => 2}) }
+    end
+
+    let(:process) { Class.new(Taskinator::Process).new(definition) }
+    subject { Taskinator::Task.define_job_task(process, TestJob, {:a => 1, :b => 2}) }
+
+    describe "#perform" do
+      it {
+        block = SpecSupport::Block.new()
+        expect(block).to receive(:call).with(TestJob, {:a => 1, :b => 2})
+
+        subject.perform &block
+      }
+    end
+
+    describe "#accept" do
+      it {
+        expect(subject).to receive(:accept)
+        subject.save
+      }
+
+      it {
+        visitor = double('visitor')
+        expect(visitor).to receive(:visit_type).with(:definition)
+        expect(visitor).to receive(:visit_attribute).with(:uuid)
+        expect(visitor).to receive(:visit_process_reference).with(:process)
+        expect(visitor).to receive(:visit_task_reference).with(:next)
+        expect(visitor).to receive(:visit_args).with(:options)
+        expect(visitor).to receive(:visit_type).with(:job)
+        expect(visitor).to receive(:visit_args).with(:args)
+
+        subject.accept(visitor)
+      }
+    end
+  end
+
   describe Taskinator::Task::SubProcess do
     it_should_behave_like "a task", Taskinator::Task::SubProcess do
       let(:process) { Class.new(Taskinator::Process).new(definition) }

@@ -49,6 +49,15 @@ module Taskinator
         define_step_task(@process, method, @args, options)
       end
 
+      # defines a task which executes the given @job
+      # which is expected to implement a perform method either as a class or instance method
+      def job(job, options={})
+        raise ArgumentError, 'job' if job.nil?
+        raise ArgumentError, 'job' unless job.methods.include?(:perform) || job.instance_methods.include?(:perform)
+
+        define_job_task(@process, job, @args, options)
+      end
+
       # defines a sub process task, for the given @definition
       # the definition specified must have input compatible arguments
       # to the current definition
@@ -67,6 +76,12 @@ module Taskinator
       def define_step_task(process, method, args, options={})
         define_task(process) {
           Task.define_step_task(process, method, args, options)
+        }
+      end
+
+      def define_job_task(process, job, args, options={})
+        define_task(process) {
+          Task.define_job_task(process, job, args, options)
         }
       end
 

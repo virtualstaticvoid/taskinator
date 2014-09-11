@@ -9,28 +9,67 @@ describe Taskinator::Queues::ResqueAdapter do
 
   subject { adapter.new() }
 
-  it "enqueues processes" do
-    worker = adapter::ProcessWorker
-    subject.enqueue_process(double('process', :uuid => uuid))
+  describe "ProcessWorker" do
+    it "enqueues processes" do
+      worker = adapter::ProcessWorker
+      subject.enqueue_process(double('process', :uuid => uuid))
 
-    expect(worker).to have_queued(uuid)
+      expect(worker).to have_queued(uuid)
+    end
+
+    it "calls process worker" do
+      expect_any_instance_of(Taskinator::ProcessWorker).to receive(:perform)
+      adapter::ProcessWorker.perform(uuid)
+    end
   end
 
-  it "calls process worker" do
-    expect_any_instance_of(Taskinator::ProcessWorker).to receive(:perform)
-    adapter::ProcessWorker.perform(uuid)
+  describe "TaskWorker" do
+    it "enqueues tasks" do
+      worker = adapter::TaskWorker
+      subject.enqueue_task(double('task', :uuid => uuid))
+
+      expect(worker).to have_queued(uuid)
+    end
+
+    it "calls task worker" do
+      expect_any_instance_of(Taskinator::TaskWorker).to receive(:perform)
+      adapter::TaskWorker.perform(uuid)
+    end
   end
 
-  it "enqueues tasks" do
-    worker = adapter::TaskWorker
-    subject.enqueue_task(double('task', :uuid => uuid))
+  describe "JobWorker" do
+    it "enqueues jobs" do
+      worker = adapter::JobWorker
 
-    expect(worker).to have_queued(uuid)
+      job = double('job')
+      job_task = double('job_task', :uuid => uuid, :job => job)
+
+      subject.enqueue_job(job_task)
+      expect(worker).to have_queued(uuid)
+    end
+
+    it "calls job worker" do
+      expect_any_instance_of(Taskinator::JobWorker).to receive(:perform)
+      adapter::JobWorker.perform(uuid)
+    end
+
+    let(:definition) do
+      Module.new() do
+        extend Taskinator::Definition
+      end
+    end
+
+    it "performs invocation on job" do
+      args = {:a => 1}
+      job_class = double('job_class', :methods => [:perform])
+      expect(job_class).to receive(:perform).with(*args)
+
+      process = Taskinator::Process::Sequential.new(definition)
+      job_task = Taskinator::Task.define_job_task(process, job_class, args)
+
+      allow(Taskinator::Task).to receive(:fetch).with(uuid) { job_task }
+
+      adapter::JobWorker.perform(uuid)
+    end
   end
-
-  it "calls task worker" do
-    expect_any_instance_of(Taskinator::TaskWorker).to receive(:perform)
-    adapter::TaskWorker.perform(uuid)
-  end
-
 end

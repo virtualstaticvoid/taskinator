@@ -8,6 +8,10 @@ module Taskinator
         Step.new(process, method, args, options)
       end
 
+      def define_job_task(process, job, args, options={})
+        Job.new(process, job, args, options)
+      end
+
       def define_sub_process_task(process, sub_process, options={})
         SubProcess.new(process, sub_process, options)
       end
@@ -108,7 +112,7 @@ module Taskinator
     end
 
     # a task which invokes the specified method on the definition
-    # the args must be intrinsic types, since they are serialized to JSON
+    # the args must be intrinsic types, since they are serialized to YAML
     class Step < Task
       attr_reader :definition
       attr_reader :method
@@ -144,6 +148,36 @@ module Taskinator
         super
         visitor.visit_type(:definition)
         visitor.visit_attribute(:method)
+        visitor.visit_args(:args)
+      end
+    end
+
+    # a task which invokes the specified background job
+    # the args must be intrinsic types, since they are serialized to YAML
+    class Job < Task
+      attr_reader :definition
+      attr_reader :job
+      attr_reader :args
+
+      def initialize(process, job, args, options={})
+        super(process, options)
+        @definition = process.definition  # for convenience
+
+        raise ArgumentError, 'job' if job.nil?
+        raise ArgumentError, 'job' unless job.methods.include?(:perform) || job.instance_methods.include?(:perform)
+
+        @job = job
+        @args = args
+      end
+
+      def perform(&block)
+        yield(job, args)
+      end
+
+      def accept(visitor)
+        super
+        visitor.visit_type(:definition)
+        visitor.visit_type(:job)
         visitor.visit_args(:args)
       end
     end

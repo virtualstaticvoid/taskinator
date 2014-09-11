@@ -11,7 +11,8 @@ module Taskinator
       def initialize(config={})
         config = {
           :process_queue => :default,
-          :task_queue => :default
+          :task_queue => :default,
+          :job_queue => :default
         }.merge(config)
 
         ProcessWorker.class_eval do
@@ -21,6 +22,10 @@ module Taskinator
         TaskWorker.class_eval do
           sidekiq_options :queue => config[:task_queue]
         end
+
+        JobWorker.class_eval do
+          sidekiq_options :queue => config[:job_queue]
+        end
       end
 
       def enqueue_process(process)
@@ -29,6 +34,14 @@ module Taskinator
 
       def enqueue_task(task)
         TaskWorker.perform_async(task.uuid)
+      end
+
+      def enqueue_job(job)
+        # get the queue name
+        queue = job.job.get_sidekiq_options['queue']
+        JobWorker.get_sidekiq_options.merge!('queue' => queue) if queue
+
+        JobWorker.perform_async(job.uuid)
       end
 
       class ProcessWorker
@@ -44,6 +57,16 @@ module Taskinator
 
         def perform(task_uuid)
           Taskinator::TaskWorker.new(task_uuid).perform
+        end
+      end
+
+      class JobWorker
+        include ::Sidekiq::Worker
+
+        def perform(job_uuid)
+          Taskinator::JobWorker.new(job_uuid).perform do |job, args|
+            job.new.perform(*args)
+          end
         end
       end
     end

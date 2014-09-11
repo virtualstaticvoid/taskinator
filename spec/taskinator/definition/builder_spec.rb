@@ -123,8 +123,29 @@ describe Taskinator::Definition::Builder do
 
     it "fails if task method is not defined" do
       expect {
-        subject.task(:undefined_method)
+        subject.task(:undefined)
       }.to raise_error(NoMethodError)
+    end
+  end
+
+  describe "#job" do
+    it "creates a job" do
+      job = double('job', :perform => true)
+      expect(Taskinator::Task).to receive(:define_job_task).with(process, job, args, {})
+      subject.job(job)
+    end
+
+    it "fails if job module is nil" do
+      expect {
+        subject.job(nil)
+      }.to raise_error(ArgumentError)
+    end
+
+    # ok, fuzzy logic to determine what is ia job here!
+    it "fails if job module is not a job" do
+      expect {
+        subject.job(double('job', :methods => [], :instance_methods => []))
+      }.to raise_error(ArgumentError)
     end
   end
 

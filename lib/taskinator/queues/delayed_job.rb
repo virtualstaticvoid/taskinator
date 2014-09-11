@@ -11,7 +11,8 @@ module Taskinator
       def initialize(config={})
         @config = {
           :process_queue => :default,
-          :task_queue => :default
+          :task_queue => :default,
+          :job_queue => :default,
         }.merge(config)
       end
 
@@ -23,6 +24,11 @@ module Taskinator
         ::Delayed::Job.enqueue TaskWorker.new(task.uuid), :queue => @config[:task_queue]
       end
 
+      def enqueue_job(job)
+        # delayed jobs don't define the queue so use the configured queue instead
+        ::Delayed::Job.enqueue JobWorker.new(job.uuid), :queue => @config[:job_queue]
+      end
+
       ProcessWorker = Struct.new(:process_uuid) do
         def perform
           Taskinator::ProcessWorker.new(process_uuid).perform
@@ -32,6 +38,14 @@ module Taskinator
       TaskWorker = Struct.new(:task_uuid) do
         def perform
           Taskinator::TaskWorker.new(task_uuid).perform
+        end
+      end
+
+      JobWorker = Struct.new(:job_uuid) do
+        def perform
+          Taskinator::JobWorker.new(job_uuid).perform do |job, args|
+            job.new(*args).perform
+          end
         end
       end
     end
