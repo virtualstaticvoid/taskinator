@@ -42,6 +42,10 @@ RSpec.configure do |config|
   config.order = :random
   config.fail_fast = (ENV["FAIL_FAST"] == 1)
 
+  config.before(:each) do
+    Taskinator.queue_adapter = :test_queue
+  end
+
   config.before(:each, :redis => true) do
     Taskinator.redis = { :namespace => 'taskinator:test' }
     Taskinator.redis do |conn|
