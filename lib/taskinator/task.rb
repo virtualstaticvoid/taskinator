@@ -170,8 +170,18 @@ module Taskinator
         @args = args
       end
 
+      def enqueue
+        Taskinator.queue.enqueue_job(self)
+      end
+
       def perform(&block)
         yield(job, args)
+        @is_complete = true
+      end
+
+      # NOTE: this _does not_ work when checking out-of-process
+      def can_complete_task?
+        defined?(@is_complete) && @is_complete
       end
 
       def accept(visitor)
