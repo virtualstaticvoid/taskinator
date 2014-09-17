@@ -14,6 +14,7 @@ module Taskinator
         task.complete!
       rescue Exception => e
         task.fail!(e)
+        raise e
       end
     end
   end

@@ -43,7 +43,9 @@ describe Taskinator::ProcessWorker do
     allow(Taskinator::Process).to receive(:fetch).with(uuid) { process }
     allow(process).to receive(:start!) { raise NotImplementedError }
     expect(process).to receive(:fail!).with(NotImplementedError)
-    subject.perform
+    expect {
+      subject.perform
+    }.to raise_error(NotImplementedError)
   end
 
 end

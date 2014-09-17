@@ -59,7 +59,9 @@ describe Taskinator::TaskWorker do
     allow(Taskinator::Task).to receive(:fetch).with(uuid) { task }
     allow(task).to receive(:start!) { raise NotImplementedError }
     expect(task).to receive(:fail!).with(NotImplementedError)
-    subject.perform
+    expect {
+      subject.perform
+    }.to raise_error(NotImplementedError)
   end
 
 end

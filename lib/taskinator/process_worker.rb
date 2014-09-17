@@ -11,6 +11,7 @@ module Taskinator
         process.start!
       rescue Exception => e
         process.fail!(e)
+        raise e
       end
     end
   end
