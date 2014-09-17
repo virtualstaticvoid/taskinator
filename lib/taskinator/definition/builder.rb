@@ -31,12 +31,12 @@ module Taskinator
 
       # dynamically defines tasks, using the given @iterator method
       # the definition will be evaluated for each yielded item
-      def for_each(iterator_method, options={}, &block)
-        raise ArgumentError, 'iterator_method' if iterator_method.nil?
-        raise NoMethodError, iterator_method unless @executor.respond_to?(iterator_method)
+      def for_each(method, options={}, &block)
+        raise ArgumentError, 'method' if method.nil?
+        raise NoMethodError, method unless @executor.respond_to?(method)
         raise ArgumentError, 'block' unless block_given?
 
-        @executor.send(iterator_method, *@args) do |*args|
+        @executor.send(method, *@args) do |*args|
           Builder.new(@process, @definition, args).instance_eval(&block)
         end
       end
