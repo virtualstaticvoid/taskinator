@@ -41,6 +41,8 @@ module Taskinator
         end
       end
 
+      alias_method :transform, :for_each
+
       # defines a task which executes the given @method
       def task(method, options={})
         raise ArgumentError, 'method' if method.nil?
