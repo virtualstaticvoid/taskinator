@@ -2,7 +2,9 @@ require 'spec_helper'
 
 describe Taskinator::Queues::SidekiqAdapter do
 
-  it_should_behave_like "a queue adapter", :sidekiq, Taskinator::Queues::SidekiqAdapter
+  it_should_behave_like "a queue adapter", :sidekiq, Taskinator::Queues::SidekiqAdapter do
+    let(:job) { double('job', :get_sidekiq_options => {}) }
+  end
 
   let(:adapter) { Taskinator::Queues::SidekiqAdapter }
   let(:uuid) {  SecureRandom.uuid }
