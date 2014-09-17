@@ -282,13 +282,15 @@ module Taskinator
           if values.is_a?(Array)
 
             values = values.collect {|value|
-              value.respond_to?(:find) ? value.find : value
+              # is it a global id?
+              value.respond_to?(:model_id) && value.respond_to?(:find) ? value.find : value
             }
 
           elsif values.is_a?(Hash)
 
             values.each {|key, value|
-              values[key] = value.find if value.respond_to?(:find)
+              # is it a global id?
+              values[key] = value.find if value.respond_to?(:model_id) && value.respond_to?(:find)
             }
 
           end
