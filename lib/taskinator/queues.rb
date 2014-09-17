@@ -9,13 +9,17 @@ module Taskinator
       end
     end
 
-    class LoggedAdapter
+    class LoggedAdapter < Delegator
 
       attr_reader :adapter
 
       def initialize(adapter)
         Taskinator.logger.info("Initialized '#{adapter.class.name}' queue adapter")
         @adapter = adapter
+      end
+
+      def __getobj__
+        adapter
       end
 
       def enqueue_process(process)
