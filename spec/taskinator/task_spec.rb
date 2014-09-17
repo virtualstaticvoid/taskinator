@@ -61,6 +61,11 @@ describe Taskinator::Task do
           subject.enqueue!
           expect(subject.current_state.name).to eq(:enqueued)
         }
+        it {
+          expect {
+            subject.enqueue!
+          }.to change { Taskinator.queue.tasks.length }.by(1)
+        }
       end
 
       describe "#start!" do
@@ -215,6 +220,14 @@ describe Taskinator::Task do
 
     let(:process) { Class.new(Taskinator::Process).new(definition) }
     subject { Taskinator::Task.define_job_task(process, TestJob, {:a => 1, :b => 2}) }
+
+    describe "#enqueue!" do
+      it {
+        expect {
+          subject.enqueue!
+        }.to change { Taskinator.queue.jobs.length }.by(1)
+      }
+    end
 
     describe "#perform" do
       it {

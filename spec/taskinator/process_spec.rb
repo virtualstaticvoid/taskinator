@@ -64,6 +64,11 @@ describe Taskinator::Process do
           subject.enqueue!
           expect(subject.current_state.name).to eq(:enqueued)
         }
+        it {
+          expect {
+            subject.enqueue!
+          }.to change { Taskinator.queue.processes.length }.by(1)
+        }
       end
 
       describe "#start!" do
