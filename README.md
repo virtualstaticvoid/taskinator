@@ -69,8 +69,8 @@ module MyProcess
 end
 ```
 
-Specify the tasks with their corresponding implementation methods, that make up the process, using the `task` method and providing
-a `name` and `method` to execute for the task.
+Specify the tasks with their corresponding implementation methods, that make up the process,
+using the `task` method and providing the `method` to execute for the task.
 
 ```ruby
 module MyProcess
@@ -124,7 +124,35 @@ module MyProcess
 end
 ```
 
-You can define data driven tasks using the `for_each` method, which takes an iterator method as an argument.
+It is likely that you have already have worker classes for one of the queueing libraries, such as resque or delayed_job, and wish to
+reuse them for executing them in the sequence defined by the process definition.
+
+You define a `job` step, providing the class of the worker, and them taskinator will execute that worker as part of the process definition.
+The `job` step will be queued and executed on the configured queue for `delayed_job`, or that of the worker for `resque` and `sidekiq`.
+
+```ruby
+# E.g. A resque worker
+class DoSomeWork
+  queue :high_priority
+
+  def self.perform(arg1, arg2)
+    # code to do the work
+  end
+end
+
+module MyProcess
+  extend Taskinator::Definition
+
+  # when creating the process, supply the same arguments
+  # that the DoSomeWork worker expects
+
+  define_process do
+    job DoSomeWork
+  end
+end
+```
+
+You can also define data driven tasks using the `for_each` method, which takes an iterator method name as an argument.
 The iterator method yields the items to produce a parameterized task for that item. Notice that the task method
 takes a parameter in this case, which will be the item provided by the iterator.
 
@@ -144,6 +172,31 @@ module MyProcess
   end
 
   def work_step(data_element)
+    # TODO: supply implementation
+  end
+end
+```
+
+In addition, it is possible to transform the arguments used by a task or job, by including a `transform` step in the definition.
+Similarly to the `for_each` method, `transform` takes a method name as an argument. The transformer method must yield the new arguments as required.
+
+```ruby
+module MyProcess
+  extend Taskinator::Definition
+
+  # this process is created with a hash argument
+
+  define_process do
+    transform :convert_args do
+      task :work_step
+    end
+  end
+
+  def convert_args(options)
+    yield *[options[:date_from], options[:date_to]]
+  end
+
+  def work_step(date_from, date_to)
     # TODO: supply implementation
   end
 end
@@ -216,9 +269,201 @@ process = MyProcess.create_process
 process.enqueue!
 ```
 
+Or, to start immediately, call the `start!` method.
+
+```ruby
+process = MyProcess.create_process
+process.start!
+```
+
 #### Arguments
 
-_TBD_
+Argument handling for defining and executing process definitions is where things can get trickey.
+_This may be something that gets refactored down the line_.
+
+To best understand how arguments are handled, you need to break it down into 3 phases. Namely:
+
+  * Definition,
+  * Creation and
+  * Execution
+
+Firstly, a process definition is declarative in that the `define_process` and a mix of `sequential`, `concurrent`, `for_each`,
+`task` and `job` directives provide the way to specify the sequencing of the steps for the process.
+Taskinator will interprete this definition and execute each step in the desired sequence or concurrency.
+
+Consider the following process definition:
+
+```ruby
+module MySimpleProcess
+  extend Taskinator::Definition
+
+  # definition
+
+  define_process do
+    task :work_step_1
+    task :work_step_2
+
+    for_each :additional_step do
+      task :work_step_3
+    end
+  end
+
+  # creation
+
+  def additional_step(options)
+    options.steps.each do |k, v|
+      yield k, v
+    end
+  end
+
+  # execution
+
+  def work_step_1(options)
+    # ...
+  end
+
+  def work_step_2(options)
+    # ...
+  end
+
+  def work_step_3(k, v)
+    # ...
+  end
+
+end
+```
+
+There are three tasks; namely `:work_step_1`, `:work_step_2` and `:work_step_3`.
+
+The third task, `:work_step_3`, is built up using the `for_each` iterator, which means that the number of `:work_step_3` tasks
+will depend on how many times the `additional_step` iterator method yields to the definition.
+
+This brings us to the creation part. When `create_process` is called on the given module, you provide arguments to it, which will get
+passed onto the respective `task` and `for_each` iterator methods.
+
+So, considering the `MySimpleProcess` module shown above, `work_step_1`, `work_step_2` and `work_step_3` methods each expect arguments.
+These will ultimately come from the arguments passed into the `create_process` method.
+
+E.g.
+
+```ruby
+
+# Given an options hash
+options = {
+  :opt1 => true,
+  :opt2 => false,
+  :steps => {
+    :a => 1,
+    :b => 2,
+    :c => 3,
+  }
+}
+
+# You create the process, passing in the options hash
+process = MySimpleProcess.create_process(options)
+
+```
+
+To best understand how the process is created, consider the following "procedural" code for how it could work.
+
+```ruby
+# A process, which maps the target and a list of steps
+class Process
+  attr_reader :target
+  attr_reader :tasks
+
+  def initialize(target)
+    @target = target
+    @tasks = []
+  end
+end
+
+# A task, which maps the method to call and it's arguments
+class Task
+  attr_reader :method
+  attr_reader :args
+
+  def initialize(method, args)
+    @method, @args = method, args
+  end
+end
+
+# Your module, with the methods which do the actual work
+module MySimpleProcess
+
+  def self.work_step_1(options) ...
+  def self.work_step_2(options) ...
+  def self.work_step_3(k, v) ...
+
+end
+
+# Now, the creation phase of the definition
+# create a process, providing the module
+
+process = Process.new(MySimpleProcess)
+
+# create the first and second tasks, providing the method
+# for the task and it's arguments, which are the options defined above
+
+process.tasks << Task.new(:work_step_1, options)
+process.tasks << Task.new(:work_step_2, options)
+
+# iterate over the steps hash in the options, and add the third step
+# this time specify the key and value as the
+# arguments for the work_step_3 method
+
+options.steps.each do |k, v|
+  process.tasks << Task.new(:work_step_3, [k, v])
+end
+
+# we now have a process with the tasks defined
+
+process.tasks  #=> [<Task :method=>work_step_1, :args=>options, ...> ,
+               #    <Task :method=>work_step_2, :args=>options, ...>,
+               #    <Task :method=>work_step_3, :args=>[:a, 1], ...>,
+               #    <Task :method=>work_step_3, :args=>[:b, 2], ...>,
+               #    <Task :method=>work_step_3, :args=>[:c, 3], ...>]
+
+```
+
+Finally, for the execution phase, the process and tasks will act on the supplied module.
+
+```ruby
+# building out the "Process" class
+class Process
+  #...
+
+  def execute
+    tasks.each {|task| task.execute(target) )
+  end
+end
+
+# and the "Task" class
+class Task
+  #...
+
+  def execute(target)
+    puts "Calling '#{method}' on '#{target.name}' with #{args.inspect}..."
+    target.send(method, *args)
+  end
+end
+
+# executing the process iterates over each task and
+# the target modules method is called with the arguments
+
+process.execute
+
+# Calling 'work_step_1' on 'MySimpleProcess' with {:opt1 => true, :opt2 => false, ...}
+# Calling 'work_step_2' on 'MySimpleProcess' with {:opt1 => true, :opt2 => false, ...}
+# Calling 'work_step_3' on 'MySimpleProcess' with [:a, 1]
+# Calling 'work_step_3' on 'MySimpleProcess' with [:b, 2]
+# Calling 'work_step_3' on 'MySimpleProcess' with [:c, 3]
+
+```
+
+In reality, each task is executed by a worker process, possibly on another host, so the execution process isn't as simple,
+but this example should help you to understand conceptually how the process is executed, and how the arguments are propagated
+through.
 
 ### Monitoring
 
