@@ -260,6 +260,33 @@ In this example, the `work_step_begin` is executed, followed by the `work_step_a
 the sub process `MySubProcess` is created and executed, followed by the `work_step_one_by_one` tasks which are executed sequentially and
 finally the `work_step_end` is executed.
 
+It is also possible to embed conditional logic within the process definition stages in order to produce steps based on the required logic.
+All builder methods are available within the scope of the `define_process` block. These methods include `args` and `options`
+which are passed into the `create_process` method of the definition.
+
+E.g.
+
+```ruby
+module MyProcess
+  extend Taskinator::Definition
+
+  define_process do
+    task :task_1
+    task :task_2
+    task :task_3 if args[3] == 1
+    task :send_notification if options[:send_notification]
+  end
+
+  # "task" methods are omitted for brevity
+
+end
+
+# when creating this proces, you supply to option when calling `create_process`
+# in this example, 'args' will be an array [1,2,3] and options will be a Hash {:send_notification => true}
+MyProcess.create_process(1, 2, 3, :send_notification => true)
+
+```
+
 ### Execution
 
 A process is executed by calling the generated `create_process` method on your "process" module.

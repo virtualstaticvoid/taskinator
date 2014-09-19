@@ -15,7 +15,7 @@ describe Taskinator::Definition::Builder do
     Class.new(Taskinator::Process).new(definition)
   }
 
-  let(:args) { [:arg1, :arg2] }
+  let(:args) { [:arg1, :arg2, {:option => 1}] }
 
   let(:block) { SpecSupport::Block.new() }
 
@@ -24,12 +24,13 @@ describe Taskinator::Definition::Builder do
     Proc.new {|*args| the_block.call }
   }
 
-  subject { Taskinator::Definition::Builder.new(process, definition, args) }
+  subject { Taskinator::Definition::Builder.new(process, definition, *args) }
 
   it "assign attributes" do
     expect(subject.process).to eq(process)
     expect(subject.definition).to eq(definition)
     expect(subject.args).to eq(args)
+    expect(subject.options).to eq({:option => 1})
   end
 
   describe "#sequential" do

@@ -5,11 +5,13 @@ module Taskinator
       attr_reader :process
       attr_reader :definition
       attr_reader :args
+      attr_reader :options
 
-      def initialize(process, definition, args)
+      def initialize(process, definition, *args)
         @process = process
         @definition = definition
         @args = args
+        @options = args.last.is_a?(Hash) ? args.last : {}
         @executor = Taskinator::Executor.new(@definition)
       end
 
