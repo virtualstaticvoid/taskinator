@@ -69,7 +69,27 @@ module MyProcess
 end
 ```
 
-Specify the tasks with their corresponding implementation methods, that make up the process,
+The `define_process` method optionally takes the list of expected arguments which are used to validate the
+arguments supplied when creating a new process. These should be specified with symbols.
+
+```ruby
+module MyProcess
+  extend Taskinator::Definition
+
+  # defines a process
+  define_process :date, :options do
+    # ...
+  end
+end
+
+# when creating a process, 2 arguments are expected
+process = MyProcess.create_process Date.today, :option_1 => true
+```
+
+NOTE: The current implementation performs a naive check on the count of arguments, but this will be
+improved in subsequent versions.
+
+Next, specify the tasks with their corresponding implementation methods, that make up the process,
 using the `task` method and providing the `method` to execute for the task.
 
 ```ruby

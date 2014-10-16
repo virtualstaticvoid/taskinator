@@ -1,7 +1,7 @@
 module TestFlow
   extend Taskinator::Definition
 
-  define_process do
+  define_process :some_arg1, :some_arg2 do
     task :error_task, :continue_on_error => true
 
     task :the_task
@@ -54,7 +54,7 @@ module TestFlow
   module TestSubFlow
     extend Taskinator::Definition
 
-    define_process do
+    define_process :some_arg1, :some_arg2 do
       task :the_task
       task :the_task
       task :the_task

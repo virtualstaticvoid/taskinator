@@ -155,7 +155,8 @@ describe Taskinator::Definition::Builder do
       Module.new() do
         extend Taskinator::Definition
 
-        define_process {}
+        define_process :some_arg1, :some_arg2, :some_arg3 do
+        end
       end
     end
 
@@ -165,7 +166,7 @@ describe Taskinator::Definition::Builder do
     end
 
     it "creates a sub process task" do
-      sub_process = sub_definition.create_process(:argX, :argY)
+      sub_process = sub_definition.create_process(:argX, :argY, :argZ)
       allow(sub_definition).to receive(:create_process) { sub_process }
       expect(Taskinator::Task).to receive(:define_sub_process_task).with(process, sub_process, {})
       subject.sub_process(sub_definition)
