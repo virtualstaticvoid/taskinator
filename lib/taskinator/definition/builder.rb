@@ -15,6 +15,10 @@ module Taskinator
         @executor = Taskinator::Executor.new(@definition)
       end
 
+      def option?(key, &block)
+        yield if @options.key?(key) && @options[key]
+      end
+
       # defines a sub process of tasks which are executed sequentially
       def sequential(options={}, &block)
         raise ArgumentError, 'block' unless block_given?

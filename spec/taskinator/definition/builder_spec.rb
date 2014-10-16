@@ -15,7 +15,7 @@ describe Taskinator::Definition::Builder do
     Class.new(Taskinator::Process).new(definition)
   }
 
-  let(:args) { [:arg1, :arg2, {:option => 1}] }
+  let(:args) { [:arg1, :arg2, {:option => 1, :another => false}] }
 
   let(:block) { SpecSupport::Block.new() }
 
@@ -30,7 +30,24 @@ describe Taskinator::Definition::Builder do
     expect(subject.process).to eq(process)
     expect(subject.definition).to eq(definition)
     expect(subject.args).to eq(args)
-    expect(subject.options).to eq({:option => 1})
+    expect(subject.options).to eq({:option => 1, :another => false})
+  end
+
+  describe "#option?" do
+    it "invokes supplied block for 'option' option" do
+      expect(block).to receive(:call)
+      subject.option?(:option, &define_block)
+    end
+
+    it "does not invoke supplied block for 'another' option" do
+      expect(block).to_not receive(:call)
+      subject.option?(:another, &define_block)
+    end
+
+    it "does not invoke supplied block for an unspecified option" do
+      expect(block).to_not receive(:call)
+      subject.option?(:unspecified, &define_block)
+    end
   end
 
   describe "#sequential" do

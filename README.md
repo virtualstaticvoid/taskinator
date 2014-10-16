@@ -197,6 +197,42 @@ module MyProcess
 end
 ```
 
+It is possible to branch the process logic based on the options hash passed in when creating a process.
+The `options?` method takes the options key as an argument and calls the supplied block if the option
+is present and it's value is truthy.
+
+```ruby
+module MyProcess
+  extend Taskinator::Definition
+
+  define_process do
+
+    option?(:some_setting) do
+      task :prerequisite_step
+    end
+
+    task :work_step
+
+  end
+
+  def prerequisite_step
+    # ...
+  end
+
+  def work_step
+    # ...
+  end
+
+end
+
+# now when creating the process, the `:some_setting` option can be used to branch the logic
+process1 = MyProcess.create_process :some_setting => true
+process1.tasks.count #=> 2
+
+process2 = MyProcess.create_process
+process2.tasks.count #=> 1
+```
+
 In addition, it is possible to transform the arguments used by a task or job, by including a `transform` step in the definition.
 Similarly to the `for_each` method, `transform` takes a method name as an argument. The transformer method must yield the new arguments as required.
 
