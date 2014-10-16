@@ -42,7 +42,7 @@ module Taskinator
         raise NoMethodError, method unless @executor.respond_to?(method)
         raise ArgumentError, 'block' unless block_given?
 
-        @executor.send(method, *@args) do |*args|
+        @executor.send(method, *[*@args, options]) do |*args|
           Builder.new(@process, @definition, args).instance_eval(&block)
         end
       end

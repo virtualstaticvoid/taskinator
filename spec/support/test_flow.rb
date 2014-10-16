@@ -10,6 +10,10 @@ module TestFlow
       task :the_task
     end
 
+    for_each :iterator, :sub_option => 1 do
+      task :the_task
+    end
+
     sequential do
       task :the_task
       task :the_task
@@ -39,7 +43,7 @@ module TestFlow
 
   # note: arg1 and arg2 are passed in all the way from the
   #  definition#create_process method
-  def iterator(arg1, arg2)
+  def iterator(arg1, arg2, options={})
     3.times do |i|
       yield [arg1, arg2, i]
     end

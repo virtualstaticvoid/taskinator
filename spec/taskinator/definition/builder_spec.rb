@@ -99,7 +99,7 @@ describe Taskinator::Definition::Builder do
         @executor = executor
       end
 
-      expect(executor).to receive(:iterator_method) do |*args, &block|
+      expect(executor).to receive(:iterator_method).with(*[*args, {}]) do |*a, &block|
         3.times(&block)
       end
 
@@ -125,7 +125,25 @@ describe Taskinator::Definition::Builder do
         subject.for_each(nil)
       }.to raise_error(ArgumentError)
     end
+
+    it "calls the iterator method, adding specified options" do
+      executor = Taskinator::Executor.new(definition)
+
+      subject.instance_eval do
+        @executor = executor
+      end
+
+      expect(executor).to receive(:iterator_method).with(*[*args, :sub_option => 1]) do |*a, &block|
+        3.times(&block)
+      end
+
+      expect(block).to receive(:call).exactly(3).times
+
+      subject.for_each(:iterator_method, :sub_option => 1, &define_block)
+    end
   end
+
+  # NOTE: #transform is an alias for #for_each
 
   describe "#task" do
     it "creates a task" do
