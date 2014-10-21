@@ -1,6 +1,6 @@
 GIT
   remote: git://github.com/virtualstaticvoid/workflow.git
-  revision: b7578549f10b8b50e74fd31c3f5dccdb6bd08ce2
+  revision: 5c7267ce7002d8ba7efad3acee52d56cbf88e0e0
   branch: master
   specs:
     workflow (1.3.0)
@@ -49,7 +49,7 @@ GEM
     minitest (5.4.2)
     mono_logger (1.1.0)
     multi_json (1.10.1)
-    netrc (0.7.8)
+    netrc (0.8.0)
     pry (0.9.12.6)
       coderay (~> 1.0)
       method_source (~> 0.8)
@@ -90,7 +90,7 @@ GEM
     rspec-mocks (3.1.3)
       rspec-support (~> 3.1.0)
     rspec-support (3.1.2)
-    sidekiq (3.2.5)
+    sidekiq (3.2.6)
       celluloid (= 0.15.2)
       connection_pool (>= 2.0.0)
       json
