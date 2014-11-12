@@ -11,6 +11,7 @@ module Taskinator
         task.start!
         task.complete! if task.can_complete?
       rescue Exception => e
+        Taskinator.logger.error(e)
         task.fail!(e)
         raise e
       end

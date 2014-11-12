@@ -10,6 +10,7 @@ module Taskinator
       begin
         process.start!
       rescue Exception => e
+        Taskinator.logger.error(e)
         process.fail!(e)
         raise e
       end
