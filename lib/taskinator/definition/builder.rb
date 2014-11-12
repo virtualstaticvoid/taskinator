@@ -24,7 +24,7 @@ module Taskinator
         raise ArgumentError, 'block' unless block_given?
 
         sub_process = Process.define_sequential_process_for(@definition, options)
-        Builder.new(define_sub_process_task(@process, sub_process, options), @definition, @args).instance_eval(&block)
+        Builder.new(define_sub_process_task(@process, sub_process, options), @definition, *@args).instance_eval(&block)
       end
 
       # defines a sub process of tasks which are executed concurrently
@@ -32,7 +32,7 @@ module Taskinator
         raise ArgumentError, 'block' unless block_given?
 
         sub_process = Process.define_concurrent_process_for(@definition, complete_on, options)
-        Builder.new(define_sub_process_task(@process, sub_process, options), @definition, @args).instance_eval(&block)
+        Builder.new(define_sub_process_task(@process, sub_process, options), @definition, *@args).instance_eval(&block)
       end
 
       # dynamically defines tasks, using the given @iterator method
@@ -42,8 +42,8 @@ module Taskinator
         raise NoMethodError, method unless @executor.respond_to?(method)
         raise ArgumentError, 'block' unless block_given?
 
-        @executor.send(method, *[*@args, options]) do |args|
-          Builder.new(@process, @definition, args).instance_eval(&block)
+        @executor.send(method, *[*@args, options]) do |*args|
+          Builder.new(@process, @definition, *args).instance_eval(&block)
         end
       end
 
@@ -76,7 +76,7 @@ module Taskinator
         # TODO: decide whether the sub process to dynamically receive arguments
 
         sub_process = definition.create_process(*@args)
-        Builder.new(define_sub_process_task(@process, sub_process, options), definition, @args)
+        Builder.new(define_sub_process_task(@process, sub_process, options), definition, *@args)
       end
 
     private
