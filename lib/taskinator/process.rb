@@ -57,12 +57,17 @@ module Taskinator
       state :initial do
         event :enqueue, :transitions_to => :enqueued
         event :start, :transitions_to => :processing
+
+        # need to be able to complete, for when there are no tasks
+        event :complete, :transitions_to => :completed, :if => :no_tasks_defined?
+
         event :cancel, :transitions_to => :cancelled
         event :fail, :transitions_to => :failed
       end
 
       state :enqueued do
         event :start, :transitions_to => :processing
+        event :complete, :transitions_to => :completed, :if => :no_tasks_defined?
         event :cancel, :transitions_to => :cancelled
         event :fail, :transitions_to => :failed
       end
@@ -89,6 +94,7 @@ module Taskinator
 
       on_error do |error, from, to, event, *args|
         Taskinator.logger.error("PROCESS: #{self.class.name}:#{uuid} :: #{error.message}")
+        Taskinator.logger.debug(error.backtrace)
         fail!(error)
       end
     end
@@ -96,6 +102,10 @@ module Taskinator
     def tasks_completed?(*args)
       # subclasses must implement this method
       raise NotImplementedError
+    end
+
+    def no_tasks_defined?
+      tasks.empty?
     end
 
     # include after defining the workflow

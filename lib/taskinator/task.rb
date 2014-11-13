@@ -60,6 +60,10 @@ module Taskinator
 
       state :enqueued do
         event :start, :transitions_to => :processing
+
+        # need to be able to complete, for when sub-tasks have no tasks
+        event :complete, :transitions_to => :completed, :if => :can_complete_task?
+
         event :fail, :transitions_to => :failed
       end
 
@@ -77,6 +81,7 @@ module Taskinator
 
       on_error do |error, from, to, event, *args|
         Taskinator.logger.error("TASK: #{self.class.name}:#{uuid} :: #{error.message}")
+        Taskinator.logger.debug(error.backtrace)
         fail!(error)
       end
     end
