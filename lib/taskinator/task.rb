@@ -106,6 +106,12 @@ module Taskinator
       process.task_completed(self)
     end
 
+    # callback for when the task has failed
+    def on_failed_entry(*args)
+      # notify the process that this task has failed
+      process.task_failed(self, args.last)
+    end
+
     # helper method, delegating to process
     def paused?
       process.paused?

@@ -99,13 +99,18 @@ module Taskinator
       end
     end
 
+    def no_tasks_defined?
+      tasks.empty?
+    end
+
     def tasks_completed?(*args)
       # subclasses must implement this method
       raise NotImplementedError
     end
 
-    def no_tasks_defined?
-      tasks.empty?
+    def task_failed(task, error)
+      # for now, fail this process
+      fail!(error)
     end
 
     # include after defining the workflow
@@ -122,6 +127,13 @@ module Taskinator
       # notify the parent task (if there is one) that this process has completed
       # note: parent may be a proxy, so explicity check for nil?
       parent.complete! unless parent.nil?
+    end
+
+    # callback for when the process has failed
+    def on_failed_entry(*args)
+      # notify the parent task (if there is one) that this process has failed
+      # note: parent may be a proxy, so explicity check for nil?
+      parent.fail!(*args) unless parent.nil?
     end
 
     class Sequential < Process
@@ -167,7 +179,7 @@ module Taskinator
 
       def task_completed(task)
         # when complete on first, then don't bother with subsequent tasks completing
-        return if completed?
+        return if completed? || failed?
         complete! if can_complete?
       end
 

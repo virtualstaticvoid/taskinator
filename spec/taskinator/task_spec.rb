@@ -96,6 +96,7 @@ describe Taskinator::Task do
         it { expect(subject).to respond_to(:fail!) }
         it {
           expect(subject).to receive(:fail).with(StandardError)
+          expect(process).to receive(:task_failed).with(subject, StandardError)
           subject.start!
           subject.fail!(StandardError)
         }

@@ -157,12 +157,20 @@ describe Taskinator::Process do
     end
 
     describe "#parent" do
-      it "notifies parent" do
+      it "notifies parent when completed" do
         allow(subject).to receive(:tasks_completed?) { true }
         subject.parent = double('parent')
         expect(subject.parent).to receive(:complete!)
         subject.start!
         subject.complete!
+      end
+
+      it "notifies parent when failed" do
+        allow(subject).to receive(:tasks_completed?) { true }
+        subject.parent = double('parent')
+        expect(subject.parent).to receive(:fail!)
+        subject.start!
+        subject.fail!
       end
     end
 
@@ -348,6 +356,16 @@ describe Taskinator::Process do
         expect(subject).to receive(:complete!)
 
         subject.task_completed(tasks.first)
+      end
+    end
+
+    describe "#task_failed" do
+      it "fails when tasks fail" do
+        tasks.each {|t| subject.tasks << t }
+
+        expect(subject).to receive(:fail!).with(StandardError)
+
+        subject.task_failed(tasks.first, StandardError)
       end
     end
 
