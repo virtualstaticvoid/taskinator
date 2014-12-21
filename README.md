@@ -7,7 +7,7 @@
 [![Dependency Status](https://gemnasium.com/virtualstaticvoid/taskinator.svg)](https://gemnasium.com/virtualstaticvoid/taskinator)
 
 A simple orchestration library for running complex processes or workflows in Ruby. Processes are defined using a simple DSL, where the sequences and
-tasks are defined. Processes can then queued for execution. Sequences can be sychronous or asynchronous, and the overall process can be monitored
+tasks are defined. Processes can then be queued for execution. Sequences can be synchronous or asynchronous, and the overall process can be monitored
 for completion or failure.
 
 Processes and tasks are executed by background workers and you can use any one of the following gems:
@@ -26,7 +26,7 @@ Redis 2.4 or greater is required.
 
 One of the following background worker queue gems: `resque`, `sidekiq` or `delayed_job`.
 
-_Note:_ `resque` or `sidekiq` is recommended since they use Redis as a backing store as well.
+_NOTE:_ `resque` or `sidekiq` is recommended since they use Redis as a backing store as well.
 
 ## Installation
 
@@ -56,7 +56,7 @@ module MyProcess
 end
 ```
 
-Define the process, using the `define_process` method.
+Define the process using the `define_process` method.
 
 ```ruby
 module MyProcess
@@ -69,8 +69,8 @@ module MyProcess
 end
 ```
 
-The `define_process` method optionally takes the list of expected arguments which are used to validate the
-arguments supplied when creating a new process. These should be specified with symbols.
+The `define_process` method optionally takes the list of expected arguments which are used to validate the arguments supplied when creating a new process.
+These should be specified with symbols.
 
 ```ruby
 module MyProcess
@@ -86,11 +86,9 @@ end
 process = MyProcess.create_process Date.today, :option_1 => true
 ```
 
-NOTE: The current implementation performs a naive check on the count of arguments, but this will be
-improved in subsequent versions.
+_NOTE:_ The current implementation performs a naive check on the count of arguments.
 
-Next, specify the tasks with their corresponding implementation methods, that make up the process,
-using the `task` method and providing the `method` to execute for the task.
+Next, specify the tasks with their corresponding implementation methods, that make up the process, using the `task` method and providing the `method` to execute for the task.
 
 ```ruby
 module MyProcess
@@ -144,11 +142,10 @@ module MyProcess
 end
 ```
 
-It is likely that you have already have worker classes for one of the queueing libraries, such as resque or delayed_job, and wish to
-reuse them for executing them in the sequence defined by the process definition.
+It is likely that you already have worker classes for one of the queueing libraries, such as resque or delayed_job, and wish to reuse them for executing them in the sequence defined by the process definition.
 
-You define a `job` step, providing the class of the worker, and them taskinator will execute that worker as part of the process definition.
-The `job` step will be queued and executed on the configured queue for `delayed_job`, or that of the worker for `resque` and `sidekiq`.
+Define a `job` step, providing the class of the worker, and then taskinator will execute that worker as part of the process definition.
+The `job` step will be queued and executed on same queue as configured by `delayed_job`, or that of the worker for `resque` and `sidekiq`.
 
 ```ruby
 # E.g. A resque worker
@@ -173,8 +170,7 @@ end
 ```
 
 You can also define data driven tasks using the `for_each` method, which takes an iterator method name as an argument.
-The iterator method yields the items to produce a parameterized task for that item. Notice that the task method
-takes a parameter in this case, which will be the item provided by the iterator.
+The iterator method yields the parameters necessary for the task or job. Notice that the task method takes a parameter in this case, which will be the return values provided by the iterator.
 
 ```ruby
 module MyProcess
@@ -198,8 +194,7 @@ end
 ```
 
 It is possible to branch the process logic based on the options hash passed in when creating a process.
-The `options?` method takes the options key as an argument and calls the supplied block if the option
-is present and it's value is truthy.
+The `options?` method takes the options key as an argument and calls the supplied block if the option is present and it's value is truthy.
 
 ```ruby
 module MyProcess
@@ -234,7 +229,7 @@ process2.tasks.count #=> 1
 ```
 
 In addition, it is possible to transform the arguments used by a task or job, by including a `transform` step in the definition.
-Similarly to the `for_each` method, `transform` takes a method name as an argument. The transformer method must yield the new arguments as required.
+Similarly for the `for_each` method, `transform` takes a method name as an argument. The transformer method must yield the new arguments as required.
 
 ```ruby
 module MyProcess
@@ -370,8 +365,7 @@ To best understand how arguments are handled, you need to break it down into 3 p
   * Creation and
   * Execution
 
-Firstly, a process definition is declarative in that the `define_process` and a mix of `sequential`, `concurrent`, `for_each`,
-`task` and `job` directives provide the way to specify the sequencing of the steps for the process.
+Firstly, a process definition is declarative in that the `define_process` and a mix of `sequential`, `concurrent`, `for_each`, `task` and `job` directives provide the way to specify the sequencing of the steps for the process.
 Taskinator will interprete this definition and execute each step in the desired sequence or concurrency.
 
 Consider the following process definition:
@@ -418,11 +412,9 @@ end
 
 There are three tasks; namely `:work_step_1`, `:work_step_2` and `:work_step_3`.
 
-The third task, `:work_step_3`, is built up using the `for_each` iterator, which means that the number of `:work_step_3` tasks
-will depend on how many times the `additional_step` iterator method yields to the definition.
+The third task, `:work_step_3`, is built up using the `for_each` iterator, which means that the number of `:work_step_3` tasks will depend on how many times the `additional_step` iterator method yields to the definition.
 
-This brings us to the creation part. When `create_process` is called on the given module, you provide arguments to it, which will get
-passed onto the respective `task` and `for_each` iterator methods.
+This brings us to the creation part. When `create_process` is called on the given module, you provide arguments to it, which will get passed onto the respective `task` and `for_each` iterator methods.
 
 So, considering the `MySimpleProcess` module shown above, `work_step_1`, `work_step_2` and `work_step_3` methods each expect arguments.
 These will ultimately come from the arguments passed into the `create_process` method.
@@ -544,9 +536,7 @@ process.execute
 
 ```
 
-In reality, each task is executed by a worker process, possibly on another host, so the execution process isn't as simple,
-but this example should help you to understand conceptually how the process is executed, and how the arguments are propagated
-through.
+In reality, each task is executed by a worker process, possibly on another host, so the execution process isn't as simple, but this example should help you to understand conceptually how the process is executed, and how the arguments are propagated through.
 
 ### Monitoring
 
@@ -564,9 +554,8 @@ end
 
 ### Redis
 
-By default Taskinator assumes Redis is located at `localhost:6397`. This is fine for development, but for many production environments
-you will need to poiint to an external Redis server. You may also what to use a namespace for the Redis keys.
-NOTE: The configuration hash _must_ have symbolized keys.
+By default Taskinator assumes Redis is located at `localhost:6397`. This is fine for development, but for many production environments you will need to point to an external Redis server. You may also what to use a namespace for the Redis keys.
+_NOTE:_ The configuration hash _must_ have symbolized keys.
 
 ```ruby
 Taskinator.configure do |config|
@@ -580,13 +569,11 @@ end
 Or, alternatively, via an `ENV` variable
 
 Set the `REDIS_PROVIDER` environment variable to the Redis server url.
-E.g. On Heroku, with RedisGreen: set REDIS_PROVIDER=REDISGREEN_URL and Taskinator will use the value of the `REDISGREEN_URL`
-environment variable when connecting to Redis.
+E.g. On Heroku, with RedisGreen: set REDIS_PROVIDER=REDISGREEN_URL and Taskinator will use the value of the `REDISGREEN_URL` environment variable when connecting to Redis.
 
 You may also use the generic `REDIS_URL` which may be set to your own private Redis server.
 
-The Redis configuration leverages the same setup as `sidekiq`. For advanced options, checkout the
-[Sidekiq Advanced Options](https://github.com/mperham/sidekiq/wiki/Advanced-Options#complete-control) wiki for more information.
+The Redis configuration leverages the same setup as `sidekiq`. For advanced options, checkout the [Sidekiq Advanced Options](https://github.com/mperham/sidekiq/wiki/Advanced-Options#complete-control) wiki for more information.
 
 ### Queues
 
@@ -622,6 +609,4 @@ Portions of code are from the Sidekiq project, Copyright (c) Contributed Systems
 
 Inspired by the [sidekiq](https://github.com/mperham/sidekiq) and [workflow](https://github.com/geekq/workflow) gems.
 
-For other workflow solutions, checkout [Stonepath](https://github.com/bokmann/stonepath), the now deprecated
-[ruote](https://github.com/jmettraux/ruote) gem and [workflow](https://github.com/geekq/workflow). Alternatively, for a robust
-enterprise ready solution checkout the [AWS Flow Framework for Ruby](http://docs.aws.amazon.com/amazonswf/latest/awsrbflowguide/welcome.html).
+For other workflow solutions, checkout [Stonepath](https://github.com/bokmann/stonepath), the now deprecated [ruote](https://github.com/jmettraux/ruote) gem and [workflow](https://github.com/geekq/workflow). Alternatively, for a robust enterprise ready solution checkout the [AWS Flow Framework for Ruby](http://docs.aws.amazon.com/amazonswf/latest/awsrbflowguide/welcome.html).
