@@ -16,10 +16,9 @@ describe Taskinator::Api, :redis => true do
       it "it enumerates processes" do
         allow_any_instance_of(Process).to receive(:fetch) {}
 
-        base_key = Taskinator::Process.base_key
         Taskinator.redis do |conn|
           conn.multi do
-            3.times {|i| conn.sadd("taskinator:#{base_key}", i) }
+            3.times {|i| conn.sadd("taskinator:#{Taskinator::Persistence.list_key}", i) }
           end
         end
 
@@ -34,10 +33,9 @@ describe Taskinator::Api, :redis => true do
       it { expect(subject.size).to eq(0) }
 
       it "yields the number of processes" do
-        base_key = Taskinator::Process.base_key
         Taskinator.redis do |conn|
           conn.multi do
-            3.times {|i| conn.sadd("taskinator:#{base_key}", i) }
+            3.times {|i| conn.sadd("taskinator:#{Taskinator::Persistence.list_key}", i) }
           end
         end
 

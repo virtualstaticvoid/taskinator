@@ -196,13 +196,13 @@ describe Taskinator::Definition::Builder do
     end
 
     it "creates a sub process" do
-      expect(sub_definition).to receive(:create_process).with(*args).and_call_original
+      expect(sub_definition).to receive(:create_sub_process).with(*args).and_call_original
       subject.sub_process(sub_definition)
     end
 
     it "creates a sub process task" do
       sub_process = sub_definition.create_process(:argX, :argY, :argZ)
-      allow(sub_definition).to receive(:create_process) { sub_process }
+      allow(sub_definition).to receive(:create_sub_process) { sub_process }
       expect(Taskinator::Task).to receive(:define_sub_process_task).with(process, sub_process, {})
       subject.sub_process(sub_definition)
     end

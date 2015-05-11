@@ -1,6 +1,18 @@
 module Taskinator
   module Persistence
 
+    class << self
+      def add_process_to_list(process)
+        Taskinator.redis do |conn|
+          conn.sadd "taskinator:#{list_key}", process.uuid
+        end
+      end
+
+      def list_key
+        'processes'
+      end
+    end
+
     # mixin logic
     def self.included(klass)
       klass.class_eval do

@@ -6,7 +6,7 @@ module Taskinator
       def each(&block)
         instance_cache = {}
         Taskinator.redis do |conn|
-          uuids = conn.smembers("taskinator:#{Taskinator::Process.base_key}")
+          uuids = conn.smembers("taskinator:processes")
           uuids.each do |uuid|
             yield Process.fetch(uuid, instance_cache)
           end
@@ -15,7 +15,7 @@ module Taskinator
 
       def size
         Taskinator.redis do |conn|
-          conn.scard("taskinator:#{Taskinator::Process.base_key}")
+          conn.scard("taskinator:processes")
         end
       end
     end

@@ -75,7 +75,7 @@ module Taskinator
 
         # TODO: decide whether the sub process to dynamically receive arguments
 
-        sub_process = definition.create_process(*@args)
+        sub_process = definition.create_sub_process(*@args)
         Builder.new(define_sub_process_task(@process, sub_process, options), definition, *@args)
       end
 
