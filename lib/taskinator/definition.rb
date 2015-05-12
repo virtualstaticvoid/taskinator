@@ -7,6 +7,9 @@ module Taskinator
       define_singleton_method :_create_process_ do |args, options={}|
 
         # TODO: better validation of arguments
+
+        # FIXME: arg_list should only contain an array of symbols
+
         raise ArgumentError, "wrong number of arguments (#{args.length} for #{arg_list.length})" if args.length < arg_list.length
 
         process = Process.define_sequential_process_for(self)
