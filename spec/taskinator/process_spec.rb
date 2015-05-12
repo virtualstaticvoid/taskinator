@@ -144,13 +144,13 @@ describe Taskinator::Process do
       describe "#fail!" do
         it { expect(subject).to respond_to(:fail!) }
         it {
-          expect(subject).to receive(:fail).with(StandardError)
+          expect(subject).to receive(:fail)
           subject.start!
-          subject.fail!(StandardError)
+          subject.fail!
         }
         it {
           subject.start!
-          subject.fail!(StandardError)
+          subject.fail!
           expect(subject.current_state.name).to eq(:failed)
         }
       end
@@ -363,9 +363,11 @@ describe Taskinator::Process do
       it "fails when tasks fail" do
         tasks.each {|t| subject.tasks << t }
 
-        expect(subject).to receive(:fail!).with(StandardError)
+        error = StandardError.new
 
-        subject.task_failed(tasks.first, StandardError)
+        expect(subject).to receive(:fail!).with(error)
+
+        subject.task_failed(tasks.first, error)
       end
     end
 

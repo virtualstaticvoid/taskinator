@@ -93,7 +93,8 @@ module Taskinator
       end
 
       # persists the error information
-      def fail(error)
+      def fail(error=nil)
+        return unless error
         Taskinator.redis do |conn|
           conn.hmset(
             self.key,

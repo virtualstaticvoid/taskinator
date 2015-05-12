@@ -95,14 +95,15 @@ describe Taskinator::Task do
       describe "#fail!" do
         it { expect(subject).to respond_to(:fail!) }
         it {
-          expect(subject).to receive(:fail).with(StandardError)
-          expect(process).to receive(:task_failed).with(subject, StandardError)
+          error = StandardError.new
+          expect(subject).to receive(:fail).with(error)
+          expect(process).to receive(:task_failed).with(subject, error)
           subject.start!
-          subject.fail!(StandardError)
+          subject.fail!(error)
         }
         it {
           subject.start!
-          subject.fail!(StandardError)
+          subject.fail!
           expect(subject.current_state.name).to eq(:failed)
         }
       end
@@ -171,8 +172,9 @@ describe Taskinator::Task do
       end
 
       it "handles failure" do
-        allow(subject.executor).to receive(subject.method).with(*subject.args).and_raise(StandardError)
-        expect(subject).to receive(:fail!).with(StandardError)
+        error = StandardError.new
+        allow(subject.executor).to receive(subject.method).with(*subject.args).and_raise(error)
+        expect(subject).to receive(:fail!).with(error)
         subject.start!
       end
     end
@@ -278,8 +280,9 @@ describe Taskinator::Task do
       end
 
       it "handles failure" do
-        allow(sub_process).to receive(:start!).and_raise(StandardError)
-        expect(subject).to receive(:fail!).with(StandardError)
+        error = StandardError.new
+        allow(sub_process).to receive(:start!).and_raise(error)
+        expect(subject).to receive(:fail!).with(error)
         subject.start!
       end
     end
