@@ -99,7 +99,7 @@ describe Taskinator::Definition::Builder do
         @executor = executor
       end
 
-      expect(executor).to receive(:iterator_method).with(*[*args, {}]) do |*a, &block|
+      expect(executor).to receive(:iterator_method).with(*args) do |*a, &block|
         3.times(&block)
       end
 

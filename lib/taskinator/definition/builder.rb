@@ -42,7 +42,13 @@ module Taskinator
         raise NoMethodError, method unless @executor.respond_to?(method)
         raise ArgumentError, 'block' unless block_given?
 
-        @executor.send(method, *[*@args, options]) do |*args|
+        #
+        # `for_each` is an exception, since it invokes the definition
+        # in order to yield elements to the builder, and any options passed
+        # are included with the builder options
+        #
+        method_args = options.any? ? [*@args, options] : @args
+        @executor.send(method, *method_args) do |*args|
           Builder.new(@process, @definition, *args).instance_eval(&block)
         end
       end
