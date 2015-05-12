@@ -41,7 +41,7 @@ describe Taskinator::Definition do
       allow(block).to receive(:to_proc) {
         Proc.new {|*args| }
       }
-      subject.define_process &block
+      subject.define_process(&block)
 
       expect(subject.create_process).to be_a(Taskinator::Process)
     end
