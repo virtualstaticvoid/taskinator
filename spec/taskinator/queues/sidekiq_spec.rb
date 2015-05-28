@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe Taskinator::Queues::SidekiqAdapter do
+describe Taskinator::Queues::SidekiqAdapter, :sidekiq do
 
   it_should_behave_like "a queue adapter", :sidekiq, Taskinator::Queues::SidekiqAdapter do
     let(:job) { double('job', :get_sidekiq_options => {}) }
@@ -14,9 +14,14 @@ describe Taskinator::Queues::SidekiqAdapter do
   describe "ProcessWorker" do
     it "enqueues processes" do
       worker = adapter::ProcessWorker
-      expect {
-        subject.enqueue_process(double('process', :uuid => uuid, :queue => nil))
-      }.to change(worker.jobs, :size).by(1)
+      process = double('process', :uuid => uuid, :queue => nil)
+      subject.enqueue_process(process)
+      expect(worker).to have_enqueued_job(process.uuid)
+    end
+
+    it "enqueues process to specified queue" do
+      subject.enqueue_process(double('process', :uuid => uuid, :queue => :other))
+      expect(adapter::ProcessWorker).to be_processed_in_x(:other)
     end
 
     it "calls process worker" do
@@ -28,9 +33,14 @@ describe Taskinator::Queues::SidekiqAdapter do
   describe "TaskWorker" do
     it "enqueues tasks" do
       worker = adapter::TaskWorker
-      expect {
-        subject.enqueue_task(double('task', :uuid => uuid, :queue => nil))
-      }.to change(worker.jobs, :size).by(1)
+      task = double('task', :uuid => uuid, :queue => nil)
+      subject.enqueue_task(task)
+      expect(worker).to have_enqueued_job(task.uuid)
+    end
+
+    it "enqueues task to specified queue" do
+      subject.enqueue_task(double('task', :uuid => uuid, :queue => :other))
+      expect(adapter::TaskWorker).to be_processed_in_x(:other)
     end
 
     it "calls task worker" do
@@ -46,9 +56,24 @@ describe Taskinator::Queues::SidekiqAdapter do
       job = double('job', :get_sidekiq_options => {})
       job_task = double('job_task', :uuid => uuid, :job => job, :queue => nil)
 
-      expect {
-        subject.enqueue_job(job_task)
-      }.to change(worker.jobs, :size).by(1)
+      subject.enqueue_job(job_task)
+      expect(worker).to have_enqueued_job(job_task.uuid)
+    end
+
+    it "enqueues job to queue of the job class" do
+      job = double('job', :get_sidekiq_options => {:queue => :job})
+      job_task = double('job_task', :uuid => uuid, :job => job, :queue => nil)
+      subject.enqueue_job(job_task)
+
+      expect(adapter::JobWorker).to be_processed_in_x(:job)
+    end
+
+    it "enqueues job to specified queue" do
+      job = double('job', :get_sidekiq_options => {})
+      job_task = double('job_task', :uuid => uuid, :job => job, :queue => :other)
+      subject.enqueue_job(job_task)
+
+      expect(adapter::JobWorker).to be_processed_in_x(:other)
     end
 
     it "calls job worker" do

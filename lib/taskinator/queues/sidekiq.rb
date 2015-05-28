@@ -9,39 +9,26 @@ module Taskinator
 
     class SidekiqAdapter
       def initialize(config={})
-        config = {
+        @config = {
           :process_queue => :default,
           :task_queue => :default,
           :job_queue => :default
         }.merge(config)
-
-        ProcessWorker.class_eval do
-          sidekiq_options :queue => config[:process_queue]
-        end
-
-        TaskWorker.class_eval do
-          sidekiq_options :queue => config[:task_queue]
-        end
-
-        JobWorker.class_eval do
-          sidekiq_options :queue => config[:job_queue]
-        end
       end
 
       def enqueue_process(process)
-        JobWorker.get_sidekiq_options.merge!('queue' => process.queue) if process.queue
-        ProcessWorker.perform_async(process.uuid)
+        queue = process.queue || @config[:process_queue]
+        ProcessWorker.client_push('class' => ProcessWorker, 'args' => [process.uuid], 'queue' => queue)
       end
 
       def enqueue_task(task)
-        JobWorker.get_sidekiq_options.merge!('queue' => task.queue) if task.queue
-        TaskWorker.perform_async(task.uuid)
+        queue = task.queue || @config[:task_queue]
+        TaskWorker.client_push('class' => TaskWorker, 'args' => [task.uuid], 'queue' => queue)
       end
 
       def enqueue_job(job)
-        queue = job.queue || job.job.get_sidekiq_options['queue']
-        JobWorker.get_sidekiq_options.merge!('queue' => queue) if queue
-        JobWorker.perform_async(job.uuid)
+        queue = job.queue || job.job.get_sidekiq_options[:queue] || @config[:job_queue]
+        JobWorker.client_push('class' => JobWorker, 'args' => [job.uuid], 'queue' => queue)
       end
 
       class ProcessWorker
