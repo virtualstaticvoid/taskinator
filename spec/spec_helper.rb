@@ -17,7 +17,7 @@ end
 require 'delayed_job'
 
 require 'sidekiq'
-require 'sidekiq/testing'
+require 'rspec-sidekiq'
 Sidekiq::Testing.fake!
 
 require 'resque'
@@ -51,6 +51,10 @@ RSpec.configure do |config|
     Taskinator.redis do |conn|
       conn.flushdb
     end
+  end
+
+  config.before(:each, :sidekiq => true) do
+    Sidekiq::Worker.clear_all
   end
 
 end
