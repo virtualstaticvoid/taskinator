@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe Taskinator::Queues::DelayedJobAdapter do
+describe Taskinator::Queues::DelayedJobAdapter, :delayed_job do
 
   it_should_behave_like "a queue adapter", :delayed_job, Taskinator::Queues::DelayedJobAdapter
 
@@ -11,10 +11,14 @@ describe Taskinator::Queues::DelayedJobAdapter do
 
   describe "ProcessWorker" do
     it "enqueues processes" do
-      worker = adapter::ProcessWorker
       expect {
         subject.enqueue_process(double('process', :uuid => uuid, :queue => nil))
       }.to change(Delayed::Job.queue, :size).by(1)
+    end
+
+    it "enqueues process to specified queue" do
+      subject.enqueue_process(double('process', :uuid => uuid, :queue => :other))
+      expect(Delayed::Job.contains?(adapter::ProcessWorker, uuid, :other)).to be
     end
 
     it "calls process worker" do
@@ -25,10 +29,14 @@ describe Taskinator::Queues::DelayedJobAdapter do
 
   describe "TaskWorker" do
     it "enqueues tasks" do
-      worker = adapter::TaskWorker
       expect {
-        subject.enqueue_process(double('task', :uuid => uuid, :queue => nil))
+        subject.enqueue_task(double('task', :uuid => uuid, :queue => nil))
       }.to change(Delayed::Job.queue, :size).by(1)
+    end
+
+    it "enqueues task to specified queue" do
+      subject.enqueue_task(double('task', :uuid => uuid, :queue => :other))
+      expect(Delayed::Job.contains?(adapter::TaskWorker, uuid, :other)).to be
     end
 
     it "calls task worker" do
@@ -39,14 +47,20 @@ describe Taskinator::Queues::DelayedJobAdapter do
 
   describe "JobWorker" do
     it "enqueues jobs" do
-      worker = adapter::JobWorker
-
       job = double('job')
       job_task = double('job_task', :uuid => uuid, :job => job, :queue => nil)
 
       expect {
         subject.enqueue_job(job_task)
       }.to change(Delayed::Job.queue, :size).by(1)
+    end
+
+    it "enqueues job to specified queue" do
+      job = double('job')
+      job_task = double('job_task', :uuid => uuid, :job => job, :queue => :other)
+      subject.enqueue_job(job_task)
+
+      expect(Delayed::Job.contains?(adapter::JobWorker, uuid, :other)).to be
     end
 
     it "calls job worker" do

@@ -57,6 +57,10 @@ RSpec.configure do |config|
     Sidekiq::Worker.clear_all
   end
 
+  config.before(:each, :delayed_job => true) do
+    Delayed::Job.clear_all
+  end
+
 end
 
 # require examples, must happen after configure
