@@ -21,10 +21,10 @@ Gem::Specification.new do |spec|
   spec.required_ruby_version = '>= 2.0.0'
 
   # core
-  spec.add_dependency 'redis', '>= 3.0.6'
-  spec.add_dependency 'redis-namespace', '>= 1.3.1'
-  spec.add_dependency 'connection_pool', '>= 2.0.0'
-  spec.add_dependency 'json', '>= 1.8.1'
+  spec.add_dependency 'redis', '>= 3.2.1'
+  spec.add_dependency 'redis-namespace', '>= 1.5.2'
+  spec.add_dependency 'connection_pool', '>= 2.2.0'
+  spec.add_dependency 'json', '>= 1.8.2'
 
   # spec.add_dependency 'workflow', '>= 1.3.0'  # RubyGems not up to date as of 11 Nov 2014.
 
