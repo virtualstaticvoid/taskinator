@@ -29,18 +29,18 @@ module Taskinator
       end
 
       def enqueue_process(process)
+        JobWorker.get_sidekiq_options.merge!('queue' => process.queue) if process.queue
         ProcessWorker.perform_async(process.uuid)
       end
 
       def enqueue_task(task)
+        JobWorker.get_sidekiq_options.merge!('queue' => task.queue) if task.queue
         TaskWorker.perform_async(task.uuid)
       end
 
       def enqueue_job(job)
-        # get the queue name
-        queue = job.job.get_sidekiq_options['queue']
+        queue = job.queue || job.job.get_sidekiq_options['queue']
         JobWorker.get_sidekiq_options.merge!('queue' => queue) if queue
-
         JobWorker.perform_async(job.uuid)
       end
 
