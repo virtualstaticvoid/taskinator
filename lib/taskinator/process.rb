@@ -53,6 +53,10 @@ module Taskinator
       "#<#{self.class.name}:#{uuid}>"
     end
 
+    def queue
+      options[:queue]
+    end
+
     workflow do
       state :initial do
         event :enqueue, :transitions_to => :enqueued
