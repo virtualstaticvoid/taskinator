@@ -29,17 +29,19 @@ module Taskinator
       end
 
       def enqueue_process(process)
-        Resque.enqueue(ProcessWorker, process.uuid)
+        queue = process.queue || Resque.queue_from_class(ProcessWorker)
+        Resque.enqueue_to(queue, ProcessWorker, process.uuid)
       end
 
       def enqueue_task(task)
-        Resque.enqueue(TaskWorker, task.uuid)
+        queue = task.queue || Resque.queue_from_class(TaskWorker)
+        Resque.enqueue_to(queue, TaskWorker, task.uuid)
       end
 
       def enqueue_job(job)
-        # get the queue name
-        queue = Resque.queue_from_class(job.job) ||
-                  Resque.queue_from_class(JobWorker)
+        queue = job.queue ||
+                  Resque.queue_from_class(job.job) ||
+                    Resque.queue_from_class(JobWorker)
 
         Resque.enqueue_to(queue, JobWorker, job.uuid)
       end
