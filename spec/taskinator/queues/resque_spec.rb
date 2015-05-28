@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe Taskinator::Queues::ResqueAdapter do
+describe Taskinator::Queues::ResqueAdapter, :resque do
 
   it_should_behave_like "a queue adapter", :resque, Taskinator::Queues::ResqueAdapter
 
@@ -17,6 +17,13 @@ describe Taskinator::Queues::ResqueAdapter do
       expect(worker).to have_queued(uuid)
     end
 
+    it "enqueues process to specified queue" do
+      worker = adapter::ProcessWorker
+      subject.enqueue_process(double('process', :uuid => uuid, :queue => :other))
+
+      expect(worker).to have_queued(uuid).in(:other)
+    end
+
     it "calls process worker" do
       expect_any_instance_of(Taskinator::ProcessWorker).to receive(:perform)
       adapter::ProcessWorker.perform(uuid)
@@ -29,6 +36,13 @@ describe Taskinator::Queues::ResqueAdapter do
       subject.enqueue_task(double('task', :uuid => uuid, :queue => nil))
 
       expect(worker).to have_queued(uuid)
+    end
+
+    it "enqueues task to specified queue" do
+      worker = adapter::TaskWorker
+      subject.enqueue_task(double('task', :uuid => uuid, :queue => :other))
+
+      expect(worker).to have_queued(uuid).in(:other)
     end
 
     it "calls task worker" do
@@ -46,6 +60,26 @@ describe Taskinator::Queues::ResqueAdapter do
 
       subject.enqueue_job(job_task)
       expect(worker).to have_queued(uuid)
+    end
+
+    it "enqueues job to queue of the job class" do
+      worker = adapter::JobWorker
+
+      job = double('job', :queue => :job)
+      job_task = double('job_task', :uuid => uuid, :job => job, :queue => nil)
+
+      subject.enqueue_job(job_task)
+      expect(worker).to have_queued(uuid).in(:job)
+    end
+
+    it "enqueues job to specified queue" do
+      worker = adapter::JobWorker
+
+      job = double('job')
+      job_task = double('job_task', :uuid => uuid, :job => job, :queue => :other)
+
+      subject.enqueue_job(job_task)
+      expect(worker).to have_queued(uuid).in(:other)
     end
 
     it "calls job worker" do
