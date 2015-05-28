@@ -12,7 +12,7 @@ describe Taskinator::Queues::ResqueAdapter do
   describe "ProcessWorker" do
     it "enqueues processes" do
       worker = adapter::ProcessWorker
-      subject.enqueue_process(double('process', :uuid => uuid))
+      subject.enqueue_process(double('process', :uuid => uuid, :queue => nil))
 
       expect(worker).to have_queued(uuid)
     end
@@ -26,7 +26,7 @@ describe Taskinator::Queues::ResqueAdapter do
   describe "TaskWorker" do
     it "enqueues tasks" do
       worker = adapter::TaskWorker
-      subject.enqueue_task(double('task', :uuid => uuid))
+      subject.enqueue_task(double('task', :uuid => uuid, :queue => nil))
 
       expect(worker).to have_queued(uuid)
     end
@@ -42,7 +42,7 @@ describe Taskinator::Queues::ResqueAdapter do
       worker = adapter::JobWorker
 
       job = double('job')
-      job_task = double('job_task', :uuid => uuid, :job => job)
+      job_task = double('job_task', :uuid => uuid, :job => job, :queue => nil)
 
       subject.enqueue_job(job_task)
       expect(worker).to have_queued(uuid)

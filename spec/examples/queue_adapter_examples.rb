@@ -15,7 +15,7 @@ shared_examples_for "a queue adapter" do |adapter_name, adapter_type|
 
     it "should enqueue a process" do
       expect {
-        subject.enqueue_process(double('process', :uuid => 'xx-xx-xx-xx'))
+        subject.enqueue_process(double('process', :uuid => 'xx-xx-xx-xx', :queue => nil))
       }.to_not raise_error
     end
   end
@@ -25,7 +25,7 @@ shared_examples_for "a queue adapter" do |adapter_name, adapter_type|
 
     it "should enqueue a task" do
       expect {
-        subject.enqueue_task(double('task', :uuid => 'xx-xx-xx-xx'))
+        subject.enqueue_task(double('task', :uuid => 'xx-xx-xx-xx', :queue => nil))
       }.to_not raise_error
     end
   end
@@ -35,7 +35,7 @@ shared_examples_for "a queue adapter" do |adapter_name, adapter_type|
 
     it "should enqueue a job" do
       expect {
-        subject.enqueue_job(double('job', :uuid => 'xx-xx-xx-xx', :job => job))
+        subject.enqueue_job(double('job', :uuid => 'xx-xx-xx-xx', :job => job, :queue => nil))
       }.to_not raise_error
     end
   end

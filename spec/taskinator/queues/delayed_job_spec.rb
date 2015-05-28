@@ -13,7 +13,7 @@ describe Taskinator::Queues::DelayedJobAdapter do
     it "enqueues processes" do
       worker = adapter::ProcessWorker
       expect {
-        subject.enqueue_process(double('process', :uuid => uuid))
+        subject.enqueue_process(double('process', :uuid => uuid, :queue => nil))
       }.to change(Delayed::Job.queue, :size).by(1)
     end
 
@@ -27,7 +27,7 @@ describe Taskinator::Queues::DelayedJobAdapter do
     it "enqueues tasks" do
       worker = adapter::TaskWorker
       expect {
-        subject.enqueue_process(double('task', :uuid => uuid))
+        subject.enqueue_process(double('task', :uuid => uuid, :queue => nil))
       }.to change(Delayed::Job.queue, :size).by(1)
     end
 
@@ -42,7 +42,7 @@ describe Taskinator::Queues::DelayedJobAdapter do
       worker = adapter::JobWorker
 
       job = double('job')
-      job_task = double('job_task', :uuid => uuid, :job => job)
+      job_task = double('job_task', :uuid => uuid, :job => job, :queue => nil)
 
       expect {
         subject.enqueue_job(job_task)
