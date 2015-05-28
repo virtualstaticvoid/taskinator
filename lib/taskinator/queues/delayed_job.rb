@@ -17,16 +17,19 @@ module Taskinator
       end
 
       def enqueue_process(process)
-        ::Delayed::Job.enqueue ProcessWorker.new(process.uuid), :queue => @config[:process_queue]
+        queue = process.queue || @config[:process_queue]
+        ::Delayed::Job.enqueue ProcessWorker.new(process.uuid), :queue => queue
       end
 
       def enqueue_task(task)
-        ::Delayed::Job.enqueue TaskWorker.new(task.uuid), :queue => @config[:task_queue]
+        queue = task.queue || @config[:task_queue]
+        ::Delayed::Job.enqueue TaskWorker.new(task.uuid), :queue => queue
       end
 
       def enqueue_job(job)
         # delayed jobs don't define the queue so use the configured queue instead
-        ::Delayed::Job.enqueue JobWorker.new(job.uuid), :queue => @config[:job_queue]
+        queue = job.queue || @config[:job_queue]
+        ::Delayed::Job.enqueue JobWorker.new(job.uuid), :queue => queue
       end
 
       ProcessWorker = Struct.new(:process_uuid) do
