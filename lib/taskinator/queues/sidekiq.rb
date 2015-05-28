@@ -9,11 +9,12 @@ module Taskinator
 
     class SidekiqAdapter
       def initialize(config={})
-        @config = {
-          :process_queue => :default,
-          :task_queue => :default,
-          :job_queue => :default
-        }.merge(config)
+        @config = Taskinator::Queues::DefaultConfig.merge(config)
+      end
+
+      def enqueue_create_process(definition, uuid, args)
+        queue = definition.queue || @config[:definition_queue]
+        ProcessWorker.client_push('class' => CreateProcessWorker, 'args' => [definition.name, uuid, Taskinator::Persistence.serialize(args)], 'queue' => queue)
       end
 
       def enqueue_process(process)
@@ -29,6 +30,14 @@ module Taskinator
       def enqueue_job(job)
         queue = job.queue || job.job.get_sidekiq_options[:queue] || @config[:job_queue]
         JobWorker.client_push('class' => JobWorker, 'args' => [job.uuid], 'queue' => queue)
+      end
+
+      class CreateProcessWorker
+        include ::Sidekiq::Worker
+
+        def perform(definition_name, uuid, args)
+          Taskinator::CreateProcessWorker.new(definition_name, uuid, args).perform
+        end
       end
 
       class ProcessWorker

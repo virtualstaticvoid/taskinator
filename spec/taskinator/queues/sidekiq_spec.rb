@@ -11,6 +11,28 @@ describe Taskinator::Queues::SidekiqAdapter, :sidekiq do
 
   subject { adapter.new() }
 
+  describe "CreateProcessWorker" do
+    let(:args) { Taskinator::Persistence.serialize(:foo => :bar) }
+
+    it "enqueues" do
+      worker = adapter::CreateProcessWorker
+      definition = MockDefinition.create
+      subject.enqueue_create_process(definition, uuid, :foo => :bar)
+      expect(worker).to have_enqueued_job(definition.name, uuid, args)
+    end
+
+    it "enqueues to specified queue" do
+      subject.enqueue_create_process(MockDefinition.create(:other), uuid, :foo => :bar)
+      expect(adapter::CreateProcessWorker).to be_processed_in_x(:other)
+    end
+
+    it "calls worker" do
+      definition = MockDefinition.create
+      expect_any_instance_of(Taskinator::CreateProcessWorker).to receive(:perform)
+      adapter::CreateProcessWorker.new().perform(definition.name, uuid, args)
+    end
+  end
+
   describe "ProcessWorker" do
     it "enqueues processes" do
       worker = adapter::ProcessWorker

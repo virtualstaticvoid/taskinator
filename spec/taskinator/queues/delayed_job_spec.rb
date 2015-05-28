@@ -9,6 +9,27 @@ describe Taskinator::Queues::DelayedJobAdapter, :delayed_job do
 
   subject { adapter.new() }
 
+  describe "CreateProcessWorker" do
+    let(:args) { Taskinator::Persistence.serialize(:foo => :bar) }
+
+    it "enqueues" do
+      expect {
+        subject.enqueue_create_process(MockDefinition.create, uuid, :foo => :bar)
+      }.to change(Delayed::Job.queue, :size).by(1)
+    end
+
+    it "enqueues to specified queue" do
+      definition = MockDefinition.create(:other)
+      subject.enqueue_create_process(definition, uuid, :foo => :bar)
+      expect(Delayed::Job.contains?(adapter::CreateProcessWorker, [definition.name, uuid, args], :other)).to be
+    end
+
+    it "calls worker" do
+      expect_any_instance_of(Taskinator::CreateProcessWorker).to receive(:perform)
+      adapter::CreateProcessWorker.new(MockDefinition.create.name, uuid, args).perform
+    end
+  end
+
   describe "ProcessWorker" do
     it "enqueues processes" do
       expect {

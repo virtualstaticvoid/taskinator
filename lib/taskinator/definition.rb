@@ -12,7 +12,7 @@ module Taskinator
 
         raise ArgumentError, "wrong number of arguments (#{args.length} for #{arg_list.length})" if args.length < arg_list.length
 
-        process = Process.define_sequential_process_for(self)
+        process = Process.define_sequential_process_for(self, options)
         Builder.new(process, self, *args).instance_eval(&block)
         process.save
 
@@ -22,6 +22,8 @@ module Taskinator
         process
       end
     end
+
+    attr_accessor :queue
 
     # creates an instance of the process
     # NOTE: the supplied @args are serialized and ultimately passed to each method of the defined process
@@ -34,6 +36,14 @@ module Taskinator
       raise UndefinedProcessError unless respond_to?(:_create_process_)
       _create_process_(args, :subprocess => true)
     end
+
+    def create_process_async(*args)
+      raise UndefinedProcessError unless respond_to?(:_create_process_)
+      uuid = SecureRandom.uuid
+      Taskinator.queue.enqueue_create_process(self, uuid, args)
+      uuid
+    end
+
   end
 end
 

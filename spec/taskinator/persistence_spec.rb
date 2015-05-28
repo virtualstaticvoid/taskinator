@@ -122,7 +122,7 @@ describe Taskinator::Persistence, :redis => true do
     end
 
     describe "#save" do
-      pending
+      pending __FILE__
     end
 
     describe "#load_workflow_state" do

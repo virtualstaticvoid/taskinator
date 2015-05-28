@@ -7,6 +7,7 @@ module Taskinator
 
     class TestQueueAdapter
 
+      attr_reader :creates
       attr_reader :processes
       attr_reader :tasks
       attr_reader :jobs
@@ -16,9 +17,14 @@ module Taskinator
       end
 
       def clear
+        @creates = []
         @processes = []
         @tasks = []
         @jobs = []
+      end
+
+      def enqueue_create_process(definition, uuid, args)
+        @creates << [definition, uuid, args]
       end
 
       def enqueue_process(process)

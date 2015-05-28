@@ -10,6 +10,16 @@ shared_examples_for "a queue adapter" do |adapter_name, adapter_type|
     expect(Taskinator.queue.adapter).to be_a(adapter_type)
   end
 
+  describe "#enqueue_create_process" do
+    it { expect(subject).to respond_to(:enqueue_create_process) }
+
+    it "should enqueue a create process" do
+      expect {
+        subject.enqueue_create_process(double('definition', :name => 'definition', :queue => nil), 'xx-xx-xx-xx', :foo => :bar)
+      }.to_not raise_error
+    end
+  end
+
   describe "#enqueue_process" do
     it { expect(subject).to respond_to(:enqueue_process) }
 

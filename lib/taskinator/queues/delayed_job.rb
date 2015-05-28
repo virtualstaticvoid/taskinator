@@ -9,11 +9,12 @@ module Taskinator
 
     class DelayedJobAdapter
       def initialize(config={})
-        @config = {
-          :process_queue => :default,
-          :task_queue => :default,
-          :job_queue => :default,
-        }.merge(config)
+        @config = Taskinator::Queues::DefaultConfig.merge(config)
+      end
+
+      def enqueue_create_process(definition, uuid, args)
+        queue = definition.queue || @config[:definition_queue]
+        ::Delayed::Job.enqueue CreateProcessWorker.new(definition.name, uuid, Taskinator::Persistence.serialize(args)), :queue => queue
       end
 
       def enqueue_process(process)
@@ -30,6 +31,12 @@ module Taskinator
         # delayed jobs don't define the queue so use the configured queue instead
         queue = job.queue || @config[:job_queue]
         ::Delayed::Job.enqueue JobWorker.new(job.uuid), :queue => queue
+      end
+
+      CreateProcessWorker = Struct.new(:definition_name, :uuid, :args) do
+        def perform
+          Taskinator::CreateProcessWorker.new(definition_name, uuid, args).perform
+        end
       end
 
       ProcessWorker = Struct.new(:process_uuid) do

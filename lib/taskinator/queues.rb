@@ -1,6 +1,13 @@
 module Taskinator
   module Queues
 
+    DefaultConfig = {
+      :definition_queue => :default,
+      :process_queue => :default,
+      :task_queue => :default,
+      :job_queue => :default,
+    }.freeze
+
     def self.create_adapter(adapter, config={})
       begin
         LoggedAdapter.new(send("create_#{adapter}_adapter", config))
@@ -20,6 +27,11 @@ module Taskinator
 
       def __getobj__
         adapter
+      end
+
+      def enqueue_create_process(definition, uuid, args)
+        Taskinator.logger.info("Enqueuing process creation for #{definition}")
+        adapter.enqueue_create_process(definition, uuid, args)
       end
 
       def enqueue_process(process)

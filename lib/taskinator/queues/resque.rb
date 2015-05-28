@@ -9,11 +9,11 @@ module Taskinator
 
     class ResqueAdapter
       def initialize(config={})
-        config = {
-          :process_queue => :default,
-          :task_queue => :default,
-          :job_queue => :default
-        }.merge(config)
+        config = Taskinator::Queues::DefaultConfig.merge(config)
+
+        CreateProcessWorker.class_eval do
+          @queue = config[:definition_queue]
+        end
 
         ProcessWorker.class_eval do
           @queue = config[:process_queue]
@@ -26,6 +26,11 @@ module Taskinator
         JobWorker.class_eval do
           @queue = config[:job_queue]
         end
+      end
+
+      def enqueue_create_process(definition, uuid, args)
+        queue = definition.queue || Resque.queue_from_class(CreateProcessWorker)
+        Resque.enqueue_to(queue, CreateProcessWorker, definition.name, uuid, Taskinator::Persistence.serialize(args))
       end
 
       def enqueue_process(process)
@@ -44,6 +49,12 @@ module Taskinator
                     Resque.queue_from_class(JobWorker)
 
         Resque.enqueue_to(queue, JobWorker, job.uuid)
+      end
+
+      class CreateProcessWorker
+        def self.perform(definition_name, uuid, args)
+          Taskinator::CreateProcessWorker.new(definition_name, uuid, args).perform
+        end
       end
 
       class ProcessWorker

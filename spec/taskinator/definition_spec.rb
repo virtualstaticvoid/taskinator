@@ -69,4 +69,26 @@ describe Taskinator::Definition do
     end
   end
 
+  describe "#create_process_async" do
+    it "raises UndefinedProcessError" do
+      expect {
+        subject.create_process_async
+      }.to raise_error(Taskinator::Definition::UndefinedProcessError)
+    end
+
+    it "returns the process uuid" do
+      block = SpecSupport::Block.new()
+      allow(block).to receive(:to_proc) {
+        Proc.new {|*args| }
+      }
+      subject.define_process(&block)
+
+      expect(subject.create_process_async()).to be
+    end
+
+    it "enqueues" do
+
+    end
+  end
+
 end

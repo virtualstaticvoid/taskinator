@@ -28,7 +28,7 @@ module Taskinator
       raise ArgumentError, 'definition' if definition.nil?
       raise ArgumentError, "#{definition.name} does not extend the #{Definition.name} module" unless definition.kind_of?(Definition)
 
-      @uuid = SecureRandom.uuid
+      @uuid = options.delete(:uuid) || SecureRandom.uuid
       @definition = definition
       @options = options
     end
