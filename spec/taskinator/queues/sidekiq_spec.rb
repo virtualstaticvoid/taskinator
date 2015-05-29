@@ -103,11 +103,7 @@ describe Taskinator::Queues::SidekiqAdapter, :sidekiq do
       adapter::JobWorker.new.perform(uuid)
     end
 
-    let(:definition) do
-      Module.new do
-        extend Taskinator::Definition
-      end
-    end
+    let(:definition) { TestDefinition }
 
     it "performs invocation on job" do
       args = {:a => 1}

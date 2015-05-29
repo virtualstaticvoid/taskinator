@@ -112,11 +112,7 @@ describe Taskinator::Queues::ResqueAdapter, :resque do
       adapter::JobWorker.perform(uuid)
     end
 
-    let(:definition) do
-      Module.new do
-        extend Taskinator::Definition
-      end
-    end
+    let(:definition) { TestDefinition }
 
     it "performs invocation on job" do
       args = {:a => 1}

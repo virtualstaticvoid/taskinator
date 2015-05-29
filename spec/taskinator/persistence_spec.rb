@@ -2,17 +2,7 @@ require 'spec_helper'
 
 describe Taskinator::Persistence, :redis => true do
 
-  module TestDefinition
-    extend Taskinator::Definition
-  end
-
   let(:definition) { TestDefinition }
-
-  class TestProcess < Taskinator::Process
-  end
-
-  class TestTask < Taskinator::Task
-  end
 
   describe "class methods" do
     subject {
