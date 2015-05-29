@@ -25,23 +25,37 @@ module Taskinator
 
     attr_accessor :queue
 
+    #
     # creates an instance of the process
     # NOTE: the supplied @args are serialized and ultimately passed to each method of the defined process
+    #
     def create_process(*args)
-      raise UndefinedProcessError unless respond_to?(:_create_process_)
+      assert_valid_process_module
       _create_process_(args)
     end
 
+    #
+    # returns a placeholder process, with the uuid attribute of the
+    # actual process. the callee can call `reload` if required to
+    # get the actual process, once it has been built by the CreateProcessWorker
+    #
+    def create_process_async(*args)
+      assert_valid_process_module
+      uuid = SecureRandom.uuid
+      Taskinator.queue.enqueue_create_process(self, uuid, args)
+
+      Taskinator::Persistence::LazyLoader.new(Taskinator::Process, uuid)
+    end
+
     def create_sub_process(*args)
-      raise UndefinedProcessError unless respond_to?(:_create_process_)
+      assert_valid_process_module
       _create_process_(args, :subprocess => true)
     end
 
-    def create_process_async(*args)
+    private
+
+    def assert_valid_process_module
       raise UndefinedProcessError unless respond_to?(:_create_process_)
-      uuid = SecureRandom.uuid
-      Taskinator.queue.enqueue_create_process(self, uuid, args)
-      uuid
     end
 
   end
