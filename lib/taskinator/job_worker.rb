@@ -10,7 +10,7 @@ module Taskinator
       return if task.paused? || task.cancelled?
       begin
         task.start!
-        task.perform &block
+        task.perform(&block)
         task.complete!
       rescue Exception => e
         Taskinator.logger.error(e)
