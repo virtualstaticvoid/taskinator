@@ -3,7 +3,7 @@ module MockDefinition
   class << self
     def create(queue=nil)
 
-      definition = Module.new() do
+      definition = Module.new do
         extend Taskinator::Definition
 
         define_process :foo_hash do

@@ -2,7 +2,7 @@ module Taskinator
   module Queues
 
     def self.create_test_queue_adapter(config={})
-      TestQueueAdapter::new()
+      TestQueueAdapter.new
     end
 
     class TestQueueAdapter

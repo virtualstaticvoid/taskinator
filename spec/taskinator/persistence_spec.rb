@@ -16,7 +16,7 @@ describe Taskinator::Persistence, :redis => true do
 
   describe "class methods" do
     subject {
-      Class.new() do
+      Class.new do
         include Taskinator::Persistence
       end
     }
@@ -99,7 +99,7 @@ describe Taskinator::Persistence, :redis => true do
 
   describe "instance methods" do
     subject {
-      klass = Class.new() do
+      klass = Class.new do
         include Taskinator::Persistence
 
         def self.base_key
@@ -112,7 +112,7 @@ describe Taskinator::Persistence, :redis => true do
           @uuid = SecureRandom.uuid
         end
       end
-      klass.new()
+      klass.new
     }
 
     describe "#key" do

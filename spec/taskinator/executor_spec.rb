@@ -3,7 +3,7 @@ require 'spec_helper'
 describe Taskinator::Executor do
 
   let(:definition) do
-    Module.new() do
+    Module.new do
       def method; end
     end
   end

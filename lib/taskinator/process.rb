@@ -34,7 +34,7 @@ module Taskinator
     end
 
     def tasks
-      @tasks ||= Tasks.new()
+      @tasks ||= Tasks.new
     end
 
     def accept(visitor)

@@ -3,7 +3,7 @@ require 'spec_helper'
 describe Taskinator::Definition::Builder do
 
   let(:definition) do
-    Module.new() do
+    Module.new do
       extend Taskinator::Definition
 
       def iterator_method(*); end
@@ -17,7 +17,7 @@ describe Taskinator::Definition::Builder do
 
   let(:args) { [:arg1, :arg2, {:option => 1, :another => false}] }
 
-  let(:block) { SpecSupport::Block.new() }
+  let(:block) { SpecSupport::Block.new }
 
   let(:define_block) {
     the_block = block
@@ -64,7 +64,7 @@ describe Taskinator::Definition::Builder do
 
     it "fails if block isn't given" do
       expect {
-        subject.sequential()
+        subject.sequential
       }.to raise_error(ArgumentError)
     end
   end
@@ -83,7 +83,7 @@ describe Taskinator::Definition::Builder do
 
     it "fails if block isn't given" do
       expect {
-        subject.concurrent()
+        subject.concurrent
       }.to raise_error(ArgumentError)
     end
   end
@@ -187,7 +187,7 @@ describe Taskinator::Definition::Builder do
 
   describe "#sub_process" do
     let(:sub_definition) do
-      Module.new() do
+      Module.new do
         extend Taskinator::Definition
 
         define_process :some_arg1, :some_arg2, :some_arg3 do

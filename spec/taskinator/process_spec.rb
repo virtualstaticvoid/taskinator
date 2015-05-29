@@ -3,7 +3,7 @@ require 'spec_helper'
 describe Taskinator::Process do
 
   let(:definition) do
-    Module.new() do
+    Module.new do
       extend Taskinator::Definition
     end
   end

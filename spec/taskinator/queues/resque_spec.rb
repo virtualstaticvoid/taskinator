@@ -7,7 +7,7 @@ describe Taskinator::Queues::ResqueAdapter, :resque do
   let(:adapter) { Taskinator::Queues::ResqueAdapter }
   let(:uuid) {  SecureRandom.uuid }
 
-  subject { adapter.new() }
+  subject { adapter.new }
 
   describe "CreateProcessWorker" do
     let(:args) { Taskinator::Persistence.serialize(:foo => :bar) }
@@ -113,7 +113,7 @@ describe Taskinator::Queues::ResqueAdapter, :resque do
     end
 
     let(:definition) do
-      Module.new() do
+      Module.new do
         extend Taskinator::Definition
       end
     end

@@ -7,7 +7,7 @@ describe Taskinator::Queues::DelayedJobAdapter, :delayed_job do
   let(:adapter) { Taskinator::Queues::DelayedJobAdapter }
   let(:uuid) {  SecureRandom.uuid }
 
-  subject { adapter.new() }
+  subject { adapter.new }
 
   describe "CreateProcessWorker" do
     let(:args) { Taskinator::Persistence.serialize(:foo => :bar) }
@@ -90,7 +90,7 @@ describe Taskinator::Queues::DelayedJobAdapter, :delayed_job do
     end
 
     let(:definition) do
-      Module.new() do
+      Module.new do
         extend Taskinator::Definition
       end
     end

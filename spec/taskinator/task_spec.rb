@@ -3,7 +3,7 @@ require 'spec_helper'
 describe Taskinator::Task do
 
   let(:definition) do
-    Module.new() do
+    Module.new do
       extend Taskinator::Definition
     end
   end
@@ -234,7 +234,7 @@ describe Taskinator::Task do
 
     describe "#perform" do
       it {
-        block = SpecSupport::Block.new()
+        block = SpecSupport::Block.new
         expect(block).to receive(:call).with(TestJob, {:a => 1, :b => 2})
 
         subject.perform &block

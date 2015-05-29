@@ -17,13 +17,13 @@ describe Taskinator::Tasks do
 
   describe "#initialize" do
     it "starts with nil head" do
-      first = double()
+      first = double
       instance = Taskinator::Tasks.new
       expect(instance.head).to be_nil
     end
 
     it "assigns head to first element" do
-      first = double()
+      first = double
       instance = Taskinator::Tasks.new(first)
       expect(instance.head).to eq(first)
     end

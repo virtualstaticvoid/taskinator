@@ -543,7 +543,7 @@ In reality, each task is executed by a worker process, possibly on another host,
 To monitor the state of the processes, use the `Taskinator::Api::Processes` class. This is still a work in progress.
 
 ```ruby
-processes = Taskinator::Api::Processes.new()
+processes = Taskinator::Api::Processes.new
 processes.each do |process|
   # => output the unique process identifier and current state
   puts [:process, process.uuid, process.current_state.name]

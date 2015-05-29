@@ -3,7 +3,7 @@ require 'spec_helper'
 describe Taskinator::Definition do
 
   subject do
-    Module.new() do
+    Module.new do
       extend Taskinator::Definition
     end
   end
@@ -23,7 +23,7 @@ describe Taskinator::Definition do
     end
 
     it "should not invoke the given block" do
-      block = SpecSupport::Block.new()
+      block = SpecSupport::Block.new
       expect(block).to_not receive(:call)
       subject.define_process(&block)
     end
@@ -37,7 +37,7 @@ describe Taskinator::Definition do
     end
 
     it "returns a process" do
-      block = SpecSupport::Block.new()
+      block = SpecSupport::Block.new
       allow(block).to receive(:to_proc) {
         Proc.new {|*args| }
       }
@@ -47,7 +47,7 @@ describe Taskinator::Definition do
     end
 
     it "invokes the given block in the context of a ProcessBuilder" do
-      block = SpecSupport::Block.new()
+      block = SpecSupport::Block.new
       expect(block).to receive(:call)
 
       subject.define_process do
@@ -77,13 +77,13 @@ describe Taskinator::Definition do
     end
 
     it "returns the process uuid" do
-      block = SpecSupport::Block.new()
+      block = SpecSupport::Block.new
       allow(block).to receive(:to_proc) {
         Proc.new {|*args| }
       }
       subject.define_process(&block)
 
-      expect(subject.create_process_async()).to be
+      expect(subject.create_process_async).to be
     end
 
     it "enqueues" do

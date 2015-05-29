@@ -8,7 +8,7 @@ describe Taskinator::Api, :redis => true do
 
     describe "#each" do
       it "does not enumerate when there aren't any processes" do
-        block = SpecSupport::Block.new()
+        block = SpecSupport::Block.new
         expect(block).to_not receive(:call)
         subject.each(&block)
       end
@@ -22,7 +22,7 @@ describe Taskinator::Api, :redis => true do
           end
         end
 
-        block = SpecSupport::Block.new()
+        block = SpecSupport::Block.new
         expect(block).to receive(:call).exactly(3).times
 
         subject.each(&block)

@@ -9,7 +9,7 @@ describe Taskinator::Queues::SidekiqAdapter, :sidekiq do
   let(:adapter) { Taskinator::Queues::SidekiqAdapter }
   let(:uuid) {  SecureRandom.uuid }
 
-  subject { adapter.new() }
+  subject { adapter.new }
 
   describe "CreateProcessWorker" do
     let(:args) { Taskinator::Persistence.serialize(:foo => :bar) }
@@ -29,7 +29,7 @@ describe Taskinator::Queues::SidekiqAdapter, :sidekiq do
     it "calls worker" do
       definition = MockDefinition.create
       expect_any_instance_of(Taskinator::CreateProcessWorker).to receive(:perform)
-      adapter::CreateProcessWorker.new().perform(definition.name, uuid, args)
+      adapter::CreateProcessWorker.new.perform(definition.name, uuid, args)
     end
   end
 
@@ -48,7 +48,7 @@ describe Taskinator::Queues::SidekiqAdapter, :sidekiq do
 
     it "calls process worker" do
       expect_any_instance_of(Taskinator::ProcessWorker).to receive(:perform)
-      adapter::ProcessWorker.new().perform(uuid)
+      adapter::ProcessWorker.new.perform(uuid)
     end
   end
 
@@ -67,7 +67,7 @@ describe Taskinator::Queues::SidekiqAdapter, :sidekiq do
 
     it "calls task worker" do
       expect_any_instance_of(Taskinator::TaskWorker).to receive(:perform)
-      adapter::TaskWorker.new().perform(uuid)
+      adapter::TaskWorker.new.perform(uuid)
     end
   end
 
@@ -100,11 +100,11 @@ describe Taskinator::Queues::SidekiqAdapter, :sidekiq do
 
     it "calls job worker" do
       expect_any_instance_of(Taskinator::JobWorker).to receive(:perform)
-      adapter::JobWorker.new().perform(uuid)
+      adapter::JobWorker.new.perform(uuid)
     end
 
     let(:definition) do
-      Module.new() do
+      Module.new do
         extend Taskinator::Definition
       end
     end
@@ -122,7 +122,7 @@ describe Taskinator::Queues::SidekiqAdapter, :sidekiq do
 
       allow(Taskinator::Task).to receive(:fetch).with(uuid) { job_task }
 
-      adapter::JobWorker.new().perform(uuid)
+      adapter::JobWorker.new.perform(uuid)
     end
   end
 end
