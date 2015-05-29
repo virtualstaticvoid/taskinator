@@ -1,6 +1,10 @@
 module Taskinator
   class CreateProcessWorker
 
+    attr_reader :definition
+    attr_reader :uuid
+    attr_reader :args
+
     def initialize(definition_name, uuid, args)
 
       # convert to the module
