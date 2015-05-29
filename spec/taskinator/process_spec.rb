@@ -2,11 +2,7 @@ require 'spec_helper'
 
 describe Taskinator::Process do
 
-  let(:definition) do
-    Module.new do
-      extend Taskinator::Definition
-    end
-  end
+  let(:definition) { TestDefinition }
 
   describe "Base" do
 
@@ -200,6 +196,7 @@ describe Taskinator::Process do
         expect(visitor).to receive(:visit_args).with(:options)
         expect(visitor).to receive(:visit_task_reference).with(:parent)
         expect(visitor).to receive(:visit_tasks)
+        expect(visitor).to receive(:visit_attribute).with(:queue)
 
         subject.accept(visitor)
       }
@@ -316,6 +313,7 @@ describe Taskinator::Process do
         expect(visitor).to receive(:visit_args).with(:options)
         expect(visitor).to receive(:visit_task_reference).with(:parent)
         expect(visitor).to receive(:visit_tasks)
+        expect(visitor).to receive(:visit_attribute).with(:queue)
 
         subject.accept(visitor)
       }
@@ -460,6 +458,7 @@ describe Taskinator::Process do
         expect(visitor).to receive(:visit_args).with(:options)
         expect(visitor).to receive(:visit_task_reference).with(:parent)
         expect(visitor).to receive(:visit_tasks)
+        expect(visitor).to receive(:visit_attribute).with(:queue)
 
         subject.accept(visitor)
       }

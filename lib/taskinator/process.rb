@@ -45,6 +45,7 @@ module Taskinator
       visitor.visit_type(:definition)
       visitor.visit_tasks(tasks)
       visitor.visit_args(:options)
+      visitor.visit_attribute(:queue)
     end
 
     def <=>(other)

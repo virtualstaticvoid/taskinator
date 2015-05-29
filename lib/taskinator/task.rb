@@ -43,6 +43,7 @@ module Taskinator
       visitor.visit_process_reference(:process)
       visitor.visit_task_reference(:next)
       visitor.visit_args(:options)
+      visitor.visit_attribute(:queue)
     end
 
     def <=>(other)
