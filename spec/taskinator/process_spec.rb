@@ -193,6 +193,10 @@ describe Taskinator::Process do
         subject.accept(visitor)
       }
     end
+
+    describe "#reload" do
+      it { expect(subject.reload).to_not be }
+    end
   end
 
   describe Taskinator::Process::Sequential do

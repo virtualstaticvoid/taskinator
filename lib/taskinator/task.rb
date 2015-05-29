@@ -233,5 +233,13 @@ module Taskinator
         visitor.visit_process(:sub_process)
       end
     end
+
+    # reloads the task from storage
+    # NB: only implemented by LazyLoader so that
+    #   the task can be lazy loaded, thereafter
+    #    it has no effect
+    def reload
+      false
+    end
   end
 end

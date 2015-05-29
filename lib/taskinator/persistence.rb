@@ -309,10 +309,19 @@ module Taskinator
       # E.g. this is useful for tasks which refer to their parent processes
       #
 
-      def initialize(type, uuid, instance_cache)
+      def initialize(type, uuid, instance_cache={})
         @type = type
         @uuid = uuid
         @instance_cache = instance_cache
+      end
+
+      attr_reader :uuid   # shadows the real method, but will be the same!
+
+      # attempts to reload the actual process
+      def reload
+        @instance = nil
+        __getobj__
+        true if @instance
       end
 
       def __getobj__

@@ -201,5 +201,13 @@ module Taskinator
         visitor.visit_attribute(:complete_on)
       end
     end
+
+    # reloads the process from storage
+    # NB: only implemented by LazyLoader so that
+    #   the process can be lazy loaded, thereafter
+    #    it has no effect
+    def reload
+      false
+    end
   end
 end

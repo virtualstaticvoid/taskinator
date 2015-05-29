@@ -149,6 +149,10 @@ describe Taskinator::Task do
         subject.accept(visitor)
       }
     end
+
+    describe "#reload" do
+      it { expect(subject.reload).to_not be }
+    end
   end
 
   describe Taskinator::Task::Step do
