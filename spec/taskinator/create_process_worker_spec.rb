@@ -14,6 +14,12 @@ describe Taskinator::CreateProcessWorker do
     }
 
     it {
+      MockDefinition.const_set(definition.name, definition)
+      Taskinator::CreateProcessWorker.new("MockDefinition::#{definition.name}", uuid, Taskinator::Persistence.serialize(:foo => :bar))
+      expect(subject.definition).to eq(definition)
+    }
+
+    it {
       expect(subject.uuid).to eq(uuid)
     }
 
