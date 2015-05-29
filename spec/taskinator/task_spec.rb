@@ -36,6 +36,17 @@ describe Taskinator::Task do
       it { expect(subject.to_s).to match(/#{subject.uuid}/) }
     end
 
+    describe "#queue" do
+      it {
+        expect(subject.queue).to be_nil
+      }
+
+      it {
+        task = Class.new(Taskinator::Task).new(process, :queue => :foo)
+        expect(task.queue).to eq(:foo)
+      }
+    end
+
     describe "#current_state" do
       it { expect(subject).to be_a(::Workflow)  }
       it { expect(subject.current_state).to_not be_nil }

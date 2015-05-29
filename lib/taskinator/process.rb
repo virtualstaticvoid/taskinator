@@ -20,6 +20,7 @@ module Taskinator
     attr_reader :uuid
     attr_reader :definition
     attr_reader :options
+    attr_reader :queue
 
     # in the case of sub process tasks, the containing task
     attr_accessor :parent
@@ -31,6 +32,7 @@ module Taskinator
       @uuid = options.delete(:uuid) || SecureRandom.uuid
       @definition = definition
       @options = options
+      @queue = options.delete(:queue)
     end
 
     def tasks
@@ -51,10 +53,6 @@ module Taskinator
 
     def to_s
       "#<#{self.class.name}:#{uuid}>"
-    end
-
-    def queue
-      options[:queue]
     end
 
     workflow do

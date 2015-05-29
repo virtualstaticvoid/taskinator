@@ -91,4 +91,15 @@ describe Taskinator::Definition do
     end
   end
 
+  describe "#queue" do
+    it {
+      expect(subject.queue).to be_nil
+    }
+
+    it {
+      subject.queue = :foo
+      expect(subject.queue).to eq(:foo)
+    }
+  end
+
 end

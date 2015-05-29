@@ -24,6 +24,7 @@ module Taskinator
     attr_reader :process
     attr_reader :uuid
     attr_reader :options
+    attr_reader :queue
 
     # the next task in the sequence
     attr_accessor :next
@@ -34,6 +35,7 @@ module Taskinator
       @uuid = SecureRandom.uuid
       @process = process
       @options = options
+      @queue = options.delete(:queue)
     end
 
     def accept(visitor)
@@ -49,10 +51,6 @@ module Taskinator
 
     def to_s
       "#<#{self.class.name}:#{uuid}>"
-    end
-
-    def queue
-      options[:queue]
     end
 
     workflow do
