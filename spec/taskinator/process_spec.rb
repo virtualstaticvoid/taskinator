@@ -237,6 +237,11 @@ describe Taskinator::Process do
           Taskinator::Process.define_sequential_process_for(Object)
         }.to raise_error(ArgumentError)
       end
+
+      it "sets the queue to use" do
+        process = Taskinator::Process.define_sequential_process_for(definition, :queue => :foo)
+        expect(process.queue).to eq(:foo)
+      end
     end
 
     describe "#start!" do
@@ -344,6 +349,11 @@ describe Taskinator::Process do
         expect {
           Taskinator::Process.define_concurrent_process_for(Object)
         }.to raise_error(ArgumentError)
+      end
+
+      it "sets the queue to use" do
+        process = Taskinator::Process.define_concurrent_process_for(definition, Taskinator::CompleteOn::First, :queue => :foo)
+        expect(process.queue).to eq(:foo)
       end
     end
 

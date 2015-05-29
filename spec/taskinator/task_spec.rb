@@ -175,6 +175,13 @@ describe Taskinator::Task do
     let(:process) { Class.new(Taskinator::Process).new(definition) }
     subject { Taskinator::Task.define_step_task(process, :method, {:a => 1, :b => 2}) }
 
+    describe ".define_step_task" do
+      it "sets the queue to use" do
+        task = Taskinator::Task.define_step_task(process, :method, {:a => 1, :b => 2}, :queue => :foo)
+        expect(task.queue).to eq(:foo)
+      end
+    end
+
     describe "#executor" do
       it { expect(subject.executor).to_not be_nil }
       it { expect(subject.executor).to be_a(definition) }
@@ -239,6 +246,13 @@ describe Taskinator::Task do
     let(:process) { Class.new(Taskinator::Process).new(definition) }
     subject { Taskinator::Task.define_job_task(process, TestJob, {:a => 1, :b => 2}) }
 
+    describe ".define_job_task" do
+      it "sets the queue to use" do
+        task = Taskinator::Task.define_job_task(process, TestJob, {:a => 1, :b => 2}, :queue => :foo)
+        expect(task.queue).to eq(:foo)
+      end
+    end
+
     describe "#enqueue!" do
       it {
         expect {
@@ -252,7 +266,7 @@ describe Taskinator::Task do
         block = SpecSupport::Block.new
         expect(block).to receive(:call).with(TestJob, {:a => 1, :b => 2})
 
-        subject.perform &block
+        subject.perform(&block)
       }
     end
 
@@ -287,6 +301,13 @@ describe Taskinator::Task do
     let(:process) { Class.new(Taskinator::Process).new(definition) }
     let(:sub_process) { Class.new(Taskinator::Process).new(definition) }
     subject { Taskinator::Task.define_sub_process_task(process, sub_process) }
+
+    describe ".define_sub_process_task" do
+      it "sets the queue to use" do
+        task = Taskinator::Task.define_sub_process_task(process, sub_process, :queue => :foo)
+        expect(task.queue).to eq(:foo)
+      end
+    end
 
     describe "#start!" do
       it "delegates to sub process" do
