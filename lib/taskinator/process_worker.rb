@@ -1,5 +1,7 @@
 module Taskinator
   class ProcessWorker
+    attr_reader :uuid
+
     def initialize(uuid)
       @uuid = uuid
     end
