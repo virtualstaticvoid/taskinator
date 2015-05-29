@@ -83,11 +83,22 @@ describe Taskinator::Definition do
       }
       subject.define_process(&block)
 
-      expect(subject.create_process_async).to be
+      process = subject.create_process_async
+
+      expect(process).to_not be_nil
+      expect(process.uuid).to_not be_nil
     end
 
     it "enqueues" do
+      block = SpecSupport::Block.new
+      allow(block).to receive(:to_proc) {
+        Proc.new {|*args| }
+      }
+      subject.define_process(&block)
 
+      expect(Taskinator.queue).to receive(:enqueue_create_process)
+
+      subject.create_process_async
     end
   end
 
