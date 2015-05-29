@@ -94,13 +94,14 @@ module Taskinator
 
       # persists the error information
       def fail(error=nil)
-        return unless error
+        return unless error && error.is_a?(Exception)
+
         Taskinator.redis do |conn|
           conn.hmset(
             self.key,
             :error_type, error.class.name,
             :error_message, error.message,
-            :error_backtrace, JSON.generate(error.backtrace)
+            :error_backtrace, JSON.generate(error.backtrace || [])
           )
         end
       end

@@ -141,7 +141,8 @@ describe Taskinator::Persistence, :redis => true do
     describe "#fail" do
       it "persists error information" do
         begin
-          raise StandardError, 'a error'
+          # raise this error in a block, so there is a backtrace!
+          raise StandardError.new('a error')
         rescue Exception => e
           subject.fail(e)
         end
@@ -149,6 +150,7 @@ describe Taskinator::Persistence, :redis => true do
         Taskinator.redis do |conn|
           expect(conn.hget(subject.key, :error_type)).to eq('StandardError')
           expect(conn.hget(subject.key, :error_message)).to eq('a error')
+          expect(conn.hget(subject.key, :error_backtrace)).to_not be_empty
         end
       end
     end
@@ -157,10 +159,11 @@ describe Taskinator::Persistence, :redis => true do
       it "retrieves error information" do
         error = nil
         begin
-          raise StandardError, 'a error'
+          # raise this error in a block, so there is a backtrace!
+          raise StandardError.new('a error')
         rescue Exception => e
           error = e
-          subject.fail(e)
+          subject.fail(error)
         end
 
         expect(subject.error).to eq([error.class.name, error.message, error.backtrace])
