@@ -27,13 +27,20 @@ describe Taskinator::Definition do
       expect(block).to_not receive(:call)
       subject.define_process(&block)
     end
+
+    it "should raise ProcessAlreadyDefinedError error if already defined" do
+      subject.define_process
+      expect {
+        subject.define_process
+      }.to raise_error(Taskinator::Definition::ProcessAlreadyDefinedError)
+    end
   end
 
   describe "#create_process" do
-    it "raises UndefinedProcessError" do
+    it "raises ProcessUndefinedError" do
       expect {
         subject.create_process
-      }.to raise_error(Taskinator::Definition::UndefinedProcessError)
+      }.to raise_error(Taskinator::Definition::ProcessUndefinedError)
     end
 
     it "returns a process" do
@@ -69,11 +76,11 @@ describe Taskinator::Definition do
     end
   end
 
-  describe "#create_process_async" do
-    it "raises UndefinedProcessError" do
+  describe "#create_process_remotely" do
+    it "raises ProcessUndefinedError" do
       expect {
-        subject.create_process_async
-      }.to raise_error(Taskinator::Definition::UndefinedProcessError)
+        subject.create_process_remotely
+      }.to raise_error(Taskinator::Definition::ProcessUndefinedError)
     end
 
     it "returns the process uuid" do
@@ -83,7 +90,7 @@ describe Taskinator::Definition do
       }
       subject.define_process(&block)
 
-      process = subject.create_process_async
+      process = subject.create_process_remotely
 
       expect(process).to_not be_nil
       expect(process.uuid).to_not be_nil
@@ -98,8 +105,30 @@ describe Taskinator::Definition do
 
       expect(Taskinator.queue).to receive(:enqueue_create_process)
 
-      subject.create_process_async
+      subject.create_process_remotely
     end
+
+    describe "reloading" do
+      it "returns false if not persisted yet" do
+        block = SpecSupport::Block.new
+        allow(block).to receive(:to_proc) {
+          Proc.new {|*args| }
+        }
+        subject.define_process(&block)
+        process = subject.create_process_remotely
+
+        expect(process.reload).to eq(false)
+      end
+
+      it "returns true if persisted" do
+        definition = MockDefinition.create
+        process = definition.create_process_remotely(:foo)
+        definition._create_process_(:foo, :uuid => process.uuid).save
+
+        expect(process.reload).to eq(true)
+      end
+    end
+
   end
 
   describe "#queue" do

@@ -30,7 +30,7 @@ describe Taskinator::CreateProcessWorker do
 
   describe "#perform" do
     it "should create the process" do
-      expect(definition).to receive(:create_process).with(*args, :uuid => uuid).and_return(double('process', :enqueue! => nil))
+      expect(definition).to receive(:_create_process_).with(*args, :uuid => uuid).and_return(double('process', :enqueue! => nil))
       subject.perform
     end
 

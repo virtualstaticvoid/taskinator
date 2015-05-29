@@ -1,9 +1,14 @@
 module Taskinator
   module Definition
-    class UndefinedProcessError < RuntimeError; end
+
+    # errors
+    class ProcessUndefinedError < StandardError; end
+    class ProcessAlreadyDefinedError < StandardError; end
 
     # defines a process
     def define_process(*arg_list, &block)
+      raise ProcessAlreadyDefinedError if respond_to?(:_create_process_)
+
       define_singleton_method :_create_process_ do |args, options={}|
 
         # TODO: better validation of arguments
@@ -39,7 +44,7 @@ module Taskinator
     # actual process. the callee can call `reload` if required to
     # get the actual process, once it has been built by the CreateProcessWorker
     #
-    def create_process_async(*args)
+    def create_process_remotely(*args)
       assert_valid_process_module
       uuid = SecureRandom.uuid
       Taskinator.queue.enqueue_create_process(self, uuid, args)
@@ -55,7 +60,7 @@ module Taskinator
     private
 
     def assert_valid_process_module
-      raise UndefinedProcessError unless respond_to?(:_create_process_)
+      raise ProcessUndefinedError unless respond_to?(:_create_process_)
     end
 
   end

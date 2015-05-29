@@ -322,7 +322,7 @@ module Taskinator
       def reload
         @instance = nil
         __getobj__
-        true if @instance
+        @instance ? true : false
       end
 
       def __getobj__
