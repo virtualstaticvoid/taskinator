@@ -57,11 +57,11 @@ describe Taskinator::TaskWorker do
   it "should fail if task raises an error" do
     task = mock_task
     allow(Taskinator::Task).to receive(:fetch).with(uuid) { task }
-    allow(task).to receive(:start!) { raise NotImplementedError }
-    expect(task).to receive(:fail!).with(NotImplementedError)
+    allow(task).to receive(:start!) { raise StandardError }
+    expect(task).to receive(:fail!).with(StandardError)
     expect {
       subject.perform
-    }.to raise_error(NotImplementedError)
+    }.to raise_error(StandardError)
   end
 
 end

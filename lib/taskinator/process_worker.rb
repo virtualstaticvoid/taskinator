@@ -11,7 +11,7 @@ module Taskinator
       return if process.paused? || process.cancelled?
       begin
         process.start!
-      rescue Exception => e
+      rescue => e
         Taskinator.logger.error(e)
         process.fail!(e)
         raise e

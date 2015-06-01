@@ -41,11 +41,11 @@ describe Taskinator::ProcessWorker do
   it "should fail if process raises an error" do
     process = mock_process
     allow(Taskinator::Process).to receive(:fetch).with(uuid) { process }
-    allow(process).to receive(:start!) { raise NotImplementedError }
-    expect(process).to receive(:fail!).with(NotImplementedError)
+    allow(process).to receive(:start!) { raise StandardError }
+    expect(process).to receive(:fail!).with(StandardError)
     expect {
       subject.perform
-    }.to raise_error(NotImplementedError)
+    }.to raise_error(StandardError)
   end
 
 end

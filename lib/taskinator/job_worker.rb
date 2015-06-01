@@ -12,7 +12,7 @@ module Taskinator
         task.start!
         task.perform(&block)
         task.complete!
-      rescue Exception => e
+      rescue => e
         Taskinator.logger.error(e)
         task.fail!(e)
         raise e

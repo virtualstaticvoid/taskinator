@@ -133,7 +133,7 @@ describe Taskinator::Persistence, :redis => true do
         begin
           # raise this error in a block, so there is a backtrace!
           raise StandardError.new('a error')
-        rescue Exception => e
+        rescue => e
           subject.fail(e)
         end
 
@@ -151,7 +151,7 @@ describe Taskinator::Persistence, :redis => true do
         begin
           # raise this error in a block, so there is a backtrace!
           raise StandardError.new('a error')
-        rescue Exception => e
+        rescue => e
           error = e
           subject.fail(error)
         end
