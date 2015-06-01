@@ -5,6 +5,9 @@ module Taskinator
     class ProcessUndefinedError < StandardError; end
     class ProcessAlreadyDefinedError < StandardError; end
 
+    # for backward compatibility
+    UndefinedProcessError = ProcessUndefinedError
+
     # defines a process
     def define_process(*arg_list, &block)
       raise ProcessAlreadyDefinedError if respond_to?(:_create_process_)
