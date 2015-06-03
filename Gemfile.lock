@@ -134,6 +134,7 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
+  activesupport (>= 4.0.0)
   bundler (>= 1.6.0)
   coveralls (>= 0.7.0)
   delayed_job (>= 4.0.0)
