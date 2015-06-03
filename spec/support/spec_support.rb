@@ -1,7 +1,9 @@
 module SpecSupport
   class Block
     def to_proc
-      lambda { |*args| call(*args) }
+      lambda { |*args|
+        call(*args)
+      }
     end
 
     # the call method must be provided by in specs
