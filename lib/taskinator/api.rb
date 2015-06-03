@@ -3,7 +3,9 @@ module Taskinator
     class Processes
       include Enumerable
 
-      def each(&block)
+      def each
+        return to_enum(__method__) unless block_given?
+
         instance_cache = {}
         Taskinator.redis do |conn|
           uuids = conn.smembers("taskinator:processes")
