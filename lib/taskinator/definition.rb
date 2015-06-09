@@ -21,11 +21,18 @@ module Taskinator
         raise ArgumentError, "wrong number of arguments (#{args.length} for #{arg_list.length})" if args.length < arg_list.length
 
         process = Process.define_sequential_process_for(self, options)
-        Builder.new(process, self, *args).instance_eval(&block)
-        process.save
 
-        # if this is a root process, then add it to the list
-        Persistence.add_process_to_list(process) unless options[:subprocess]
+        # this may take long... up to users definition
+        Taskinator.instrumenter.instrument(:create_process, :uuid => process.uuid) do
+          Builder.new(process, self, *args).instance_eval(&block)
+        end
+
+        # instrument separately
+        Taskinator.instrumenter.instrument(:save_process, :uuid => process.uuid) do
+          process.save
+          # if this is a root process, then add it to the list
+          Persistence.add_process_to_list(process) unless options[:subprocess]
+        end
 
         process
       end

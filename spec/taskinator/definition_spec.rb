@@ -74,6 +74,30 @@ describe Taskinator::Definition do
         subject.create_process
       }.to_not raise_error
     end
+
+    context "is instrumented" do
+      subject { MockDefinition.create }
+
+      it "for create process" do
+        instrumentation_block = SpecSupport::Block.new
+        expect(instrumentation_block).to receive(:call)
+
+        # temporary subscription
+        ActiveSupport::Notifications.subscribed(instrumentation_block, /create_process/) do
+          subject.create_process :foo
+        end
+      end
+
+      it "for save process" do
+        instrumentation_block = SpecSupport::Block.new
+        expect(instrumentation_block).to receive(:call)
+
+        # temporary subscription
+        ActiveSupport::Notifications.subscribed(instrumentation_block, /save_process/) do
+          subject.create_process :foo
+        end
+      end
+    end
   end
 
   describe "#create_process_remotely" do
