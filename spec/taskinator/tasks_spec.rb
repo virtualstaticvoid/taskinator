@@ -17,7 +17,6 @@ describe Taskinator::Tasks do
 
   describe "#initialize" do
     it "starts with nil head" do
-      first = double
       instance = Taskinator::Tasks.new
       expect(instance.head).to be_nil
     end
