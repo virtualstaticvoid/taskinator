@@ -196,6 +196,18 @@ describe Taskinator::Task do
         expect(subject).to receive(:fail!).with(error)
         subject.start!
       end
+
+      it "is instrumented" do
+        allow(subject.executor).to receive(subject.method)
+
+        instrumentation_block = SpecSupport::Block.new
+        expect(instrumentation_block).to receive(:call)
+
+        # temporary subscription
+        ActiveSupport::Notifications.subscribed(instrumentation_block, /execute_step_task/) do
+          subject.start!
+        end
+      end
     end
 
     describe "#can_complete_task?" do
@@ -266,6 +278,19 @@ describe Taskinator::Task do
 
         subject.perform(&block)
       }
+
+      it "is instrumented" do
+        block = SpecSupport::Block.new
+        allow(block).to receive(:call)
+
+        instrumentation_block = SpecSupport::Block.new
+        expect(instrumentation_block).to receive(:call)
+
+        # temporary subscription
+        ActiveSupport::Notifications.subscribed(instrumentation_block, /execute_job_task/) do
+          subject.perform(&block)
+        end
+      end
     end
 
     describe "#accept" do
@@ -319,6 +344,18 @@ describe Taskinator::Task do
         allow(sub_process).to receive(:start!).and_raise(error)
         expect(subject).to receive(:fail!).with(error)
         subject.start!
+      end
+
+      it "is instrumented" do
+        allow(sub_process).to receive(:start)
+
+        instrumentation_block = SpecSupport::Block.new
+        expect(instrumentation_block).to receive(:call)
+
+        # temporary subscription
+        ActiveSupport::Notifications.subscribed(instrumentation_block, /execute_subprocess/) do
+          subject.start!
+        end
       end
     end
 
