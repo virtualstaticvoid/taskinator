@@ -48,7 +48,7 @@ describe Taskinator do
   describe "#logger" do
     it { expect(subject.logger).to_not be_nil }
     it {
-      logger = Logger.new(STDOUT)
+      logger = Logger.new(File::NULL)
       subject.logger = logger
       expect(subject.logger).to eq(logger)
       subject.logger = nil

@@ -27,8 +27,15 @@ ResqueSpec.disable_ext = false
 
 require 'taskinator'
 
-# use active support for instrumentation
-Taskinator.instrumenter = ActiveSupport::Notifications
+Taskinator.configure do |config|
+
+  # use active support for instrumentation
+  config.instrumenter = ActiveSupport::Notifications
+
+  # use a "null stream" for logging
+  config.logger = Logger.new(File::NULL)
+
+end
 
 # require supporting files with custom matchers and macros, etc
 Dir[File.expand_path("../support/**/*.rb", __FILE__)].each {|f| require f }
