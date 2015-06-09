@@ -47,7 +47,7 @@ module Taskinator
     ##
     # Configuration for Taskinator client, use like:
     #
-    #   Taskinator.configure_client do |config|
+    #   Taskinator.configure do |config|
     #     config.redis = { :namespace => 'myapp', :pool_size => 1, :url => 'redis://myhost:8877/0' }
     #     config.queue_config = { :process_queue => 'processes', :task_queue => 'tasks' }
     #   end
