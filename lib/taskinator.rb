@@ -102,5 +102,23 @@ module Taskinator
       config = queue_config || {}
       @queue ||= Taskinator::Queues.create_adapter(adapter, config)
     end
+
+    # set the instrumenter to use.
+    # can be ActiveSupport::Notifications
+    def instrumenter
+      @instrumenter ||= NoOpInstrumenter.new
+    end
+    def instrumenter=(value)
+      @instrumenter = value
+    end
+
   end
+
+  class NoOpInstrumenter
+    # just yield to the given block
+    def instrument(event, payload={})
+      yield(payload) if block_given?
+    end
+  end
+
 end

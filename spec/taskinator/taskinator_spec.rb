@@ -54,4 +54,38 @@ describe Taskinator do
       subject.logger = nil
     }
   end
+
+  describe "#instrumenter" do
+    it { expect(subject.instrumenter).to_not be_nil }
+
+    it {
+      orig_instrumenter = subject.instrumenter
+
+      instrumenter = Class.new().new
+      subject.instrumenter = instrumenter
+      expect(subject.instrumenter).to eq(instrumenter)
+
+      subject.instrumenter = orig_instrumenter
+    }
+
+    it "yields to given block" do
+      block = SpecSupport::Block.new
+      expect(block).to receive(:call)
+
+      subject.instrumenter.instrument(:foo, :bar => :baz, &block)
+    end
+
+    it "instruments event, when activesupport is referenced" do
+      block = SpecSupport::Block.new
+      expect(block).to receive(:call)
+
+      # temporary subscription
+      ActiveSupport::Notifications.subscribed(block, /.*/) do
+        subject.instrumenter.instrument(:foo, :bar) do
+          :baz
+        end
+      end
+    end
+
+  end
 end

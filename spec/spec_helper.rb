@@ -4,6 +4,7 @@ Bundler.setup
 require 'simplecov'
 require 'coveralls'
 require 'pry'
+require 'active_support/notifications'
 
 SimpleCov.formatter = SimpleCov::Formatter::MultiFormatter[
   SimpleCov::Formatter::HTMLFormatter,
@@ -25,6 +26,9 @@ require 'resque_spec'
 ResqueSpec.disable_ext = false
 
 require 'taskinator'
+
+# use active support for instrumentation
+Taskinator.instrumenter = ActiveSupport::Notifications
 
 # require supporting files with custom matchers and macros, etc
 Dir[File.expand_path("../support/**/*.rb", __FILE__)].each {|f| require f }
