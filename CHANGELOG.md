@@ -1,3 +1,11 @@
+v0.0.16 - 25 Jun 2015
+---
+Added ability to enqueue the creation of processes; added a new worker, `CreateProcessWorker`
+Added support for instrumentation
+Improvements to error handling
+Bug fix for the persistence of the `queue` attribute for `Process` and `Task`
+Code clean up and additional specs added
+
 v0.0.15 - 28 May 2015
 ---
 Added ability to specify the queue to use when enqueing processes, tasks and jobs
