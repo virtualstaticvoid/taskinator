@@ -166,6 +166,10 @@ module Taskinator
         visitor.visit_attribute(:method)
         visitor.visit_args(:args)
       end
+
+      def inspect
+        %(#<#{self.class.name}:0x#{self.__id__.to_s(16)} method=:#{method}, state=:#{current_state.name}>)
+      end
     end
 
     # a task which invokes the specified background job
@@ -208,6 +212,10 @@ module Taskinator
         visitor.visit_type(:job)
         visitor.visit_args(:args)
       end
+
+      def inspect
+        %(#<#{self.class.name}:0x#{self.__id__.to_s(16)} job=#{job}, state=:#{current_state.name}>)
+      end
     end
 
     # a task which delegates to another process
@@ -236,6 +244,10 @@ module Taskinator
       def accept(visitor)
         super
         visitor.visit_process(:sub_process)
+      end
+
+      def inspect
+        %(#<#{self.class.name}:0x#{self.__id__.to_s(16)} sub_process=#{sub_process.inspect}, state=:#{current_state.name}>)
       end
     end
 

@@ -41,5 +41,9 @@ module Taskinator
       end
     end
 
+    def inspect
+      %(#<#{self.class.name}:0x#{self.__id__.to_s(16)} tasks=[#{collect(&:inspect).join(', ')}]>)
+    end
+
   end
 end

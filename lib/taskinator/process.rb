@@ -162,6 +162,10 @@ module Taskinator
         # TODO: optimize this
         tasks.all?(&:completed?)
       end
+
+      def inspect
+        %(#<#{self.class.name}:0x#{self.__id__.to_s(16)} state=:#{current_state.name}, tasks=[#{tasks.inspect}]>)
+      end
     end
 
     class Concurrent < Process
@@ -198,6 +202,10 @@ module Taskinator
       def accept(visitor)
         super
         visitor.visit_attribute(:complete_on)
+      end
+
+      def inspect
+        %(#<#{self.class.name}:0x#{self.__id__.to_s(16)} state=:#{current_state.name}, complete_on=:#{complete_on}, tasks=[#{tasks.inspect}]>)
       end
     end
 
