@@ -34,6 +34,7 @@ module Taskinator
   LICENSE = 'See LICENSE.txt for licensing details.'
 
   DEFAULTS = {
+    # none for now...
   }
 
   class << self
@@ -117,6 +118,14 @@ module Taskinator
   class NoOpInstrumenter
     # just yield to the given block
     def instrument(event, payload={})
+      yield(payload) if block_given?
+    end
+  end
+
+  class ConsoleInstrumenter
+    # just yield to the given block
+    def instrument(event, payload={})
+      puts [event.inspect, payload.to_yaml]
       yield(payload) if block_given?
     end
   end
