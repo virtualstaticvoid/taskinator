@@ -9,8 +9,29 @@ module Taskinator
     UndefinedProcessError = ProcessUndefinedError
 
     # defines a process
+
+    def define_sequential_process(*arg_list, &block)
+      factory = lambda {|definition, options|
+        Process.define_sequential_process_for(definition, options)
+      }
+      define_process(*arg_list + [factory], &block)
+    end
+
+    def define_concurrent_process(*arg_list, &block)
+      factory = lambda {|definition, options|
+        Process.define_concurrent_process_for(definition, options)
+      }
+      define_process(*arg_list + [factory], &block)
+    end
+
     def define_process(*arg_list, &block)
       raise ProcessAlreadyDefinedError if respond_to?(:_create_process_)
+
+      factory = arg_list.last.respond_to?(:call) ?
+                  arg_list.pop :
+                  lambda {|definition, options|
+                    Process.define_sequential_process_for(definition, options)
+                  }
 
       define_singleton_method :_create_process_ do |args, options={}|
 
@@ -20,7 +41,7 @@ module Taskinator
 
         raise ArgumentError, "wrong number of arguments (#{args.length} for #{arg_list.length})" if args.length < arg_list.length
 
-        process = Process.define_sequential_process_for(self, options)
+        process = factory.call(self, options)
 
         # this may take long... up to users definition
         Taskinator.instrumenter.instrument(:create_process, :uuid => process.uuid) do
