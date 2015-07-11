@@ -1,3 +1,10 @@
+v0.0.17 - 11 Jul 2015
+---
+Fixed issue with `Task#each` method, which was causing a Segmentation fault.
+Added `define_sequential_process` and `define_concurrent_process` methods for defining processes.
+Added `ConsoleInstrumenter` instrumenter implementation.
+Required `resque` for console and rake tasks, to make debugging easier
+
 v0.0.16 - 25 Jun 2015
 ---
 Added ability to enqueue the creation of processes; added a new worker, `CreateProcessWorker`
