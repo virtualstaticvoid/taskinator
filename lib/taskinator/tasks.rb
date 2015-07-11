@@ -31,7 +31,7 @@ module Taskinator
       @head.nil?
     end
 
-    def each
+    def each(&block)
       return to_enum(__method__) unless block_given?
 
       current = @head
