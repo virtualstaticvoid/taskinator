@@ -105,14 +105,21 @@ module Taskinator
 
     # callback for when the task has completed
     def on_completed_entry(*args)
+      self.incr_completed
       # notify the process that this task has completed
       process.task_completed(self)
     end
 
     # callback for when the task has failed
     def on_failed_entry(*args)
+      self.incr_failed
       # notify the process that this task has failed
       process.task_failed(self, args.last)
+    end
+
+    # callback for when the task has cancelled
+    def on_cancelled_entry(*args)
+      self.incr_cancelled
     end
 
     # helper method, delegating to process

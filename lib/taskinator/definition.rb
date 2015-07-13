@@ -93,7 +93,7 @@ module Taskinator
       uuid = SecureRandom.uuid
       Taskinator.queue.enqueue_create_process(self, uuid, args)
 
-      Taskinator::Persistence::LazyLoader.new(Taskinator::Process, uuid)
+      Taskinator::Persistence::LazyLoader.new(Taskinator::Process, uuid, uuid)
     end
 
     def create_sub_process(*args)

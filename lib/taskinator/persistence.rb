@@ -65,11 +65,22 @@ module Taskinator
         self.class.key_for(self.uuid)
       end
 
+      def root_key
+        @root_key ||= key
+      end
+
       def save
         Taskinator.redis do |conn|
           conn.multi do
-            RedisSerializationVisitor.new(conn, self).visit
-            conn.sadd "taskinator:#{self.class.base_key}", self.uuid
+            m_root_key = self.root_key
+            visitor = RedisSerializationVisitor.new(conn, self).visit
+            conn.hmset(
+              "taskinator:#{m_root_key}",
+              :tasks_count,     visitor.task_count,
+              :tasks_failed,    0,
+              :tasks_completed, 0,
+              :tasks_cancelled, 0,
+            )
             true
           end
         end
@@ -116,6 +127,39 @@ module Taskinator
           [error_type, error_message, JSON.parse(error_backtrace)]
         end
       end
+
+      def tasks_count
+        @tasks_count ||= begin
+          Taskinator.redis do |conn|
+            conn.hget "taskinator:#{self.root_key}", :tasks_count
+          end.to_i
+        end
+      end
+
+      %w(
+        failed
+        cancelled
+        completed
+      ).each do |status|
+
+        define_method "count_#{status}" do
+          Taskinator.redis do |conn|
+            conn.hget "taskinator:#{self.root_key}", status
+          end.to_i
+        end
+
+        define_method "incr_#{status}" do
+          Taskinator.redis do |conn|
+            conn.hincrby "taskinator:#{self.root_key}", status, 1
+          end
+        end
+
+        define_method "percentage_#{status}" do
+          tasks_count > 0 ? (send("count_#{status}") / tasks_count.to_f) * 100.0 : 0.0
+        end
+
+      end
+
     end
 
     class RedisSerializationVisitor < Visitor::Base
@@ -126,38 +170,48 @@ module Taskinator
       # one roundtrip to the redis server
       #
 
-      def initialize(conn, instance, parent=nil)
-        @conn = conn
-        @instance = instance
-        @key = instance.key
-        # @parent = parent        # not using this yet
+      attr_reader :instance
+
+      def initialize(conn, instance, base_visitor=nil)
+        @conn         = conn
+        @instance     = instance
+        @key          = instance.key
+        @base_visitor = base_visitor || self
+        @task_count   = 0
       end
 
       # the starting point for serializing the instance
       def visit
         @hmset = []
         @hmset << @key
+
         @hmset += [:type, @instance.class.name]
 
         @instance.accept(self)
 
+        # add the root key, for easy access later!
+        @hmset += [:root_key, @base_visitor.instance.root_key]
+
         # NB: splat args
         @conn.hmset(*@hmset)
+
+        self
       end
 
       def visit_process(attribute)
         process = @instance.send(attribute)
         if process
           @hmset += [attribute, process.uuid]
-          RedisSerializationVisitor.new(@conn, process, @instance).visit
+          RedisSerializationVisitor.new(@conn, process, @base_visitor).visit
         end
       end
 
       def visit_tasks(tasks)
-        @hmset += [:task_count, tasks.count]
+        @hmset += [:task_count, tasks.count]  # not used currently, but for informational purposes
         tasks.each do |task|
-          RedisSerializationVisitor.new(@conn, task, @instance).visit
+          RedisSerializationVisitor.new(@conn, task, @base_visitor).visit
           @conn.rpush "#{@key}:tasks", task.uuid
+          @base_visitor.incr_task_count unless task.is_a?(Task::SubProcess)
         end
       end
 
@@ -185,6 +239,14 @@ module Taskinator
         values = @instance.send(attribute)
         yaml = Taskinator::Persistence.serialize(values)
         @hmset += [attribute, yaml]
+      end
+
+      def task_count
+        @task_count
+      end
+
+      def incr_task_count
+        @task_count += 1
       end
     end
 
@@ -293,8 +355,10 @@ module Taskinator
       def lazy_instance_for(base, uuid)
         Taskinator.redis do |conn|
           type = conn.hget(base.key_for(uuid), :type)
+          root_key = conn.hget(base.key_for(uuid), :root_key)
+
           klass = Kernel.const_get(type)
-          LazyLoader.new(klass, uuid, @instance_cache)
+          LazyLoader.new(klass, uuid, root_key, @instance_cache)
         end
       end
     end
@@ -310,13 +374,16 @@ module Taskinator
       # E.g. this is useful for tasks which refer to their parent processes
       #
 
-      def initialize(type, uuid, instance_cache={})
+      def initialize(type, uuid, root_key, instance_cache={})
         @type = type
         @uuid = uuid
+        @root_key = root_key
         @instance_cache = instance_cache
       end
 
-      attr_reader :uuid   # shadows the real method, but will be the same!
+      # shadows the real methods, but will be the same!
+      attr_reader :uuid
+      attr_reader :root_key
 
       # attempts to reload the actual process
       def reload
