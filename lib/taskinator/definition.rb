@@ -33,7 +33,9 @@ module Taskinator
                     Process.define_sequential_process_for(definition, options)
                   }
 
-      define_singleton_method :_create_process_ do |args, options={}|
+      define_singleton_method :_create_process_ do |*args|
+
+        options = args.last.is_a?(Hash) ? args.pop : {}
 
         # TODO: better validation of arguments
 
@@ -67,7 +69,7 @@ module Taskinator
     #
     def create_process(*args)
       assert_valid_process_module
-      _create_process_(args)
+      _create_process_(*args)
     end
 
     #
@@ -85,7 +87,7 @@ module Taskinator
 
     def create_sub_process(*args)
       assert_valid_process_module
-      _create_process_(args, :subprocess => true)
+      _create_process_(*args, :subprocess => true)
     end
 
     private
