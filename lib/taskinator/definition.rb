@@ -71,7 +71,7 @@ module Taskinator
     #
     def create_process(*args)
       assert_valid_process_module
-      _create_process_(*args)
+      _create_process_(*args, :sub_process => false)
     end
 
     #
