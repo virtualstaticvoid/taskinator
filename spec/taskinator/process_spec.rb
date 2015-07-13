@@ -63,11 +63,14 @@ describe Taskinator::Process do
     describe "workflow" do
       describe "#enqueue!" do
         it { expect(subject).to respond_to(:enqueue!) }
+
         it {
           expect(subject).to receive(:enqueue)
           subject.enqueue!
         }
+
         it {
+          expect(subject.current_state.name).to eq(:initial)
           subject.enqueue!
           expect(subject.current_state.name).to eq(:enqueued)
         }
@@ -94,6 +97,7 @@ describe Taskinator::Process do
           subject.start!
         }
         it {
+          expect(subject.current_state.name).to eq(:initial)
           subject.start!
           expect(subject.current_state.name).to eq(:processing)
         }
@@ -106,6 +110,7 @@ describe Taskinator::Process do
           subject.cancel!
         }
         it {
+          expect(subject.current_state.name).to eq(:initial)
           subject.cancel!
           expect(subject.current_state.name).to eq(:cancelled)
         }
