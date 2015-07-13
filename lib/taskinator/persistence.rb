@@ -343,6 +343,8 @@ module Taskinator
           values.each {|key, value|
             values[key] = value.global_id if value.respond_to?(:global_id)
           }
+        elsif values.respond_to?(:global_id)
+          values = values.global_id
         end
         YAML.dump(values)
       end
@@ -357,6 +359,8 @@ module Taskinator
           values.each {|key, value|
             values[key] = value.find if value.respond_to?(:model_id) && value.respond_to?(:find)
           }
+        elsif values.respond_to?(:model_id) && values.respond_to?(:find)
+          values = values.find
         end
         values
       end
