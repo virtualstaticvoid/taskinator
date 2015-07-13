@@ -21,6 +21,10 @@ module Taskinator
 
       def visit_args(attribute)
       end
+
+      def task_count
+        # return the total count of all tasks
+      end
     end
   end
 end
