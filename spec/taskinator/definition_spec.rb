@@ -18,7 +18,6 @@ describe Taskinator::Definition do
 
   describe "#define_process" do
     it "should define a #create_process method" do
-      subject.define_process
       expect(subject).to respond_to(:create_process)
     end
 
@@ -33,6 +32,60 @@ describe Taskinator::Definition do
       expect {
         subject.define_process
       }.to raise_error(Taskinator::Definition::ProcessAlreadyDefinedError)
+    end
+
+    it "should create a sequential process" do
+      subject.define_process {}
+      expect(subject.create_process).to be_a(Taskinator::Process::Sequential)
+    end
+  end
+
+  describe "#define_sequential_process" do
+    it "should define a #define_sequential_process method" do
+      expect(subject).to respond_to(:define_sequential_process)
+    end
+
+    it "should not invoke the given block" do
+      block = SpecSupport::Block.new
+      expect(block).to_not receive(:call)
+      subject.define_sequential_process(&block)
+    end
+
+    it "should raise ProcessAlreadyDefinedError error if already defined" do
+      subject.define_sequential_process
+      expect {
+        subject.define_sequential_process
+      }.to raise_error(Taskinator::Definition::ProcessAlreadyDefinedError)
+    end
+
+    it "should create a sequential process" do
+      subject.define_sequential_process {}
+      expect(subject.create_process).to be_a(Taskinator::Process::Sequential)
+    end
+  end
+
+  describe "#define_concurrent_process" do
+    it "should define a #define_concurrent_process method" do
+      subject.define_concurrent_process
+      expect(subject).to respond_to(:define_concurrent_process)
+    end
+
+    it "should not invoke the given block" do
+      block = SpecSupport::Block.new
+      expect(block).to_not receive(:call)
+      subject.define_concurrent_process(&block)
+    end
+
+    it "should raise ProcessAlreadyDefinedError error if already defined" do
+      subject.define_concurrent_process
+      expect {
+        subject.define_concurrent_process
+      }.to raise_error(Taskinator::Definition::ProcessAlreadyDefinedError)
+    end
+
+    it "should create a concurrent process" do
+      subject.define_concurrent_process {}
+      expect(subject.create_process).to be_a(Taskinator::Process::Concurrent)
     end
   end
 
