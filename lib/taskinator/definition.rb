@@ -57,7 +57,9 @@ module Taskinator
           Persistence.add_process_to_list(process) unless options[:subprocess]
         end
 
+        # this is the "root" process
         process
+
       end
     end
 
