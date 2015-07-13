@@ -332,6 +332,10 @@ describe Taskinator::Process do
         subject.accept(visitor)
       }
     end
+
+    describe "#inspect" do
+      it { expect(subject.inspect).to_not be_nil }
+    end
   end
 
   describe Taskinator::Process::Concurrent do
@@ -476,6 +480,10 @@ describe Taskinator::Process do
 
         subject.accept(visitor)
       }
+    end
+
+    describe "#inspect" do
+      it { expect(subject.inspect).to_not be_nil }
     end
   end
 

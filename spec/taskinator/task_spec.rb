@@ -239,6 +239,10 @@ describe Taskinator::Task do
         subject.accept(visitor)
       }
     end
+
+    describe "#inspect" do
+      it { expect(subject.inspect).to_not be_nil }
+    end
   end
 
   describe Taskinator::Task::Job do
@@ -313,6 +317,10 @@ describe Taskinator::Task do
         subject.accept(visitor)
       }
     end
+
+    describe "#inspect" do
+      it { expect(subject.inspect).to_not be_nil }
+    end
   end
 
   describe Taskinator::Task::SubProcess do
@@ -383,6 +391,10 @@ describe Taskinator::Task do
 
         subject.accept(visitor)
       }
+    end
+
+    describe "#inspect" do
+      it { expect(subject.inspect).to_not be_nil }
     end
   end
 

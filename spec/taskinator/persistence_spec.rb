@@ -87,6 +87,125 @@ describe Taskinator::Persistence, :redis => true do
     end
   end
 
+  describe "serialization helpers" do
+    subject { Taskinator::Persistence }
+
+    describe "#serialize" do
+      describe "Array" do
+        it {
+          expect(subject.serialize([])).to eq(YAML.dump([]))
+        }
+
+        it {
+          expect(subject.serialize([1])).to eq(YAML.dump([1]))
+        }
+
+        it {
+          expect(subject.serialize(["string"])).to eq(YAML.dump(["string"]))
+        }
+
+        it {
+          expect(subject.serialize([MockModel.new])).to eq(YAML.dump([{:model_id => 1, :model_type => 'TypeX'}]))
+        }
+      end
+
+      describe "Hash" do
+        it {
+          expect(subject.serialize({:foo => :bar})).to eq(YAML.dump({:foo => :bar}))
+        }
+
+        it {
+          expect(subject.serialize({:foo => 1})).to eq(YAML.dump({:foo => 1}))
+        }
+
+        it {
+          expect(subject.serialize({:foo => "string"})).to eq(YAML.dump({:foo => "string"}))
+        }
+
+        it {
+          expect(subject.serialize({:foo => MockModel.new})).to eq(YAML.dump({:foo => {:model_id => 1, :model_type => 'TypeX'}}))
+        }
+      end
+
+      describe "Object" do
+        it {
+          expect(subject.serialize(:foo)).to eq(YAML.dump(:foo))
+        }
+
+        it {
+          expect(subject.serialize(1)).to eq(YAML.dump(1))
+        }
+
+        it {
+          expect(subject.serialize("string")).to eq(YAML.dump("string"))
+        }
+
+        it {
+          expect(subject.serialize(MockModel.new)).to eq(YAML.dump({:model_id => 1, :model_type => 'TypeX'}))
+        }
+      end
+    end
+
+    describe "#deserialize" do
+      describe "Array" do
+        it {
+          expect(subject.deserialize(YAML.dump([]))).to eq([])
+        }
+
+        it {
+          expect(subject.deserialize(YAML.dump([1]))).to eq([1])
+        }
+
+        it {
+          expect(subject.deserialize(YAML.dump(["string"]))).to eq(["string"])
+        }
+
+        it {
+          expect_any_instance_of(MockModel).to receive(:find)
+          subject.deserialize(YAML.dump([MockModel.new]))
+        }
+      end
+
+      describe "Hash" do
+        it {
+          expect(subject.deserialize(YAML.dump({:foo => :bar}))).to eq({:foo => :bar})
+        }
+
+        it {
+          expect(subject.deserialize(YAML.dump({:foo => 1}))).to eq({:foo => 1})
+        }
+
+        it {
+          expect(subject.deserialize(YAML.dump({:foo => "string"}))).to eq({:foo => "string"})
+        }
+
+        it {
+          expect_any_instance_of(MockModel).to receive(:find)
+          subject.deserialize(YAML.dump({:foo => MockModel.new}))
+        }
+      end
+
+      describe "Object" do
+        it {
+          expect(subject.deserialize(YAML.dump(:foo))).to eq(:foo)
+        }
+
+        it {
+          expect(subject.deserialize(YAML.dump(1))).to eq(1)
+        }
+
+        it {
+          expect(subject.deserialize(YAML.dump("string"))).to eq("string")
+        }
+
+        it {
+          expect_any_instance_of(MockModel).to receive(:find)
+          subject.deserialize(YAML.dump(MockModel.new))
+        }
+      end
+    end
+  end
+
   describe "instance methods" do
     subject {
       klass = Class.new do
