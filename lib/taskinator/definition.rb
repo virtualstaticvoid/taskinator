@@ -50,11 +50,20 @@ module Taskinator
           Builder.new(process, self, *args).instance_eval(&block)
         end
 
-        # instrument separately
-        Taskinator.instrumenter.instrument(:save_process, :uuid => process.uuid) do
-          process.save
-          # if this is a root process, then add it to the list
-          Persistence.add_process_to_list(process) unless options[:subprocess]
+        # only save "root processes"
+        unless options[:subprocess]
+
+          # instrument separately
+          Taskinator.instrumenter.instrument(:save_process, :uuid => process.uuid) do
+
+            # this will visit "sub processes" and persist them too
+            process.save
+
+            # add it to the list of "root processes"
+            Persistence.add_process_to_list(process)
+
+          end
+
         end
 
         # this is the "root" process
