@@ -588,6 +588,24 @@ Taskinator.configure do |config|
 end
 ```
 
+### Instrumentation
+
+It is possible to instrument processes, tasks and jobs by providing an instrumeter such as `ActiveSupport::Notifications`.
+
+```ruby
+Taskinator.configure do |config|
+  config.instrumenter = ActiveSupport::Notifications
+end
+```
+
+Alternatively, you can use the built-in instrumenter for logging to the console for debugging:
+
+```ruby
+Taskinator.configure do |config|
+  config.instrumenter = Taskinator::ConsoleInstrumenter.new
+end
+```
+
 ## Notes
 
 The persistence logic is decoupled from the implementation, so it is possible to implement another backing store if required.
