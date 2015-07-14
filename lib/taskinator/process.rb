@@ -122,7 +122,13 @@ module Taskinator
     include Persistence
 
     def enqueue
-      Taskinator.queue.enqueue_process(self)
+      # don't bother if there aren't any tasks!
+      if tasks.empty?
+        # simply complete the process...
+        complete!
+      else
+        Taskinator.queue.enqueue_process(self)
+      end
     end
 
     # callback for when the process has completed
@@ -177,10 +183,10 @@ module Taskinator
       end
 
       def start
-        if tasks.any?
-          tasks.each(&:enqueue!)
-        else
+        if tasks.empty?
           complete! # weren't any tasks to start with
+        else
+          tasks.each(&:enqueue!)
         end
       end
 

@@ -71,11 +71,20 @@ describe Taskinator::Process do
           subject.enqueue!
           expect(subject.current_state.name).to eq(:enqueued)
         }
-        it {
+
+        it "should not enqueue if there aren't any tasks" do
+          expect {
+            subject.enqueue!
+          }.to change { Taskinator.queue.processes.length }.by(0)
+        end
+
+        it "should enqueue if there are tasks" do
+          allow(subject).to receive(:tasks).and_return([Object.new])
+
           expect {
             subject.enqueue!
           }.to change { Taskinator.queue.processes.length }.by(1)
-        }
+        end
       end
 
       describe "#start!" do
