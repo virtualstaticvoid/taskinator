@@ -203,6 +203,34 @@ describe Taskinator::Task do
         subject.start!
       end
 
+      it "provides execution context" do
+        executor = Taskinator::Executor.new(definition, subject)
+
+        method = subject.method
+
+        executor.class_eval do
+          define_method method do |*args|
+            # this method executes in the scope of the executor
+            # store the context in an instance variable
+            @exec_context = self
+          end
+        end
+
+        # replace the internal executor instance for the task
+        # with this one, so we can hook into the methods
+        subject.instance_eval { @executor = executor }
+
+        # task start will invoke the method on the executor
+        subject.start!
+
+        # extract the instance variable
+        exec_context = executor.instance_eval { @exec_context }
+
+        expect(exec_context).to eq(executor)
+        expect(exec_context.uuid).to eq(subject.uuid)
+        expect(exec_context.options).to eq(subject.options)
+      end
+
       it "is instrumented" do
         allow(subject.executor).to receive(subject.method)
 

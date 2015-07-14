@@ -151,7 +151,7 @@ module Taskinator
       end
 
       def executor
-        @executor ||= Taskinator::Executor.new(@definition)
+        @executor ||= Taskinator::Executor.new(@definition, self)
       end
 
       def start

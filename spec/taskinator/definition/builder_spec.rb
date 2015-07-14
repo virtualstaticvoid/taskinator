@@ -91,10 +91,9 @@ describe Taskinator::Definition::Builder do
   describe "#for_each" do
     it "creates tasks for each returned item" do
       # the definition is mixed into the eigen class of Executor
+
       # HACK: replace the internal executor instance
-
       executor = Taskinator::Executor.new(definition)
-
       subject.instance_eval do
         @executor = executor
       end

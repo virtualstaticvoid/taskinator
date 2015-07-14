@@ -10,7 +10,20 @@ module Taskinator
 
       # include the module into the eigen class, so it is only for this instance
       eigen = class << self; self; end
-      eigen.send :include, definition
+      eigen.send(:include, definition)
     end
+
+    def root_key
+      @root_key ||= task.root_key
+    end
+
+    def uuid
+      task.uuid
+    end
+
+    def options
+      task.options
+    end
+
   end
 end
