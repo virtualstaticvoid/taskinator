@@ -61,21 +61,13 @@ module Taskinator
     end
 
     module InstanceMethods
-      def key
-        self.class.key_for(self.uuid)
-      end
-
-      def root_key
-        @root_key ||= key
-      end
 
       def save
         Taskinator.redis do |conn|
           conn.multi do
-            m_root_key = self.root_key
             visitor = RedisSerializationVisitor.new(conn, self).visit
             conn.hmset(
-              "taskinator:#{m_root_key}",
+              "taskinator:#{self.key}",
               :tasks_count,     visitor.task_count,
               :tasks_failed,    0,
               :tasks_completed, 0,
@@ -83,6 +75,19 @@ module Taskinator
             )
             true
           end
+        end
+      end
+
+      # this is the persistence key
+      def key
+        @key ||= self.class.key_for(self.uuid)
+      end
+
+      # retrieves the root key associated
+      # with the process or task
+      def root_key
+        @root_key ||= Taskinator.redis do |conn|
+          conn.hget(self.key, :root_key)
         end
       end
 
@@ -172,11 +177,12 @@ module Taskinator
 
       attr_reader :instance
 
-      def initialize(conn, instance, base_visitor=nil)
+      def initialize(conn, instance, base_visitor=self)
         @conn         = conn
         @instance     = instance
         @key          = instance.key
-        @base_visitor = base_visitor || self
+        @root_key     = base_visitor.instance.key
+        @base_visitor = base_visitor
         @task_count   = 0
       end
 
@@ -190,7 +196,7 @@ module Taskinator
         @instance.accept(self)
 
         # add the root key, for easy access later!
-        @hmset += [:root_key, @base_visitor.instance.root_key]
+        @hmset += [:root_key, @root_key]
 
         # NB: splat args
         @conn.hmset(*@hmset)
