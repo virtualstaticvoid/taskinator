@@ -54,6 +54,14 @@ describe TestFlows do
               expect(process.send(:"count_#{status}")).to eq(i + 1)
             end
           }
+
+          it "should increment completed count" do
+            process = definition.create_process(10)
+            recursively_enumerate_tasks(process.tasks) do |task|
+              task.send(:"incr_#{status}")
+            end
+            expect(process.send(:"count_#{status}")).to eq(10)
+          end
         end
 
         describe "percentage_#{status}" do
@@ -76,9 +84,5 @@ describe TestFlows do
 
       end
     end
-
-
   end
-
-
 end

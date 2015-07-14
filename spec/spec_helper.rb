@@ -76,3 +76,13 @@ end
 
 # require examples, must happen after configure
 Dir[File.expand_path("../examples/**/*.rb", __FILE__)].each {|f| require f }
+
+def recursively_enumerate_tasks(tasks, &block)
+  tasks.each do |task|
+    if task.is_a?(Taskinator::Task::SubProcess)
+      recursively_enumerate_tasks(task.sub_process.tasks, &block)
+    else
+      yield task
+    end
+  end
+end
