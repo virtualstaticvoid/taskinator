@@ -8,7 +8,7 @@ GIT
 PATH
   remote: .
   specs:
-    taskinator (0.0.17)
+    taskinator (0.0.18)
       connection_pool (>= 2.2.0)
       json (>= 1.8.2)
       redis (>= 3.2.1)
