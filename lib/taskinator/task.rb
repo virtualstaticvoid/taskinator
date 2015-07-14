@@ -175,7 +175,7 @@ module Taskinator
       end
 
       def inspect
-        %(#<#{self.class.name}:0x#{self.__id__.to_s(16)} method=:#{method}, state=:#{current_state.name}>)
+        %(#<#{self.class.name}:0x#{self.__id__.to_s(16)} uuid="#{uuid}", method=:#{method}, args=#{args}, state=:#{current_state.name}>)
       end
     end
 
@@ -221,7 +221,7 @@ module Taskinator
       end
 
       def inspect
-        %(#<#{self.class.name}:0x#{self.__id__.to_s(16)} job=#{job}, state=:#{current_state.name}>)
+        %(#<#{self.class.name}:0x#{self.__id__.to_s(16)} uuid="#{uuid}", job=#{job}, args=#{args}, state=:#{current_state.name}>)
       end
     end
 
@@ -254,7 +254,7 @@ module Taskinator
       end
 
       def inspect
-        %(#<#{self.class.name}:0x#{self.__id__.to_s(16)} sub_process=#{sub_process.inspect}, state=:#{current_state.name}>)
+        %(#<#{self.class.name}:0x#{self.__id__.to_s(16)} uuid="#{uuid}", sub_process=#{sub_process.inspect}, state=:#{current_state.name}>)
       end
     end
 
