@@ -219,6 +219,13 @@ describe Taskinator::Process do
     describe "#reload" do
       it { expect(subject.reload).to_not be }
     end
+
+    describe "#tasks_count" do
+      it {
+        expect(subject.tasks_count).to eq(0)
+      }
+    end
+
   end
 
   describe Taskinator::Process::Sequential do
