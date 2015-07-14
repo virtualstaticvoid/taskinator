@@ -8,64 +8,77 @@ module TestFlows
     end
   end
 
-  module OneTask
-    extend Taskinator::Definition
+  module Support
 
-    define_process do
-      task :task1
+    def iterator(task_count)
+      task_count.times do |i|
+        yield i
+      end
     end
 
-    def task1
-    end
-
-  end
-
-  module OneJob
-    extend Taskinator::Definition
-
-    define_process do
-      job Worker
+    def do_task(*args)
     end
 
   end
 
-  module OneSubProcess
+  module Task
     extend Taskinator::Definition
+    include Support
 
-    define_process do
-      sub_process OneTask
+    define_process :task_count do
+      for_each :iterator do
+        task :do_task
+      end
     end
 
   end
 
-  module OneSequential
+  module Job
     extend Taskinator::Definition
+    include Support
 
-    define_process do
+    define_process :task_count do
+      for_each :iterator do
+        job Worker
+      end
+    end
+
+  end
+
+  module SubProcess
+    extend Taskinator::Definition
+    include Support
+
+    define_process :task_count do
+      sub_process Task
+    end
+
+  end
+
+  module Sequential
+    extend Taskinator::Definition
+    include Support
+
+    define_process :task_count do
       sequential do
-        task :task1
-        task :task1
-        task :task1
+        for_each :iterator do
+          task :do_task
+        end
       end
-    end
-
-    def task1
     end
 
   end
 
-  module OneConcurrent
+  module Concurrent
     extend Taskinator::Definition
+    include Support
 
-    define_process do
+    define_process :task_count do
       concurrent do
-        task :task1
-        task :task1
-        task :task1
+        for_each :iterator do
+          task :do_task
+        end
       end
-    end
-
-    def task1
     end
 
   end
