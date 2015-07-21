@@ -85,9 +85,9 @@ module Taskinator
 
       # retrieves the root key associated
       # with the process or task
-      def root_key
-        @root_key ||= Taskinator.redis do |conn|
-          conn.hget(self.key, :root_key)
+      def process_key
+        @process_key ||= Taskinator.redis do |conn|
+          conn.hget(self.key, :process_key)
         end
       end
 
@@ -136,7 +136,7 @@ module Taskinator
       def tasks_count
         @tasks_count ||= begin
           Taskinator.redis do |conn|
-            conn.hget "taskinator:#{self.root_key}", :tasks_count
+            conn.hget "taskinator:#{self.process_key}", :tasks_count
           end.to_i
         end
       end
@@ -149,13 +149,13 @@ module Taskinator
 
         define_method "count_#{status}" do
           Taskinator.redis do |conn|
-            conn.hget "taskinator:#{self.root_key}", status
+            conn.hget "taskinator:#{self.process_key}", status
           end.to_i
         end
 
         define_method "incr_#{status}" do
           Taskinator.redis do |conn|
-            conn.hincrby "taskinator:#{self.root_key}", status, 1
+            conn.hincrby "taskinator:#{self.process_key}", status, 1
           end
         end
 
@@ -207,7 +207,7 @@ module Taskinator
 
         # add the process uuid and root key, for easy access later!
         @hmset += [:process_uuid, @root.uuid]
-        @hmset += [:root_key, @root.key]
+        @hmset += [:process_key, @root.key]
 
         # NB: splat args
         @conn.hmset(*@hmset)
@@ -373,10 +373,10 @@ module Taskinator
         Taskinator.redis do |conn|
           type = conn.hget(base.key_for(uuid), :type)
           process_uuid = conn.hget(base.key_for(uuid), :process_uuid)
-          root_key = conn.hget(base.key_for(uuid), :root_key)
+          process_key = conn.hget(base.key_for(uuid), :process_key)
 
           klass = Kernel.const_get(type)
-          LazyLoader.new(klass, uuid, process_uuid, root_key, @instance_cache)
+          LazyLoader.new(klass, uuid, process_uuid, process_key, @instance_cache)
         end
       end
     end
@@ -392,18 +392,18 @@ module Taskinator
       # E.g. this is useful for tasks which refer to their parent processes
       #
 
-      def initialize(type, uuid, process_uuid, root_key, instance_cache={})
+      def initialize(type, uuid, process_uuid, process_key, instance_cache={})
         @type = type
         @uuid = uuid
         @process_uuid = process_uuid
-        @root_key = root_key
+        @process_key = process_key
         @instance_cache = instance_cache
       end
 
       # shadows the real methods, but will be the same!
       attr_reader :process_uuid
       attr_reader :uuid
-      attr_reader :root_key
+      attr_reader :process_key
 
       # attempts to reload the actual process
       def reload
