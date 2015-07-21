@@ -95,7 +95,6 @@ module Taskinator
       Taskinator::Persistence::LazyLoader.new(
         Taskinator::Process,
         uuid,
-        uuid,
         Taskinator::Process.key_for(uuid)
       )
     end

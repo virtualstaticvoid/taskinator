@@ -83,12 +83,17 @@ module Taskinator
         @key ||= self.class.key_for(self.uuid)
       end
 
-      # retrieves the root key associated
+      # retrieves the root process uuid associated
       # with the process or task
-      def process_key
-        @process_key ||= Taskinator.redis do |conn|
-          conn.hget(self.key, :process_key)
+      def process_uuid
+        @process_uuid ||= Taskinator.redis do |conn|
+          conn.hget(self.key, :process_uuid)
         end
+      end
+
+      # retrieves the root process key associated
+      def process_key
+        @process_key ||= Taskinator::Process.key_for(process_uuid)
       end
 
       # retrieves the workflow state
@@ -217,7 +222,6 @@ module Taskinator
 
         # add the process uuid and root key, for easy access later!
         @hmset += [:process_uuid, @root.uuid]
-        @hmset += [:process_key, @root.key]
 
         # NB: splat args
         @conn.hmset(*@hmset)
@@ -383,10 +387,9 @@ module Taskinator
         Taskinator.redis do |conn|
           type = conn.hget(base.key_for(uuid), :type)
           process_uuid = conn.hget(base.key_for(uuid), :process_uuid)
-          process_key = conn.hget(base.key_for(uuid), :process_key)
 
           klass = Kernel.const_get(type)
-          LazyLoader.new(klass, uuid, process_uuid, process_key, @instance_cache)
+          LazyLoader.new(klass, uuid, process_uuid, @instance_cache)
         end
       end
     end
@@ -402,18 +405,16 @@ module Taskinator
       # E.g. this is useful for tasks which refer to their parent processes
       #
 
-      def initialize(type, uuid, process_uuid, process_key, instance_cache={})
+      def initialize(type, uuid, process_uuid, instance_cache={})
         @type = type
         @uuid = uuid
         @process_uuid = process_uuid
-        @process_key = process_key
         @instance_cache = instance_cache
       end
 
       # shadows the real methods, but will be the same!
       attr_reader :process_uuid
       attr_reader :uuid
-      attr_reader :process_key
 
       # attempts to reload the actual process
       def reload

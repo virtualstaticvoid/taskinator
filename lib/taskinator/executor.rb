@@ -13,8 +13,8 @@ module Taskinator
       eigen.send(:include, definition)
     end
 
-    def process_key
-      @process_key ||= task.process_key
+    def process_uuid
+      task.process_uuid
     end
 
     def uuid
