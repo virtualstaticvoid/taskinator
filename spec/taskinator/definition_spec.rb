@@ -147,7 +147,7 @@ describe Taskinator::Definition do
         expect(instrumentation_block).to receive(:call)
 
         # temporary subscription
-        ActiveSupport::Notifications.subscribed(instrumentation_block, /create_process/) do
+        ActiveSupport::Notifications.subscribed(instrumentation_block, /taskinator.process.created/) do
           subject.create_process :foo
         end
       end
@@ -157,7 +157,7 @@ describe Taskinator::Definition do
         expect(instrumentation_block).to receive(:call)
 
         # temporary subscription
-        ActiveSupport::Notifications.subscribed(instrumentation_block, /save_process/) do
+        ActiveSupport::Notifications.subscribed(instrumentation_block, /taskinator.process.saved/) do
           subject.create_process :foo
         end
       end

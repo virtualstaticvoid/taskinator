@@ -44,7 +44,7 @@ module Taskinator
         process = factory.call(self, (args.last.is_a?(Hash) ? args.last : {}))
 
         # this may take long... up to users definition
-        Taskinator.instrumenter.instrument(:create_process, :uuid => process.uuid) do
+        Taskinator.instrumenter.instrument('taskinator.process.created', :uuid => process.uuid) do
           Builder.new(process, self, *args).instance_eval(&block)
         end
 
@@ -52,7 +52,7 @@ module Taskinator
         unless subprocess
 
           # instrument separately
-          Taskinator.instrumenter.instrument(:save_process, :uuid => process.uuid) do
+          Taskinator.instrumenter.instrument('taskinator.process.saved', :uuid => process.uuid) do
 
             # this will visit "sub processes" and persist them too
             process.save
@@ -89,9 +89,15 @@ module Taskinator
     def create_process_remotely(*args)
       assert_valid_process_module
       uuid = SecureRandom.uuid
+
       Taskinator.queue.enqueue_create_process(self, uuid, args)
 
-      Taskinator::Persistence::LazyLoader.new(Taskinator::Process, uuid, uuid)
+      Taskinator::Persistence::LazyLoader.new(
+        Taskinator::Process,
+        uuid,
+        uuid,
+        Taskinator::Process.key_for(uuid)
+      )
     end
 
     def create_sub_process(*args)

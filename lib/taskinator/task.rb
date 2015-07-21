@@ -157,7 +157,7 @@ module Taskinator
 
       def start
         # ASSUMPTION: when the method returns, the task is considered to be complete
-        Taskinator.instrumenter.instrument(:execute_step_task, :uuid => uuid) do
+        Taskinator.instrumenter.instrument('taskinator.process.task.step.executed', instrumentation_payload) do
           executor.send(method, *args)
         end
         @is_complete = true
@@ -204,7 +204,7 @@ module Taskinator
       end
 
       def perform
-        Taskinator.instrumenter.instrument(:execute_job_task, :uuid => uuid) do
+        Taskinator.instrumenter.instrument('taskinator.process.task.job.executed', instrumentation_payload) do
           yield(job, *args)
         end
         @is_complete = true
@@ -241,7 +241,7 @@ module Taskinator
       end
 
       def start
-        Taskinator.instrumenter.instrument(:execute_subprocess, :uuid => uuid) do
+        Taskinator.instrumenter.instrument('taskinator.process.task.subprocess.executed', instrumentation_payload) do
           sub_process.start!
         end
       end

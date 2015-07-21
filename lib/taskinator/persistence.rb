@@ -165,6 +165,16 @@ module Taskinator
 
       end
 
+      def instrumentation_payload(options={})
+        {
+          :process_uuid => process_uuid,
+          :uuid => uuid,
+          :percentage_failed => percentage_failed,
+          :percentage_cancelled => percentage_cancelled,
+          :percentage_completed => percentage_completed
+        }.merge(options)
+      end
+
     end
 
     class RedisSerializationVisitor < Visitor::Base
@@ -181,7 +191,7 @@ module Taskinator
         @conn         = conn
         @instance     = instance
         @key          = instance.key
-        @root_key     = base_visitor.instance.key
+        @root         = base_visitor.instance
         @base_visitor = base_visitor
         @task_count   = 0
       end
@@ -195,8 +205,9 @@ module Taskinator
 
         @instance.accept(self)
 
-        # add the root key, for easy access later!
-        @hmset += [:root_key, @root_key]
+        # add the process uuid and root key, for easy access later!
+        @hmset += [:process_uuid, @root.uuid]
+        @hmset += [:root_key, @root.key]
 
         # NB: splat args
         @conn.hmset(*@hmset)
@@ -361,10 +372,11 @@ module Taskinator
       def lazy_instance_for(base, uuid)
         Taskinator.redis do |conn|
           type = conn.hget(base.key_for(uuid), :type)
+          process_uuid = conn.hget(base.key_for(uuid), :process_uuid)
           root_key = conn.hget(base.key_for(uuid), :root_key)
 
           klass = Kernel.const_get(type)
-          LazyLoader.new(klass, uuid, root_key, @instance_cache)
+          LazyLoader.new(klass, uuid, process_uuid, root_key, @instance_cache)
         end
       end
     end
@@ -380,14 +392,16 @@ module Taskinator
       # E.g. this is useful for tasks which refer to their parent processes
       #
 
-      def initialize(type, uuid, root_key, instance_cache={})
+      def initialize(type, uuid, process_uuid, root_key, instance_cache={})
         @type = type
         @uuid = uuid
+        @process_uuid = process_uuid
         @root_key = root_key
         @instance_cache = instance_cache
       end
 
       # shadows the real methods, but will be the same!
+      attr_reader :process_uuid
       attr_reader :uuid
       attr_reader :root_key
 

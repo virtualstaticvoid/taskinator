@@ -238,7 +238,7 @@ describe Taskinator::Task do
         expect(instrumentation_block).to receive(:call)
 
         # temporary subscription
-        ActiveSupport::Notifications.subscribed(instrumentation_block, /execute_step_task/) do
+        ActiveSupport::Notifications.subscribed(instrumentation_block, /taskinator.process.task.step/) do
           subject.start!
         end
       end
@@ -325,7 +325,7 @@ describe Taskinator::Task do
         expect(instrumentation_block).to receive(:call)
 
         # temporary subscription
-        ActiveSupport::Notifications.subscribed(instrumentation_block, /execute_job_task/) do
+        ActiveSupport::Notifications.subscribed(instrumentation_block, /taskinator.process.task.job/) do
           subject.perform(&block)
         end
       end
@@ -395,7 +395,7 @@ describe Taskinator::Task do
         expect(instrumentation_block).to receive(:call)
 
         # temporary subscription
-        ActiveSupport::Notifications.subscribed(instrumentation_block, /execute_subprocess/) do
+        ActiveSupport::Notifications.subscribed(instrumentation_block, /taskinator.process.task.subprocess/) do
           subject.start!
         end
       end
