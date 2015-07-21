@@ -106,6 +106,17 @@ describe Taskinator::Definition do
       expect(subject.create_process).to be_a(Taskinator::Process)
     end
 
+    it "receives options" do
+      block = SpecSupport::Block.new
+      allow(block).to receive(:to_proc) {
+        Proc.new {|*args| }
+      }
+      subject.define_process(&block)
+
+      process = subject.create_process(:foo => :bar)
+      expect(process.options).to eq(:foo => :bar)
+    end
+
     it "invokes the given block in the context of a ProcessBuilder" do
       block = SpecSupport::Block.new
       expect(block).to receive(:call)

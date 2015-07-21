@@ -139,7 +139,8 @@ module Taskinator
       attr_reader :method
       attr_reader :args
 
-      def initialize(process, method, args, options={})
+      def initialize(process, method, *args)
+        options = args.last.is_a?(Hash) ? args.pop : {}
         super(process, options)
         @definition = process.definition  # for convenience
 
@@ -186,7 +187,8 @@ module Taskinator
       attr_reader :job
       attr_reader :args
 
-      def initialize(process, job, args, options={})
+      def initialize(process, job, *args)
+        options = args.last.is_a?(Hash) ? args.pop : {}
         super(process, options)
         @definition = process.definition  # for convenience
 
@@ -203,7 +205,7 @@ module Taskinator
 
       def perform
         Taskinator.instrumenter.instrument(:execute_job_task, :uuid => uuid) do
-          yield(job, args)
+          yield(job, *args)
         end
         @is_complete = true
       end
@@ -229,7 +231,8 @@ module Taskinator
     class SubProcess < Task
       attr_reader :sub_process
 
-      def initialize(process, sub_process, options={})
+      def initialize(process, sub_process, *args)
+        options = args.last.is_a?(Hash) ? args.pop : {}
         super(process, options)
         raise ArgumentError, 'sub_process' if sub_process.nil? || !sub_process.is_a?(Process)
 

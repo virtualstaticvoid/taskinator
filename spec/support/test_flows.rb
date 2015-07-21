@@ -10,9 +10,9 @@ module TestFlows
 
   module Support
 
-    def iterator(task_count)
+    def iterator(task_count, *args)
       task_count.times do |i|
-        yield i
+        yield i, *args
       end
     end
 
@@ -27,7 +27,7 @@ module TestFlows
 
     define_process :task_count do
       for_each :iterator do
-        task :do_task
+        task :do_task, :queue => :foo
       end
     end
 
