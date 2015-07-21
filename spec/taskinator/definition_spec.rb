@@ -200,7 +200,7 @@ describe Taskinator::Definition do
       it "returns true if persisted" do
         definition = MockDefinition.create
         process = definition.create_process_remotely(:foo)
-        definition._create_process_(:foo, :uuid => process.uuid).save
+        definition._create_process_(false, :foo, :uuid => process.uuid).save
 
         expect(process.reload).to eq(true)
       end

@@ -19,7 +19,7 @@ module Taskinator
     end
 
     def perform
-      @definition._create_process_(*@args, :uuid => @uuid).enqueue!
+      @definition._create_process_(false, *@args, :uuid => @uuid).enqueue!
     end
 
     private
