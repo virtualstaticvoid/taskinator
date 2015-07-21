@@ -106,6 +106,26 @@ module Taskinator
       tasks.empty?
     end
 
+    # callbacks for process events for instrumentation
+
+    def on_completed_entry(*args)
+      Taskinator.instrumenter.instrument('taskinator.process.completed', instrumentation_payload) do
+        # intentionally left empty
+      end
+    end
+
+    def on_failed_entry(*args)
+      Taskinator.instrumenter.instrument('taskinator.process.failed', instrumentation_payload) do
+        # intentionally left empty
+      end
+    end
+
+    def on_cancelled_entry(*args)
+      Taskinator.instrumenter.instrument('taskinator.process.cancelled', instrumentation_payload) do
+        # intentionally left empty
+      end
+    end
+
     def tasks_completed?(*args)
       # subclasses must implement this method
       raise NotImplementedError
