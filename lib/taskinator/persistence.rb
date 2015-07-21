@@ -165,9 +165,19 @@ module Taskinator
 
       end
 
+      def process_options
+        @process_options ||= begin
+          Taskinator.redis do |conn|
+            yaml = conn.hget("taskinator:#{self.process_key}", :options)
+            yaml ? Taskinator::Persistence.deserialize(yaml) : {}
+          end
+        end
+      end
+
       def instrumentation_payload(options={})
         {
           :process_uuid => process_uuid,
+          :process_options => process_options,
           :uuid => uuid,
           :percentage_failed => percentage_failed,
           :percentage_cancelled => percentage_cancelled,
