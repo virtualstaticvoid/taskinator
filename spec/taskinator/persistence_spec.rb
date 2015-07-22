@@ -224,14 +224,34 @@ describe Taskinator::Persistence, :redis => true do
       klass.new
     }
 
+    describe "#save" do
+      pending __FILE__
+    end
+
     describe "#key" do
       it {
-        expect(subject.key).to match(/#{subject.uuid}/)
+        expect(subject.key).to match(/taskinator:base_key:#{subject.uuid}/)
       }
     end
 
-    describe "#save" do
-      pending __FILE__
+    describe "#process_uuid" do
+      it {
+        Taskinator.redis do |conn|
+          conn.hset(subject.key, :process_uuid, subject.uuid)
+        end
+
+        expect(subject.process_uuid).to match(/#{subject.uuid}/)
+      }
+    end
+
+    describe "#process_key" do
+      it {
+        Taskinator.redis do |conn|
+          conn.hset(subject.key, :process_uuid, subject.uuid)
+        end
+
+        expect(subject.process_key).to match(/taskinator:process:#{subject.uuid}/)
+      }
     end
 
     describe "#load_workflow_state" do
@@ -256,11 +276,13 @@ describe Taskinator::Persistence, :redis => true do
           subject.fail(e)
         end
 
-        Taskinator.redis do |conn|
-          expect(conn.hget(subject.key, :error_type)).to eq('StandardError')
-          expect(conn.hget(subject.key, :error_message)).to eq('a error')
-          expect(conn.hget(subject.key, :error_backtrace)).to_not be_empty
+        type, message, backtrace = Taskinator.redis do |conn|
+          conn.hmget(subject.key, :error_type, :error_message, :error_backtrace)
         end
+
+        expect(type).to eq('StandardError')
+        expect(message).to eq('a error')
+        expect(backtrace).to_not be_empty
       end
     end
 
@@ -277,6 +299,98 @@ describe Taskinator::Persistence, :redis => true do
 
         expect(subject.error).to eq([error.class.name, error.message, error.backtrace])
       end
+    end
+
+    describe "#tasks_count" do
+      it {
+        Taskinator.redis do |conn|
+          conn.hset(subject.process_key, :tasks_count, 99)
+        end
+
+        expect(subject.tasks_count).to eq(99)
+      }
+    end
+
+    %w(
+      failed
+      cancelled
+      completed
+    ).each do |status|
+
+      describe "#count_#{status}" do
+        it {
+          Taskinator.redis do |conn|
+            conn.hset(subject.process_key, status, 99)
+          end
+
+          expect(subject.send(:"count_#{status}")).to eq(99)
+        }
+      end
+
+      describe "#incr_#{status}" do
+        it {
+          Taskinator.redis do |conn|
+            conn.hset(subject.process_key, status, 99)
+          end
+
+          subject.send(:"incr_#{status}")
+
+          expect(subject.send(:"count_#{status}")).to eq(100)
+        }
+      end
+
+      describe "#percentage_#{status}" do
+        it {
+          Taskinator.redis do |conn|
+            conn.hmset(
+              subject.process_key,
+              [:tasks_count, 100],
+              [status, 1]
+            )
+          end
+
+          expect(subject.send(:"percentage_#{status}")).to eq(1.0)
+        }
+      end
+
+    end
+
+    describe "#process_options" do
+      it {
+        Taskinator.redis do |conn|
+          conn.hset(subject.process_key, :options, YAML.dump({:foo => :bar}))
+        end
+
+        expect(subject.process_options).to eq(:foo => :bar)
+      }
+    end
+
+    describe "#instrumentation_payload" do
+      it {
+        Taskinator.redis do |conn|
+          conn.hset(subject.key, :process_uuid, subject.uuid)
+          conn.hmset(
+            subject.process_key,
+            [:options, YAML.dump({:foo => :bar})],
+            [:tasks_count, 100],
+            [:completed, 3],
+            [:cancelled, 2],
+            [:failed, 1]
+          )
+        end
+
+        expect(subject.instrumentation_payload(:baz => :qux)).to eq({
+          :process_uuid          => subject.uuid,
+          :process_options       => {:foo => :bar},
+          :uuid                  => subject.uuid,
+          :percentage_failed     => 1.0,
+          :percentage_cancelled  => 2.0,
+          :percentage_completed  => 3.0,
+          :tasks_count           => 100,
+          :baz                   => :qux
+        })
+      }
+
     end
   end
 end

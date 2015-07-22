@@ -40,10 +40,10 @@ module Taskinator
       # querying for the status of an instance
       def state_for(uuid)
         key = key_for(uuid)
-        Taskinator.redis do |conn|
-          state = conn.hget(key, :state) || 'initial'
-          state.to_sym
+        state = Taskinator.redis do |conn|
+          conn.hget(key, :state) || 'initial'
         end
+        state.to_sym
       end
 
       # fetches the instance for given identifier
@@ -67,7 +67,7 @@ module Taskinator
           conn.multi do
             visitor = RedisSerializationVisitor.new(conn, self).visit
             conn.hmset(
-              "taskinator:#{self.key}",
+              Taskinator::Process.key_for(uuid),
               :tasks_count,     visitor.task_count,
               :tasks_failed,    0,
               :tasks_completed, 0,
@@ -78,20 +78,19 @@ module Taskinator
         end
       end
 
-      # this is the persistence key
+      # the persistence key
       def key
         @key ||= self.class.key_for(self.uuid)
       end
 
-      # retrieves the root process uuid associated
-      # with the process or task
+      # the root process uuid associated with this process or task
       def process_uuid
         @process_uuid ||= Taskinator.redis do |conn|
           conn.hget(self.key, :process_uuid)
         end
       end
 
-      # retrieves the root process key associated
+      # the root process persistence key associated with this process or task
       def process_key
         @process_key ||= Taskinator::Process.key_for(process_uuid)
       end
@@ -140,9 +139,10 @@ module Taskinator
 
       def tasks_count
         @tasks_count ||= begin
-          Taskinator.redis do |conn|
-            conn.hget "taskinator:#{self.process_key}", :tasks_count
-          end.to_i
+          count = Taskinator.redis do |conn|
+            conn.hget self.process_key, :tasks_count
+          end
+          count.to_i
         end
       end
 
@@ -153,14 +153,15 @@ module Taskinator
       ).each do |status|
 
         define_method "count_#{status}" do
-          Taskinator.redis do |conn|
-            conn.hget "taskinator:#{self.process_key}", status
-          end.to_i
+          count = Taskinator.redis do |conn|
+            conn.hget self.process_key, status
+          end
+          count.to_i
         end
 
         define_method "incr_#{status}" do
           Taskinator.redis do |conn|
-            conn.hincrby "taskinator:#{self.process_key}", status, 1
+            conn.hincrby self.process_key, status, 1
           end
         end
 
@@ -170,24 +171,43 @@ module Taskinator
 
       end
 
+      # retrieves the process options of the root process
+      # this is so that meta data of the process can be maintained
+      # and accessible to instrumentation subscribers
       def process_options
         @process_options ||= begin
-          Taskinator.redis do |conn|
-            yaml = conn.hget("taskinator:#{self.process_key}", :options)
-            yaml ? Taskinator::Persistence.deserialize(yaml) : {}
+          yaml = Taskinator.redis do |conn|
+            conn.hget(self.process_key, :options)
           end
+          yaml ? Taskinator::Persistence.deserialize(yaml) : {}
         end
       end
 
-      def instrumentation_payload(options={})
-        {
-          :process_uuid => process_uuid,
-          :process_options => process_options,
-          :uuid => uuid,
-          :percentage_failed => percentage_failed,
-          :percentage_cancelled => percentage_cancelled,
-          :percentage_completed => percentage_completed
-        }.merge(options)
+      # prepairs the meta data for instrumentation events
+      def instrumentation_payload(additional={})
+
+        # need to cache here, since this method hits redis, so can't be part of multi statement following
+        process_key = self.process_key
+
+        tasks_count, completed_count, cancelled_count, failed_count = Taskinator.redis do |conn|
+          conn.hmget process_key, :tasks_count, :completed, :cancelled, :failed
+        end
+
+        tasks_count = tasks_count.to_f
+        completed_percent = tasks_count > 0 ? (completed_count.to_i / tasks_count) * 100.0 : 0.0
+        cancelled_percent = tasks_count > 0 ? (cancelled_count.to_i / tasks_count) * 100.0 : 0.0
+        failed_percent    = tasks_count > 0 ? (failed_count.to_i    / tasks_count) * 100.0 : 0.0
+
+        return {
+          :process_uuid          => process_uuid,
+          :process_options       => process_options,
+          :uuid                  => uuid,
+          :percentage_failed     => failed_percent,
+          :percentage_cancelled  => cancelled_percent,
+          :percentage_completed  => completed_percent,
+          :tasks_count           => tasks_count
+        }.merge(additional)
+
       end
 
     end
@@ -384,13 +404,11 @@ module Taskinator
       # arbitrary instance to perform it's work
       #
       def lazy_instance_for(base, uuid)
-        Taskinator.redis do |conn|
-          type = conn.hget(base.key_for(uuid), :type)
-          process_uuid = conn.hget(base.key_for(uuid), :process_uuid)
-
-          klass = Kernel.const_get(type)
-          LazyLoader.new(klass, uuid, process_uuid, @instance_cache)
+        type, process_uuid = Taskinator.redis do |conn|
+          conn.hmget(base.key_for(uuid), :type, :process_uuid)
         end
+        klass = Kernel.const_get(type)
+        LazyLoader.new(klass, uuid, process_uuid, @instance_cache)
       end
     end
 

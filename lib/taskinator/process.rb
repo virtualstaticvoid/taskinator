@@ -108,6 +108,12 @@ module Taskinator
 
     # callbacks for process events for instrumentation
 
+    def on_enqueued_entry(*args)
+      Taskinator.instrumenter.instrument('taskinator.process.enqueued', instrumentation_payload) do
+        # intentionally left empty
+      end
+    end
+
     def on_completed_entry(*args)
       Taskinator.instrumenter.instrument('taskinator.process.completed', instrumentation_payload) do
         # intentionally left empty

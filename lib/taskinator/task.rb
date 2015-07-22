@@ -151,13 +151,19 @@ module Taskinator
         @args = args
       end
 
+      def on_enqueued_entry(*args)
+        Taskinator.instrumenter.instrument('taskinator.task.enqueued', instrumentation_payload) do
+          # intentionally left empty
+        end
+      end
+
       def executor
         @executor ||= Taskinator::Executor.new(@definition, self)
       end
 
       def start
         # ASSUMPTION: when the method returns, the task is considered to be complete
-        Taskinator.instrumenter.instrument('taskinator.process.task.step.executed', instrumentation_payload) do
+        Taskinator.instrumenter.instrument('taskinator.task.executed', instrumentation_payload) do
           executor.send(method, *args)
         end
         @is_complete = true
@@ -199,12 +205,18 @@ module Taskinator
         @args = args
       end
 
+      def on_enqueued_entry(*args)
+        Taskinator.instrumenter.instrument('taskinator.job.enqueued', instrumentation_payload) do
+          # intentionally left empty
+        end
+      end
+
       def enqueue
         Taskinator.queue.enqueue_job(self)
       end
 
       def perform
-        Taskinator.instrumenter.instrument('taskinator.process.task.job.executed', instrumentation_payload) do
+        Taskinator.instrumenter.instrument('taskinator.job.executed', instrumentation_payload) do
           yield(job, *args)
         end
         @is_complete = true
@@ -240,8 +252,14 @@ module Taskinator
         @sub_process.parent = self
       end
 
+      def on_enqueued_entry(*args)
+        Taskinator.instrumenter.instrument('taskinator.subprocess.enqueued', instrumentation_payload) do
+          # intentionally left empty
+        end
+      end
+
       def start
-        Taskinator.instrumenter.instrument('taskinator.process.task.subprocess.executed', instrumentation_payload) do
+        Taskinator.instrumenter.instrument('taskinator.subprocess.executed', instrumentation_payload) do
           sub_process.start!
         end
       end
