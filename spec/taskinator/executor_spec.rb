@@ -8,7 +8,25 @@ describe Taskinator::Executor do
     end
   end
 
-  subject { Taskinator::Executor.new(definition) }
+  let(:task) { double('task') }
+  subject { Taskinator::Executor.new(definition, task) }
+
+  describe "helpers" do
+    it "#process_uuid" do
+      expect(task).to receive(:process_uuid)
+      subject.process_uuid
+    end
+
+    it "#uuid" do
+      expect(task).to receive(:uuid)
+      subject.uuid
+    end
+
+    it "#options" do
+      expect(task).to receive(:options)
+      subject.options
+    end
+  end
 
   it "should mixin definition" do
     expect(subject).to be_a(definition)

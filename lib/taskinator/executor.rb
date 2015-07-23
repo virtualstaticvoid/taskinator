@@ -14,15 +14,15 @@ module Taskinator
     end
 
     def process_uuid
-      task.process_uuid
+      task.process_uuid if task
     end
 
     def uuid
-      task.uuid
+      task.uuid if task
     end
 
     def options
-      task.options
+      task.options if task
     end
 
   end
