@@ -33,11 +33,6 @@ module Taskinator
         Resque.enqueue_to(queue, CreateProcessWorker, definition.name, uuid, Taskinator::Persistence.serialize(args))
       end
 
-      def enqueue_process(process)
-        queue = process.queue || Resque.queue_from_class(ProcessWorker)
-        Resque.enqueue_to(queue, ProcessWorker, process.uuid)
-      end
-
       def enqueue_task(task)
         queue = task.queue || Resque.queue_from_class(TaskWorker)
         Resque.enqueue_to(queue, TaskWorker, task.uuid)

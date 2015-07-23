@@ -20,16 +20,6 @@ shared_examples_for "a queue adapter" do |adapter_name, adapter_type|
     end
   end
 
-  describe "#enqueue_process" do
-    it { expect(subject).to respond_to(:enqueue_process) }
-
-    it "should enqueue a process" do
-      expect {
-        subject.enqueue_process(double('process', :uuid => 'xx-xx-xx-xx', :queue => nil))
-      }.to_not raise_error
-    end
-  end
-
   describe "#enqueue_task" do
     it { expect(subject).to respond_to(:enqueue_task) }
 

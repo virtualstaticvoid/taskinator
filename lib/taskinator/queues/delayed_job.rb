@@ -17,11 +17,6 @@ module Taskinator
         ::Delayed::Job.enqueue CreateProcessWorker.new(definition.name, uuid, Taskinator::Persistence.serialize(args)), :queue => queue
       end
 
-      def enqueue_process(process)
-        queue = process.queue || @config[:process_queue]
-        ::Delayed::Job.enqueue ProcessWorker.new(process.uuid), :queue => queue
-      end
-
       def enqueue_task(task)
         queue = task.queue || @config[:task_queue]
         ::Delayed::Job.enqueue TaskWorker.new(task.uuid), :queue => queue

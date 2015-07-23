@@ -17,11 +17,6 @@ module Taskinator
         ProcessWorker.client_push('class' => CreateProcessWorker, 'args' => [definition.name, uuid, Taskinator::Persistence.serialize(args)], 'queue' => queue)
       end
 
-      def enqueue_process(process)
-        queue = process.queue || @config[:process_queue]
-        ProcessWorker.client_push('class' => ProcessWorker, 'args' => [process.uuid], 'queue' => queue)
-      end
-
       def enqueue_task(task)
         queue = task.queue || @config[:task_queue]
         TaskWorker.client_push('class' => TaskWorker, 'args' => [task.uuid], 'queue' => queue)
