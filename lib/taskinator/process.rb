@@ -111,18 +111,6 @@ module Taskinator
 
     # callbacks for process events for instrumentation
 
-    def on_enqueued_entry(*args)
-      Taskinator.instrumenter.instrument('taskinator.process.enqueued', instrumentation_payload) do
-        # intentionally left empty
-      end
-    end
-
-    def on_completed_entry(*args)
-      Taskinator.instrumenter.instrument('taskinator.process.completed', instrumentation_payload) do
-        # intentionally left empty
-      end
-    end
-
     def on_failed_entry(*args)
       Taskinator.instrumenter.instrument('taskinator.process.failed', instrumentation_payload) do
         # intentionally left empty
@@ -166,21 +154,25 @@ module Taskinator
 
     class Sequential < Process
       def enqueue
-        # don't bother if there aren't any tasks!
-        if tasks.empty?
-          # simply complete the process...
-          complete!
-        else
-          tasks.first.enqueue!
+        Taskinator.instrumenter.instrument('taskinator.process.enqueued', instrumentation_payload) do
+          # don't bother if there aren't any tasks!
+          if tasks.empty?
+            # simply complete the process...
+            complete!
+          else
+            tasks.first.enqueue!
+          end
         end
       end
 
       def start
-        task = tasks.first
-        if task
-          task.start!
-        else
-          complete! # weren't any tasks to start with
+        Taskinator.instrumenter.instrument('taskinator.process.completed', instrumentation_payload) do
+          task = tasks.first
+          if task
+            task.start!
+          else
+            complete! # weren't any tasks to start with
+          end
         end
       end
 
@@ -214,12 +206,14 @@ module Taskinator
       end
 
       def enqueue
-        # don't bother if there aren't any tasks!
-        if tasks.empty?
-          # simply complete the process...
-          complete!
-        else
-          tasks.each(&:enqueue!)
+        Taskinator.instrumenter.instrument('taskinator.process.enqueued', instrumentation_payload) do
+          # don't bother if there aren't any tasks!
+          if tasks.empty?
+            # simply complete the process...
+            complete!
+          else
+            tasks.each(&:enqueue!)
+          end
         end
       end
 
@@ -228,23 +222,25 @@ module Taskinator
       # alias :start :enqueue
 
       def start
-        if tasks.empty?
-          complete! # weren't any tasks to start with
-        else
-          if concurrency_method == :fork
-            tasks.each do |task|
-              fork do
-                task.start!
-              end
-            end
-            Process.waitall
+        Taskinator.instrumenter.instrument('taskinator.process.completed', instrumentation_payload) do
+          if tasks.empty?
+            complete! # weren't any tasks to start with
           else
-            threads = tasks.map do |task|
-              Thread.new do
-                task.start!
+            if concurrency_method == :fork
+              tasks.each do |task|
+                fork do
+                  task.start!
+                end
               end
+              Process.waitall
+            else
+              threads = tasks.map do |task|
+                Thread.new do
+                  task.start!
+                end
+              end
+              ThreadsWait.all_waits(*threads)
             end
-            ThreadsWait.all_waits(*threads)
           end
         end
       end
