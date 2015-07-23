@@ -116,14 +116,14 @@ module Taskinator
   end
 
   class NoOpInstrumenter
-    # just yield to the given block
+    # :nocov:
     def instrument(event, payload={})
       yield(payload) if block_given?
     end
   end
 
   class ConsoleInstrumenter
-    # just yield to the given block
+    # :nocov:
     def instrument(event, payload={})
       puts [event.inspect, payload.to_yaml]
       yield(payload) if block_given?

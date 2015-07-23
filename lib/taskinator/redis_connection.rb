@@ -14,6 +14,7 @@ require 'connection_pool'
 require 'redis'
 require 'uri'
 
+# :nocov:
 module Taskinator
   class RedisConnection
     class << self

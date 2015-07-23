@@ -24,8 +24,11 @@ module Taskinator
 
     private
 
-    # borrowed from activesupport/lib/active_support/inflector/methods.rb
+    # :nocov:
     def constantize(camel_cased_word)
+
+      # borrowed from activesupport/lib/active_support/inflector/methods.rb
+
       names = camel_cased_word.split('::')
 
       # Trigger a built-in NameError exception including the ill-formed constant in the message.

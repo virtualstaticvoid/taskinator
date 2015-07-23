@@ -8,6 +8,7 @@
 require 'time'
 require 'logger'
 
+# :nocov:
 module Taskinator
   module Logging
 
