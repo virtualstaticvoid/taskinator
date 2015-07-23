@@ -99,10 +99,6 @@ module Taskinator
     # need to override the ones defined by workflow
     include Persistence
 
-    def enqueue
-      Taskinator.queue.enqueue_task(self)
-    end
-
     # callback for when the task has completed
     def on_completed_entry(*args)
       self.incr_completed
@@ -149,6 +145,10 @@ module Taskinator
 
         @method = method
         @args = args
+      end
+
+      def enqueue
+        Taskinator.queue.enqueue_task(self)
       end
 
       def on_enqueued_entry(*args)
@@ -205,14 +205,14 @@ module Taskinator
         @args = args
       end
 
+      def enqueue
+        Taskinator.queue.enqueue_job(self)
+      end
+
       def on_enqueued_entry(*args)
         Taskinator.instrumenter.instrument('taskinator.job.enqueued', instrumentation_payload) do
           # intentionally left empty
         end
-      end
-
-      def enqueue
-        Taskinator.queue.enqueue_job(self)
       end
 
       def perform
@@ -256,6 +256,10 @@ module Taskinator
         Taskinator.instrumenter.instrument('taskinator.subprocess.enqueued', instrumentation_payload) do
           # intentionally left empty
         end
+      end
+
+      def enqueue
+        sub_process.enqueue!
       end
 
       def start

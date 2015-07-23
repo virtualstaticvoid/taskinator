@@ -74,20 +74,6 @@ describe Taskinator::Process do
           subject.enqueue!
           expect(subject.current_state.name).to eq(:enqueued)
         }
-
-        it "should not enqueue if there aren't any tasks" do
-          expect {
-            subject.enqueue!
-          }.to change { Taskinator.queue.processes.length }.by(0)
-        end
-
-        it "should enqueue if there are tasks" do
-          allow(subject).to receive(:tasks).and_return([Object.new])
-
-          expect {
-            subject.enqueue!
-          }.to change { Taskinator.queue.processes.length }.by(1)
-        end
       end
 
       describe "#start!" do
@@ -262,13 +248,37 @@ describe Taskinator::Process do
       end
     end
 
+    describe "#enqueue!" do
+      context "without tasks" do
+        it {
+          expect {
+            subject.enqueue!
+          }.to change { Taskinator.queue.processes.length }.by(0)
+        }
+
+        it {
+          expect {
+            subject.enqueue!
+          }.to change { Taskinator.queue.tasks.length }.by(0)
+        }
+      end
+
+      it "delegates to the first task" do
+        task = double('task')
+        expect(task).to receive(:enqueue!)
+        allow(subject).to receive(:tasks).and_return([task])
+
+        subject.enqueue!
+      end
+    end
+
     describe "#start!" do
       it "executes the first task" do
         tasks.each {|t| subject.tasks << t }
         task1 = tasks[0]
 
         expect(subject.tasks).to receive(:first).and_call_original
-        expect(task1).to receive(:enqueue!)
+        expect(task1).to receive(:start!)
 
         subject.start!
       end
@@ -380,11 +390,36 @@ describe Taskinator::Process do
       end
     end
 
+    describe "#enqueue!" do
+      context "without tasks" do
+        it {
+          expect {
+            subject.enqueue!
+          }.to change { Taskinator.queue.processes.length }.by(0)
+        }
+
+        it {
+          expect {
+            subject.enqueue!
+          }.to change { Taskinator.queue.tasks.length }.by(0)
+        }
+      end
+
+      it "delegates to all the tasks" do
+        tasks.each {|t|
+          subject.tasks << t
+          expect(t).to receive(:enqueue!)
+        }
+
+        subject.enqueue!
+      end
+    end
+
     describe "#start!" do
       it "executes all tasks" do
         tasks.each {|t|
           subject.tasks << t
-          expect(t).to receive(:enqueue!)
+          expect(t).to receive(:start!)
         }
 
         subject.start!

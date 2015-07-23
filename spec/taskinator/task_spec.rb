@@ -68,11 +68,6 @@ describe Taskinator::Task do
           subject.enqueue!
           expect(subject.current_state.name).to eq(:enqueued)
         }
-        it {
-          expect {
-            subject.enqueue!
-          }.to change { Taskinator.queue.tasks.length }.by(1)
-        }
       end
 
       describe "#start!" do
@@ -188,6 +183,14 @@ describe Taskinator::Task do
     describe "#executor" do
       it { expect(subject.executor).to_not be_nil }
       it { expect(subject.executor).to be_a(definition) }
+    end
+
+    describe "#enqueue!" do
+      it {
+        expect {
+          subject.enqueue!
+        }.to change { Taskinator.queue.tasks.length }.by(1)
+      }
     end
 
     describe "#start!" do
@@ -372,6 +375,27 @@ describe Taskinator::Task do
       it "sets the queue to use" do
         task = Taskinator::Task.define_sub_process_task(process, sub_process, :queue => :foo)
         expect(task.queue).to eq(:foo)
+      end
+    end
+
+    describe "#enqueue!" do
+      context "without tasks" do
+        it {
+          expect {
+            subject.enqueue!
+          }.to change { Taskinator.queue.processes.length }.by(0)
+        }
+
+        it {
+          expect {
+            subject.enqueue!
+          }.to change { Taskinator.queue.tasks.length }.by(0)
+        }
+      end
+
+      it "delegates to sub process" do
+        expect(sub_process).to receive(:enqueue!)
+        subject.enqueue!
       end
     end
 

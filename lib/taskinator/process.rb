@@ -1,3 +1,6 @@
+require 'thread'
+require 'thwait'
+
 module Taskinator
   class Process
     include ::Comparable
@@ -147,16 +150,6 @@ module Taskinator
     # need to override the ones defined by workflow
     include Persistence
 
-    def enqueue
-      # don't bother if there aren't any tasks!
-      if tasks.empty?
-        # simply complete the process...
-        complete!
-      else
-        Taskinator.queue.enqueue_process(self)
-      end
-    end
-
     # callback for when the process has completed
     def on_completed_entry(*args)
       # notify the parent task (if there is one) that this process has completed
@@ -172,10 +165,20 @@ module Taskinator
     end
 
     class Sequential < Process
+      def enqueue
+        # don't bother if there aren't any tasks!
+        if tasks.empty?
+          # simply complete the process...
+          complete!
+        else
+          tasks.first.enqueue!
+        end
+      end
+
       def start
         task = tasks.first
         if task
-          task.enqueue!
+          task.start!
         else
           complete! # weren't any tasks to start with
         end
@@ -202,17 +205,47 @@ module Taskinator
 
     class Concurrent < Process
       attr_reader :complete_on
+      attr_reader :concurrency_method
 
       def initialize(definition, complete_on=CompleteOn::Default, options={})
         super(definition, options)
         @complete_on = complete_on
+        @concurrency_method = options.delete(:concurrency_method) || :thread
       end
+
+      def enqueue
+        # don't bother if there aren't any tasks!
+        if tasks.empty?
+          # simply complete the process...
+          complete!
+        else
+          tasks.each(&:enqueue!)
+        end
+      end
+
+      # not sure on the best implementation
+      # since these tasks need to be executed concurrently
+      # alias :start :enqueue
 
       def start
         if tasks.empty?
           complete! # weren't any tasks to start with
         else
-          tasks.each(&:enqueue!)
+          if concurrency_method == :fork
+            tasks.each do |task|
+              fork do
+                task.start!
+              end
+            end
+            Process.waitall
+          else
+            threads = tasks.map do |task|
+              Thread.new do
+                task.start!
+              end
+            end
+            ThreadsWait.all_waits(*threads)
+          end
         end
       end
 
