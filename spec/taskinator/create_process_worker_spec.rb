@@ -14,9 +14,20 @@ describe Taskinator::CreateProcessWorker do
     }
 
     it {
+      Taskinator::CreateProcessWorker.new(definition.name, uuid, Taskinator::Persistence.serialize(:foo => :bar))
+      expect(subject.definition).to eq(definition)
+    }
+
+    it {
       MockDefinition.const_set(definition.name, definition)
       Taskinator::CreateProcessWorker.new("MockDefinition::#{definition.name}", uuid, Taskinator::Persistence.serialize(:foo => :bar))
       expect(subject.definition).to eq(definition)
+    }
+
+    it {
+      expect {
+        Taskinator::CreateProcessWorker.new("NonExistent", uuid, Taskinator::Persistence.serialize(:foo => :bar))
+      }.to raise_error(NameError)
     }
 
     it {
@@ -39,6 +50,4 @@ describe Taskinator::CreateProcessWorker do
       subject.perform
     end
   end
-
-
 end
