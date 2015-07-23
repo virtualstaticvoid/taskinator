@@ -1,3 +1,13 @@
+v0.1.0 - 23 Jul 2015
+---
+Fixed issue with persistence of options passed to `create_process` on the respective `Process` and `Task` instances.
+Improvements to process creation logic.
+Namespaced instrumentation event names.
+Added process completed, cancelled and failed instrumentation events.
+Include additional data in the instrumentation payload. E.g. Process options and percentages.
+Refactored the way processes/tasks get queued, to prevent unnecessary queuing of contained processes/tasks.
+Removed `ProcessWorker` since it isn't needed anymore.
+
 v0.0.18 - 14 Jul 2015
 ---
 Fixed issue with `Taskinator::Api::Processes#each` method, which was causing a Segmentation fault.
