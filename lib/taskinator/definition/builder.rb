@@ -5,18 +5,18 @@ module Taskinator
       attr_reader :process
       attr_reader :definition
       attr_reader :args
-      attr_reader :options
+      attr_reader :builder_options
 
       def initialize(process, definition, *args)
         @process = process
         @definition = definition
+        @builder_options = args.last.is_a?(Hash) ? args.pop : {}
         @args = args
-        @options = args.last.is_a?(Hash) ? args.last : {}
         @executor = Taskinator::Executor.new(@definition)
       end
 
       def option?(key, &block)
-        yield if @options.key?(key) && @options[key]
+        yield if builder_options.key?(key) && builder_options[key]
       end
 
       # defines a sub process of tasks which are executed sequentially
@@ -81,7 +81,7 @@ module Taskinator
 
         # TODO: decide whether the sub process to dynamically receive arguments
 
-        sub_process = definition.create_sub_process(*@args)
+        sub_process = definition.create_sub_process(*@args, combine_options(options))
         Builder.new(define_sub_process_task(@process, sub_process, options), definition, *@args)
       end
 
@@ -89,19 +89,19 @@ module Taskinator
 
       def define_step_task(process, method, args, options={})
         define_task(process) {
-          Task.define_step_task(process, method, args, options)
+          Task.define_step_task(process, method, args, combine_options(options))
         }
       end
 
       def define_job_task(process, job, args, options={})
         define_task(process) {
-          Task.define_job_task(process, job, args, options)
+          Task.define_job_task(process, job, args, combine_options(options))
         }
       end
 
       def define_sub_process_task(process, sub_process, options={})
         define_task(process) {
-          Task.define_sub_process_task(process, sub_process, options)
+          Task.define_sub_process_task(process, sub_process, combine_options(options))
         }
         sub_process
       end
@@ -110,6 +110,11 @@ module Taskinator
         process.tasks << task = yield
         task
       end
+
+      def combine_options(options={})
+        builder_options.merge(options)
+      end
+
     end
   end
 end

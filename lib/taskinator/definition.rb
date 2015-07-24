@@ -33,6 +33,8 @@ module Taskinator
                     Process.define_sequential_process_for(definition, options)
                   }
 
+      # called from respective "create_process" methods
+      # parameters can contain options as the last parameter
       define_singleton_method :_create_process_ do |subprocess, *args|
 
         # TODO: better validation of arguments
@@ -41,7 +43,8 @@ module Taskinator
 
         raise ArgumentError, "wrong number of arguments (#{args.length} for #{arg_list.length})" if args.length < arg_list.length
 
-        process = factory.call(self, (args.last.is_a?(Hash) ? args.last : {}))
+        options = (args.last.is_a?(Hash) ? args.last : {})
+        process = factory.call(self, options)
 
         # this may take long... up to users definition
         Taskinator.instrumenter.instrument('taskinator.process.created', :uuid => process.uuid) do

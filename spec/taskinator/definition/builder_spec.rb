@@ -15,7 +15,9 @@ describe Taskinator::Definition::Builder do
     Class.new(Taskinator::Process).new(definition)
   }
 
-  let(:args) { [:arg1, :arg2, {:option => 1, :another => false}] }
+  let(:args) { [:arg1, :arg2] }
+  let(:builder_options) { {:option1 => 1, :another => false} }
+  let(:options) { { :bar => :baz } }
 
   let(:block) { SpecSupport::Block.new }
 
@@ -24,19 +26,19 @@ describe Taskinator::Definition::Builder do
     Proc.new {|*args| the_block.call }
   }
 
-  subject { Taskinator::Definition::Builder.new(process, definition, *args) }
+  subject { Taskinator::Definition::Builder.new(process, definition, *[*args, builder_options]) }
 
   it "assign attributes" do
     expect(subject.process).to eq(process)
     expect(subject.definition).to eq(definition)
     expect(subject.args).to eq(args)
-    expect(subject.options).to eq({:option => 1, :another => false})
+    expect(subject.builder_options).to eq(builder_options)
   end
 
   describe "#option?" do
-    it "invokes supplied block for 'option' option" do
+    it "invokes supplied block for 'option1' option" do
       expect(block).to receive(:call)
-      subject.option?(:option, &define_block)
+      subject.option?(:option1, &define_block)
     end
 
     it "does not invoke supplied block for 'another' option" do
@@ -67,6 +69,12 @@ describe Taskinator::Definition::Builder do
         subject.sequential
       }.to raise_error(ArgumentError)
     end
+
+    it "includes options" do
+      allow(block).to receive(:call)
+      expect(Taskinator::Process).to receive(:define_sequential_process_for).with(definition, options).and_call_original
+      subject.sequential(options, &define_block)
+    end
   end
 
   describe "#concurrent" do
@@ -85,6 +93,12 @@ describe Taskinator::Definition::Builder do
       expect {
         subject.concurrent
       }.to raise_error(ArgumentError)
+    end
+
+    it "includes options" do
+      allow(block).to receive(:call)
+      expect(Taskinator::Process).to receive(:define_concurrent_process_for).with(definition, Taskinator::CompleteOn::First, options).and_call_original
+      subject.concurrent(Taskinator::CompleteOn::First, options, &define_block)
     end
   end
 
@@ -146,7 +160,7 @@ describe Taskinator::Definition::Builder do
 
   describe "#task" do
     it "creates a task" do
-      expect(Taskinator::Task).to receive(:define_step_task).with(process, :task_method, args, {})
+      expect(Taskinator::Task).to receive(:define_step_task).with(process, :task_method, args, builder_options)
       subject.task(:task_method)
     end
 
@@ -161,12 +175,17 @@ describe Taskinator::Definition::Builder do
         subject.task(:undefined)
       }.to raise_error(NoMethodError)
     end
+
+    it "includes options" do
+      expect(Taskinator::Task).to receive(:define_step_task).with(process, :task_method, args, builder_options.merge(options))
+      subject.task(:task_method, options)
+    end
   end
 
   describe "#job" do
     it "creates a job" do
       job = double('job', :perform => true)
-      expect(Taskinator::Task).to receive(:define_job_task).with(process, job, args, {})
+      expect(Taskinator::Task).to receive(:define_job_task).with(process, job, args, builder_options)
       subject.job(job)
     end
 
@@ -182,6 +201,12 @@ describe Taskinator::Definition::Builder do
         subject.job(double('job', :methods => [], :instance_methods => []))
       }.to raise_error(ArgumentError)
     end
+
+    it "includes options" do
+      job = double('job', :perform => true)
+      expect(Taskinator::Task).to receive(:define_job_task).with(process, job, args, builder_options.merge(options))
+      subject.job(job, options)
+    end
   end
 
   describe "#sub_process" do
@@ -195,15 +220,20 @@ describe Taskinator::Definition::Builder do
     end
 
     it "creates a sub process" do
-      expect(sub_definition).to receive(:create_sub_process).with(*args).and_call_original
+      expect(sub_definition).to receive(:create_sub_process).with(*args, builder_options).and_call_original
       subject.sub_process(sub_definition)
     end
 
     it "creates a sub process task" do
       sub_process = sub_definition.create_process(:argX, :argY, :argZ)
       allow(sub_definition).to receive(:create_sub_process) { sub_process }
-      expect(Taskinator::Task).to receive(:define_sub_process_task).with(process, sub_process, {})
+      expect(Taskinator::Task).to receive(:define_sub_process_task).with(process, sub_process, builder_options)
       subject.sub_process(sub_definition)
+    end
+
+    it "includes options" do
+      expect(sub_definition).to receive(:create_sub_process).with(*args, builder_options.merge(options)).and_call_original
+      subject.sub_process(sub_definition, options)
     end
   end
 
