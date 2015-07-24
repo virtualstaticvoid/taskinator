@@ -94,7 +94,7 @@ describe Taskinator::Queues::ResqueAdapter, :resque do
     let(:definition) { TestDefinition }
 
     it "performs invocation on job" do
-      args = {:a => 1}
+      args = [:foo, {:a => 1}]
       job_class = double('job_class', :methods => [:perform])
       expect(job_class).to receive(:perform).with(*args)
 

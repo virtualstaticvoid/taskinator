@@ -74,7 +74,7 @@ describe Taskinator::Queues::DelayedJobAdapter, :delayed_job do
     let(:definition) { TestDefinition }
 
     it "performs invocation on job" do
-      args = {:a => 1}
+      args = [:foo, {:a => 1}]
       job = double('job')
       expect(job).to receive(:perform)
 
