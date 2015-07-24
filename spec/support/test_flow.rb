@@ -2,6 +2,8 @@ module TestFlow
   extend Taskinator::Definition
 
   define_process :some_arg1, :some_arg2 do
+
+    # TODO: add support for "continue_on_error"
     task :error_task, :continue_on_error => true
 
     task :the_task
