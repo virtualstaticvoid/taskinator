@@ -606,6 +606,35 @@ Taskinator.configure do |config|
 end
 ```
 
+The following instrumentation events are issued:
+
+| Event                              | When                                        |
+|------------------------------------|---------------------------------------------|
+| `taskinator.process.created`       | After a process gets created                |
+| `taskinator.process.saved`         | After a process has been persisted to Redis |
+| `taskinator.process.enqueued`      | After a process is enqueued for processing  |
+| `taskinator.process.completed`     | After a process has completed processing    |
+| `taskinator.process.cancelled`     | After a process has been cancelled          |
+| `taskinator.process.failed`        | After a process has failed                  |
+| `taskinator.task.enqueued`         | After a task has been enqueued              |
+| `taskinator.task.executed`         | After a task has executed                   |
+| `taskinator.job.enqueued`          | After a job has been enqueued               |
+| `taskinator.job.executed`          | After a job has executed                    |
+| `taskinator.subprocess.enqueued`   | After a sub process has been enqueued       |
+| `taskinator.subprocess.executed`   | After a sub process has executed            |
+
+For all events, the data included contains the following information:
+
+| Key                      | Value                                                 |
+|--------------------------|-------------------------------------------------------|
+| `:process_uuid`          | The UUID of the root process                          |
+| `:process_options`       | Options hash of the root process                      |
+| `:uuid`                  | The UUID of the respective task, job or sub process   |
+| `:tasks_count`           | The total count of tasks for the given process        |
+| `:percentage_completed`  | The percentage of completed tasks                     |
+| `:percentage_failed`     | The percentage of failed tasks                        |
+| `:percentage_cancelled`  | The percentage of cancelled tasks                     |
+
 ## Notes
 
 The persistence logic is decoupled from the implementation, so it is possible to implement another backing store if required.
