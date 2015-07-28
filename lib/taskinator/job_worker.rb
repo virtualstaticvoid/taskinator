@@ -14,6 +14,7 @@ module Taskinator
         task.complete!
       rescue => e
         Taskinator.logger.error(e)
+        Taskinator.logger.debug(e.backtrace)
         task.fail!(e)
         raise e
       end
