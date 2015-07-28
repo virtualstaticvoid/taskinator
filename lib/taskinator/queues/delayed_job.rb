@@ -34,12 +34,6 @@ module Taskinator
         end
       end
 
-      ProcessWorker = Struct.new(:process_uuid) do
-        def perform
-          Taskinator::ProcessWorker.new(process_uuid).perform
-        end
-      end
-
       TaskWorker = Struct.new(:task_uuid) do
         def perform
           Taskinator::TaskWorker.new(task_uuid).perform
@@ -53,6 +47,7 @@ module Taskinator
           end
         end
       end
+
     end
   end
 end

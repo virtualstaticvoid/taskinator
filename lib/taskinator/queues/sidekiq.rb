@@ -14,7 +14,7 @@ module Taskinator
 
       def enqueue_create_process(definition, uuid, args)
         queue = definition.queue || @config[:definition_queue]
-        ProcessWorker.client_push('class' => CreateProcessWorker, 'args' => [definition.name, uuid, Taskinator::Persistence.serialize(args)], 'queue' => queue)
+        CreateProcessWorker.client_push('class' => CreateProcessWorker, 'args' => [definition.name, uuid, Taskinator::Persistence.serialize(args)], 'queue' => queue)
       end
 
       def enqueue_task(task)
@@ -32,14 +32,6 @@ module Taskinator
 
         def perform(definition_name, uuid, args)
           Taskinator::CreateProcessWorker.new(definition_name, uuid, args).perform
-        end
-      end
-
-      class ProcessWorker
-        include ::Sidekiq::Worker
-
-        def perform(process_uuid)
-          Taskinator::ProcessWorker.new(process_uuid).perform
         end
       end
 

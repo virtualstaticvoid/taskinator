@@ -253,12 +253,6 @@ describe Taskinator::Process do
         it {
           expect {
             subject.enqueue!
-          }.to change { Taskinator.queue.processes.length }.by(0)
-        }
-
-        it {
-          expect {
-            subject.enqueue!
           }.to change { Taskinator.queue.tasks.length }.by(0)
         }
       end
@@ -392,12 +386,6 @@ describe Taskinator::Process do
 
     describe "#enqueue!" do
       context "without tasks" do
-        it {
-          expect {
-            subject.enqueue!
-          }.to change { Taskinator.queue.processes.length }.by(0)
-        }
-
         it {
           expect {
             subject.enqueue!

@@ -388,12 +388,6 @@ describe Taskinator::Task do
         it {
           expect {
             subject.enqueue!
-          }.to change { Taskinator.queue.processes.length }.by(0)
-        }
-
-        it {
-          expect {
-            subject.enqueue!
           }.to change { Taskinator.queue.tasks.length }.by(0)
         }
       end

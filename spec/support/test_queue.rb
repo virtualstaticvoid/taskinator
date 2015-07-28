@@ -8,7 +8,6 @@ module Taskinator
     class TestQueueAdapter
 
       attr_reader :creates
-      attr_reader :processes
       attr_reader :tasks
       attr_reader :jobs
 
@@ -18,7 +17,6 @@ module Taskinator
 
       def clear
         @creates = []
-        @processes = []
         @tasks = []
         @jobs = []
       end

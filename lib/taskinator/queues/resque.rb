@@ -15,10 +15,6 @@ module Taskinator
           @queue = config[:definition_queue]
         end
 
-        ProcessWorker.class_eval do
-          @queue = config[:process_queue]
-        end
-
         TaskWorker.class_eval do
           @queue = config[:task_queue]
         end
@@ -49,12 +45,6 @@ module Taskinator
       class CreateProcessWorker
         def self.perform(definition_name, uuid, args)
           Taskinator::CreateProcessWorker.new(definition_name, uuid, args).perform
-        end
-      end
-
-      class ProcessWorker
-        def self.perform(process_uuid)
-          Taskinator::ProcessWorker.new(process_uuid).perform
         end
       end
 
