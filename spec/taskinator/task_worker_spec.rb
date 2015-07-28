@@ -24,22 +24,6 @@ describe Taskinator::TaskWorker do
     subject.perform
   end
 
-  it "should complete the task if can_complete? is true" do
-    task = mock_task(false, false, true)
-    allow(Taskinator::Task).to receive(:fetch).with(uuid) { task }
-    allow(task).to receive(:start!)
-    expect(task).to receive(:complete!)
-    subject.perform
-  end
-
-  it "should not complete the task if can_complete? is false" do
-    task = mock_task
-    allow(Taskinator::Task).to receive(:fetch).with(uuid) { task }
-    allow(task).to receive(:start!)
-    expect(task).to_not receive(:complete!)
-    subject.perform
-  end
-
   it "should not start if paused" do
     task = mock_task(true, false)
     allow(Taskinator::Task).to receive(:fetch).with(uuid) { task }

@@ -144,7 +144,9 @@ describe Taskinator::Definition do
 
       it "for create process" do
         instrumentation_block = SpecSupport::Block.new
-        expect(instrumentation_block).to receive(:call)
+        expect(instrumentation_block).to receive(:call) do |*args|
+          expect(args.first).to eq('taskinator.process.created')
+        end
 
         # temporary subscription
         ActiveSupport::Notifications.subscribed(instrumentation_block, /taskinator.process.created/) do
@@ -154,7 +156,9 @@ describe Taskinator::Definition do
 
       it "for save process" do
         instrumentation_block = SpecSupport::Block.new
-        expect(instrumentation_block).to receive(:call)
+        expect(instrumentation_block).to receive(:call) do |*args|
+          expect(args.first).to eq('taskinator.process.saved')
+        end
 
         # temporary subscription
         ActiveSupport::Notifications.subscribed(instrumentation_block, /taskinator.process.saved/) do

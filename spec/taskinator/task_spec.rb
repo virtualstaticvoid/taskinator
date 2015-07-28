@@ -7,6 +7,7 @@ describe Taskinator::Task do
   describe "Base" do
 
     let(:process) { Class.new(Taskinator::Process).new(definition) }
+
     subject { Class.new(Taskinator::Task).new(process) }
 
     describe "#initialize" do
@@ -49,14 +50,6 @@ describe Taskinator::Task do
       it { expect(subject.current_state.name).to eq(:initial) }
     end
 
-    describe "#can_complete_task?" do
-      it {
-        expect {
-          subject.can_complete_task?
-        }.to raise_error(NotImplementedError)
-      }
-    end
-
     describe "workflow" do
       describe "#enqueue!" do
         it { expect(subject).to respond_to(:enqueue!) }
@@ -85,7 +78,6 @@ describe Taskinator::Task do
       describe "#complete!" do
         it { expect(subject).to respond_to(:complete!) }
         it {
-          expect(subject).to receive(:can_complete_task?) { true }
           expect(subject).to receive(:complete)
           expect(process).to receive(:task_completed).with(subject)
           subject.start!
@@ -194,6 +186,10 @@ describe Taskinator::Task do
     end
 
     describe "#start!" do
+      before do
+        allow(process).to receive(:task_completed).with(subject)
+      end
+
       it "invokes executor" do
         expect(subject.executor).to receive(subject.method).with(*subject.args)
         subject.start!
@@ -238,22 +234,20 @@ describe Taskinator::Task do
         allow(subject.executor).to receive(subject.method)
 
         instrumentation_block = SpecSupport::Block.new
-        expect(instrumentation_block).to receive(:call)
+
+        expect(instrumentation_block).to receive(:call) do |*args|
+          expect(args.first).to eq('taskinator.task.executed')
+        end
+
+        expect(instrumentation_block).to receive(:call) do |*args|
+          expect(args.first).to eq('taskinator.task.completed')
+        end
 
         # temporary subscription
         ActiveSupport::Notifications.subscribed(instrumentation_block, /taskinator.task/) do
           subject.start!
         end
       end
-    end
-
-    describe "#can_complete_task?" do
-      it { expect(subject.can_complete_task?).to_not be }
-      it {
-        allow(subject.executor).to receive(subject.method).with(*subject.args)
-        subject.start!
-        expect(subject.can_complete_task?).to be
-      }
     end
 
     describe "#accept" do
@@ -313,6 +307,10 @@ describe Taskinator::Task do
     end
 
     describe "#perform" do
+      before do
+        allow(process).to receive(:task_completed).with(subject)
+      end
+
       it {
         block = SpecSupport::Block.new
         expect(block).to receive(:call).with(TestJob, {:a => 1, :b => 2})
@@ -325,7 +323,14 @@ describe Taskinator::Task do
         allow(block).to receive(:call)
 
         instrumentation_block = SpecSupport::Block.new
-        expect(instrumentation_block).to receive(:call)
+
+        expect(instrumentation_block).to receive(:call) do |*args|
+          expect(args.first).to eq('taskinator.job.executed')
+        end
+
+        expect(instrumentation_block).to receive(:call) do |*args|
+          expect(args.first).to eq('taskinator.job.completed')
+        end
 
         # temporary subscription
         ActiveSupport::Notifications.subscribed(instrumentation_block, /taskinator.job/) do
@@ -416,19 +421,19 @@ describe Taskinator::Task do
         allow(sub_process).to receive(:start)
 
         instrumentation_block = SpecSupport::Block.new
-        expect(instrumentation_block).to receive(:call)
+
+        expect(instrumentation_block).to receive(:call) do |*args|
+          expect(args.first).to eq('taskinator.subprocess.executed')
+        end
+
+        expect(instrumentation_block).to receive(:call) do |*args|
+          expect(args.first).to eq('taskinator.subprocess.completed')
+        end
 
         # temporary subscription
         ActiveSupport::Notifications.subscribed(instrumentation_block, /taskinator.subprocess/) do
           subject.start!
         end
-      end
-    end
-
-    describe "#can_complete_task?" do
-      it "delegates to sub process" do
-        expect(sub_process).to receive(:completed?)
-        subject.can_complete_task?
       end
     end
 

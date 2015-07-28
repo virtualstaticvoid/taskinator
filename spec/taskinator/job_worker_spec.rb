@@ -33,16 +33,6 @@ describe Taskinator::JobWorker do
     allow(Taskinator::Task).to receive(:fetch).with(uuid) { job }
     allow(job).to receive(:start!)
     expect(job).to receive(:perform)
-    allow(job).to receive(:complete!)
-    subject.perform
-  end
-
-  it "should complete the job" do
-    job = mock_job
-    allow(Taskinator::Task).to receive(:fetch).with(uuid) { job }
-    allow(job).to receive(:start!)
-    allow(job).to receive(:perform)
-    expect(job).to receive(:complete!)
     subject.perform
   end
 

@@ -58,20 +58,18 @@ module Taskinator
       state :initial do
         event :enqueue, :transitions_to => :enqueued
         event :start, :transitions_to => :processing
+        event :complete, :transitions_to => :completed
         event :fail, :transitions_to => :failed
       end
 
       state :enqueued do
         event :start, :transitions_to => :processing
-
-        # need to be able to complete, for when sub-tasks have no tasks
-        event :complete, :transitions_to => :completed, :if => :can_complete_task?
-
+        event :complete, :transitions_to => :completed
         event :fail, :transitions_to => :failed
       end
 
       state :processing do
-        event :complete, :transitions_to => :completed, :if => :can_complete_task?
+        event :complete, :transitions_to => :completed
         event :fail, :transitions_to => :failed
       end
 
@@ -87,11 +85,6 @@ module Taskinator
         Taskinator.logger.debug(error.backtrace)
         fail!(error)
       end
-    end
-
-    def can_complete_task?(*args)
-      # subclasses must implement this method
-      raise NotImplementedError
     end
 
     # include after defining the workflow
@@ -165,12 +158,14 @@ module Taskinator
         Taskinator.instrumenter.instrument('taskinator.task.executed', instrumentation_payload) do
           executor.send(method, *args)
         end
-        @is_complete = true
+        complete!
       end
 
-      # NOTE: this _does not_ work when checking out-of-process
-      def can_complete_task?
-        defined?(@is_complete) && @is_complete
+      def on_completed_entry(*args)
+        super
+        Taskinator.instrumenter.instrument('taskinator.task.completed', instrumentation_payload) do
+          # intentionally left empty
+        end
       end
 
       def accept(visitor)
@@ -214,15 +209,18 @@ module Taskinator
       end
 
       def perform
+        # ASSUMPTION: when the method returns, the task is considered to be complete
         Taskinator.instrumenter.instrument('taskinator.job.executed', instrumentation_payload) do
           yield(job, args)
         end
-        @is_complete = true
+        complete!
       end
 
-      # NOTE: this _does not_ work when checking out-of-process
-      def can_complete_task?
-        defined?(@is_complete) && @is_complete
+      def on_completed_entry(*args)
+        super
+        Taskinator.instrumenter.instrument('taskinator.job.completed', instrumentation_payload) do
+          # intentionally left empty
+        end
       end
 
       def accept(visitor)
@@ -249,14 +247,14 @@ module Taskinator
         @sub_process.parent = self
       end
 
+      def enqueue
+        sub_process.enqueue!
+      end
+
       def on_enqueued_entry(*args)
         Taskinator.instrumenter.instrument('taskinator.subprocess.enqueued', instrumentation_payload) do
           # intentionally left empty
         end
-      end
-
-      def enqueue
-        sub_process.enqueue!
       end
 
       def start
@@ -265,9 +263,11 @@ module Taskinator
         end
       end
 
-      def can_complete_task?
-        # NOTE: this works out-of-process, so there isn't any issue
-        sub_process.completed?
+      def on_completed_entry(*args)
+        super
+        Taskinator.instrumenter.instrument('taskinator.subprocess.completed', instrumentation_payload) do
+          # intentionally left empty
+        end
       end
 
       def accept(visitor)

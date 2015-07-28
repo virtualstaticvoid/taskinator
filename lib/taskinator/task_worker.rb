@@ -11,7 +11,6 @@ module Taskinator
       return if task.paused? || task.cancelled?
       begin
         task.start!
-        task.complete! if task.can_complete?
       rescue => e
         Taskinator.logger.error(e)
         Taskinator.logger.debug(e.backtrace)

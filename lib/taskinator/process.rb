@@ -63,10 +63,7 @@ module Taskinator
       state :initial do
         event :enqueue, :transitions_to => :enqueued
         event :start, :transitions_to => :processing
-
-        # need to be able to complete, for when there are no tasks
         event :complete, :transitions_to => :completed, :if => :no_tasks_defined?
-
         event :cancel, :transitions_to => :cancelled
         event :fail, :transitions_to => :failed
       end
