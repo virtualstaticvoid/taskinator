@@ -1,4 +1,17 @@
-v0.1.0 - 23 Jul 2015
+v0.2.0 - 31 Jul 2015
+---
+Bug fix for `create_process_remotely` so that it returns the process uuid instead of nil.
+Removed reload functionality, since it isn't used anymore
+Added missing instrumentation events for task, job and subprocess completed events.
+Bug fix for when `sequential` or `concurrent` steps don't have any tasks to still continue processing.
+Refactoring to remove dead code and "reload" functionality.
+Improvements to console and rake to use console instrumenter.
+
+v0.1.1 - 23 Jul 2015  [Yanked]
+---
+Bug fix for option parameter handling.
+
+v0.1.0 - 23 Jul 2015 [Yanked]
 ---
 Fixed issue with persistence of options passed to `create_process` on the respective `Process` and `Task` instances.
 Improvements to process creation logic.
