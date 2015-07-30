@@ -17,6 +17,15 @@ module TestFlows
     end
 
     def do_task(*args)
+      Taskinator.logger.info(">>> Executing task do_task [#{uuid}]...")
+    end
+
+    # just create lots of these, so it's easy to see which task
+    # corresponds with each method when debugging specs
+    20.times do |i|
+      define_method "task_#{i}" do |*args|
+        Taskinator.logger.info(">>> Executing task #{__method__} [#{uuid}]...")
+      end
     end
 
   end
@@ -81,6 +90,48 @@ module TestFlows
       end
     end
 
+  end
+
+  module EmptySequentialProcessTest
+    extend Taskinator::Definition
+    include Support
+
+    define_process do
+
+      task :task_0
+
+      sequential do
+        # NB: empty!
+      end
+
+      sequential do
+        task :task_1
+      end
+
+      task :task_2
+
+    end
+  end
+
+  module EmptyConcurrentProcessTest
+    extend Taskinator::Definition
+    include Support
+
+    define_process do
+
+      task :task_0
+
+      concurrent do
+        # NB: empty!
+      end
+
+      concurrent do
+        task :task_1
+      end
+
+      task :task_2
+
+    end
   end
 
 end

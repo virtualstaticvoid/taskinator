@@ -58,7 +58,7 @@ module Taskinator
       state :initial do
         event :enqueue, :transitions_to => :enqueued
         event :start, :transitions_to => :processing
-        event :complete, :transitions_to => :completed
+        event :complete, :transitions_to => :completed  # specific to a SubProcess which has no tasks
         event :fail, :transitions_to => :failed
       end
 
@@ -92,11 +92,10 @@ module Taskinator
     # need to override the ones defined by workflow
     include Persistence
 
-    # callback for when the task has completed
-    def on_completed_entry(*args)
-      self.incr_completed
+    def complete
       # notify the process that this task has completed
       process.task_completed(self)
+      self.incr_completed
     end
 
     # callback for when the task has failed
@@ -162,7 +161,6 @@ module Taskinator
       end
 
       def on_completed_entry(*args)
-        super
         Taskinator.instrumenter.instrument('taskinator.task.completed', instrumentation_payload) do
           # intentionally left empty
         end
@@ -217,7 +215,6 @@ module Taskinator
       end
 
       def on_completed_entry(*args)
-        super
         Taskinator.instrumenter.instrument('taskinator.job.completed', instrumentation_payload) do
           # intentionally left empty
         end
@@ -264,7 +261,6 @@ module Taskinator
       end
 
       def on_completed_entry(*args)
-        super
         Taskinator.instrumenter.instrument('taskinator.subprocess.completed', instrumentation_payload) do
           # intentionally left empty
         end

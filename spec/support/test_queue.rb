@@ -37,23 +37,40 @@ module Taskinator
         @jobs << job
       end
 
+      def empty?
+        @creates.empty? && @tasks.empty? && @jobs.empty?
+      end
+
     end
 
     #
-    # this is a synchronous implementation for use in testing
+    # this is a "synchronous" implementation for use in testing
     #
-    class QueueWorkerAdapter
+    class QueueWorkerAdapter < TestQueueAdapter
 
       def enqueue_create_process(definition, uuid, args)
-        Taskinator::CreateProcessWorker.new(definition.name, uuid, args).perform
+        super
+        invoke do
+          Taskinator::CreateProcessWorker.new(definition.name, uuid, args).perform
+        end
       end
 
       def enqueue_task(task)
-        Taskinator::TaskWorker.new(task.uuid).perform
+        super
+        invoke do
+          Taskinator::TaskWorker.new(task.uuid).perform
+        end
       end
 
       def enqueue_job(job)
-        Taskinator::JobWorker.new(job.uuid).perform
+        super
+        invoke do
+          Taskinator::JobWorker.new(job.uuid).perform
+        end
+      end
+
+      def invoke(&block)
+        block.call
       end
 
     end

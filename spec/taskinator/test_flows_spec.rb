@@ -85,4 +85,47 @@ describe TestFlows do
       end
     end
   end
+
+  describe "scenarios" do
+
+    before do
+      # use the "synchronous" queue
+      Taskinator.queue_adapter = :test_queue_worker
+    end
+
+    context "empty subprocesses" do
+
+      context "sequential" do
+        let(:definition) { TestFlows::EmptySequentialProcessTest }
+        subject { definition.create_process }
+
+        it "invokes each task" do
+          # this doesn't work...
+          # expect_any_instance_of(Taskinator::Executor).to receive(:do_task_x).exactly(3).times
+          # subject.start!
+
+          expect {
+            subject.enqueue!
+          }.to change { Taskinator.queue.tasks.length }.by(3)
+        end
+      end
+
+      context "concurrent" do
+        let(:definition) { TestFlows::EmptyConcurrentProcessTest }
+        subject { definition.create_process }
+
+        it "invokes each task" do
+          # this doesn't work...
+          # expect_any_instance_of(Taskinator::Executor).to receive(:do_task_x).exactly(3).times
+          # subject.start!
+
+          expect {
+            subject.enqueue!
+          }.to change { Taskinator.queue.tasks.length }.by(3)
+        end
+      end
+
+    end
+  end
+
 end

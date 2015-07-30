@@ -63,21 +63,21 @@ module Taskinator
       state :initial do
         event :enqueue, :transitions_to => :enqueued
         event :start, :transitions_to => :processing
-        event :complete, :transitions_to => :completed, :if => :no_tasks_defined?
+        event :complete, :transitions_to => :completed
         event :cancel, :transitions_to => :cancelled
         event :fail, :transitions_to => :failed
       end
 
       state :enqueued do
         event :start, :transitions_to => :processing
-        event :complete, :transitions_to => :completed, :if => :no_tasks_defined?
+        event :complete, :transitions_to => :completed
         event :cancel, :transitions_to => :cancelled
         event :fail, :transitions_to => :failed
       end
 
       state :processing do
         event :pause, :transitions_to => :paused
-        event :complete, :transitions_to => :completed, :if => :tasks_completed?
+        event :complete, :transitions_to => :completed
         event :fail, :transitions_to => :failed
       end
 
@@ -135,8 +135,7 @@ module Taskinator
     # need to override the ones defined by workflow
     include Persistence
 
-    # callback for when the process has completed
-    def on_completed_entry(*args)
+    def complete
       # notify the parent task (if there is one) that this process has completed
       # note: parent may be a proxy, so explicity check for nil?
       parent.complete! unless parent.nil?
@@ -152,10 +151,8 @@ module Taskinator
     class Sequential < Process
       def enqueue
         Taskinator.instrumenter.instrument('taskinator.process.enqueued', instrumentation_payload) do
-          # don't bother if there aren't any tasks!
           if tasks.empty?
-            # simply complete the process...
-            complete!
+            complete! # weren't any tasks to start with
           else
             tasks.first.enqueue!
           end
@@ -178,7 +175,7 @@ module Taskinator
         if next_task
           next_task.enqueue!
         else
-          complete! if can_complete?
+          complete!
         end
       end
 
@@ -204,19 +201,13 @@ module Taskinator
 
       def enqueue
         Taskinator.instrumenter.instrument('taskinator.process.enqueued', instrumentation_payload) do
-          # don't bother if there aren't any tasks!
           if tasks.empty?
-            # simply complete the process...
-            complete!
+            complete! # weren't any tasks to start with
           else
             tasks.each(&:enqueue!)
           end
         end
       end
-
-      # not sure on the best implementation
-      # since these tasks need to be executed concurrently
-      # alias :start :enqueue
 
       def start
         Taskinator.instrumenter.instrument('taskinator.process.completed', instrumentation_payload) do
@@ -245,7 +236,7 @@ module Taskinator
       def task_completed(task)
         # when complete on first, then don't bother with subsequent tasks completing
         return if completed? || failed?
-        complete! if can_complete?
+        complete!
       end
 
       def tasks_completed?(*args)

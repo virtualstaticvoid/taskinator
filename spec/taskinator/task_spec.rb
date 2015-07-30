@@ -79,7 +79,6 @@ describe Taskinator::Task do
         it { expect(subject).to respond_to(:complete!) }
         it {
           expect(subject).to receive(:complete)
-          expect(process).to receive(:task_completed).with(subject)
           subject.start!
           subject.complete!
           expect(subject.current_state.name).to eq(:completed)
@@ -171,6 +170,13 @@ describe Taskinator::Task do
     describe "#executor" do
       it { expect(subject.executor).to_not be_nil }
       it { expect(subject.executor).to be_a(definition) }
+
+      it "handles failure" do
+        error = StandardError.new
+        allow(subject.executor).to receive(subject.method).with(*subject.args).and_raise(error)
+        expect(subject).to receive(:fail!).with(error)
+        subject.start!
+      end
     end
 
     describe "#enqueue!" do
@@ -183,18 +189,11 @@ describe Taskinator::Task do
 
     describe "#start!" do
       before do
-        allow(process).to receive(:task_completed).with(subject)
+        expect(process).to receive(:task_completed).with(subject)
       end
 
       it "invokes executor" do
         expect(subject.executor).to receive(subject.method).with(*subject.args)
-        subject.start!
-      end
-
-      it "handles failure" do
-        error = StandardError.new
-        allow(subject.executor).to receive(subject.method).with(*subject.args).and_raise(error)
-        expect(subject).to receive(:fail!).with(error)
         subject.start!
       end
 
@@ -304,7 +303,7 @@ describe Taskinator::Task do
 
     describe "#perform" do
       before do
-        allow(process).to receive(:task_completed).with(subject)
+        expect(process).to receive(:task_completed).with(subject)
       end
 
       it {

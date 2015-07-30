@@ -141,7 +141,6 @@ describe Taskinator::Process do
           subject.complete!
         }
         it {
-          expect(subject).to receive(:tasks_completed?) { true }
           subject.start!
           subject.complete!
           expect(subject.current_state.name).to eq(:completed)
@@ -295,7 +294,6 @@ describe Taskinator::Process do
         tasks.each {|t| subject.tasks << t }
         task2 = tasks[1]
 
-        expect(subject).to receive(:can_complete?) { true }
         expect(subject).to receive(:complete!)
 
         subject.task_completed(task2)
@@ -419,7 +417,6 @@ describe Taskinator::Process do
       it "completes when tasks complete" do
         tasks.each {|t| subject.tasks << t }
 
-        expect(subject).to receive(:can_complete?) { true }
         expect(subject).to receive(:complete!)
 
         subject.task_completed(tasks.first)
