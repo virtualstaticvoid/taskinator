@@ -9,3 +9,8 @@ task :default => :spec
 require 'resque'
 require 'resque/tasks'
 require 'taskinator'
+
+Taskinator.configure do |config|
+  config.logger.level = 0  # DEBUG
+  config.instrumenter = Taskinator::ConsoleInstrumenter.new
+end

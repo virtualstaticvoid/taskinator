@@ -7,5 +7,10 @@ require "taskinator"
 # You can add fixtures and/or initialization code here to make experimenting
 # with your gem easier. You can also use a different console, if you like.
 
+Taskinator.configure do |config|
+  config.logger.level = 0  # DEBUG
+  config.instrumenter = Taskinator::ConsoleInstrumenter.new
+end
+
 require "pry"
 Pry.start
