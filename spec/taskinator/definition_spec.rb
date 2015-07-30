@@ -198,28 +198,6 @@ describe Taskinator::Definition do
 
       subject.create_process_remotely
     end
-
-    describe "reloading" do
-      it "returns false if not persisted yet" do
-        block = SpecSupport::Block.new
-        allow(block).to receive(:to_proc) {
-          Proc.new {|*args| }
-        }
-        subject.define_process(&block)
-        process = subject.create_process_remotely
-
-        expect(process.reload).to eq(false)
-      end
-
-      it "returns true if persisted" do
-        definition = MockDefinition.create
-        process = definition.create_process_remotely(:foo)
-        definition._create_process_(false, :foo, :uuid => process.uuid).save
-
-        expect(process.reload).to eq(true)
-      end
-    end
-
   end
 
   describe "#queue" do

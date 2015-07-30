@@ -434,18 +434,12 @@ module Taskinator
       attr_reader :process_uuid
       attr_reader :uuid
 
-      # attempts to reload the actual process
-      def reload
-        @instance = nil
-        __getobj__
-        @instance ? true : false
-      end
-
       def __getobj__
         # only fetch the object as needed
         # and memoize for subsequent calls
         @instance ||= @type.fetch(@uuid, @instance_cache)
       end
+
     end
 
     class << self

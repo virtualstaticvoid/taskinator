@@ -266,13 +266,5 @@ module Taskinator
         %(#<#{self.class.name}:0x#{self.__id__.to_s(16)} uuid="#{uuid}", state=:#{current_state.name}, complete_on=:#{complete_on}, tasks=[#{tasks.inspect}]>)
       end
     end
-
-    # reloads the process from storage
-    # NB: only implemented by LazyLoader so that
-    #   the process can be lazy loaded, thereafter
-    #    it has no effect
-    def reload
-      false
-    end
   end
 end

@@ -279,13 +279,5 @@ module Taskinator
         %(#<#{self.class.name}:0x#{self.__id__.to_s(16)} uuid="#{uuid}", sub_process=#{sub_process.inspect}, state=:#{current_state.name}>)
       end
     end
-
-    # reloads the task from storage
-    # NB: only implemented by LazyLoader so that
-    #   the task can be lazy loaded, thereafter
-    #    it has no effect
-    def reload
-      false
-    end
   end
 end
