@@ -85,9 +85,9 @@ module Taskinator
     end
 
     #
-    # returns a placeholder process, with the uuid attribute of the
-    # actual process. the callee can call `reload` if required to
-    # get the actual process, once it has been built by the CreateProcessWorker
+    # returns the process uuid of the process to be created
+    # the process can be retrieved using this uuid by using
+    # Taskinator::Process.fetch(uuid)
     #
     def create_process_remotely(*args)
       assert_valid_process_module
@@ -95,11 +95,7 @@ module Taskinator
 
       Taskinator.queue.enqueue_create_process(self, uuid, args)
 
-      Taskinator::Persistence::LazyLoader.new(
-        Taskinator::Process,
-        uuid,
-        Taskinator::Process.key_for(uuid)
-      )
+      return uuid
     end
 
     def create_sub_process(*args)

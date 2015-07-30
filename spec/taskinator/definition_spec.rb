@@ -185,7 +185,6 @@ describe Taskinator::Definition do
       process = subject.create_process_remotely
 
       expect(process).to_not be_nil
-      expect(process.uuid).to_not be_nil
     end
 
     it "enqueues" do
