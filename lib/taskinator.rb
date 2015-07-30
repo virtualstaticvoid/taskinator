@@ -98,9 +98,11 @@ module Taskinator
     end
 
     def queue
-      adapter = self.queue_adapter || :resque
-      config = queue_config || {}
-      @queue ||= Taskinator::Queues.create_adapter(adapter, config)
+      @queue ||= begin
+        adapter = self.queue_adapter || :resque
+        config = queue_config || {}
+        Taskinator::Queues.create_adapter(adapter, config)
+      end
     end
 
     # set the instrumenter to use.
