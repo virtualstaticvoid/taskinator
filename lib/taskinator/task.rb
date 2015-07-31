@@ -93,21 +93,27 @@ module Taskinator
     include Persistence
 
     def complete
-      # notify the process that this task has completed
-      process.task_completed(self)
-      self.incr_completed
+      Taskinator.instrumenter.instrument('taskinator.task.completed', instrumentation_payload) do
+        # notify the process that this task has completed
+        process.task_completed(self)
+        self.incr_completed
+      end
     end
 
     # callback for when the task has failed
     def on_failed_entry(*args)
-      self.incr_failed
-      # notify the process that this task has failed
-      process.task_failed(self, args.last)
+      Taskinator.instrumenter.instrument('taskinator.task.failed', instrumentation_payload) do
+        self.incr_failed
+        # notify the process that this task has failed
+        process.task_failed(self, args.last)
+      end
     end
 
     # callback for when the task has cancelled
     def on_cancelled_entry(*args)
-      self.incr_cancelled
+      Taskinator.instrumenter.instrument('taskinator.task.cancelled', instrumentation_payload) do
+        self.incr_cancelled
+      end
     end
 
     # helper method, delegating to process
@@ -139,31 +145,17 @@ module Taskinator
       end
 
       def enqueue
-        Taskinator.queue.enqueue_task(self)
-      end
-
-      def on_enqueued_entry(*args)
         Taskinator.instrumenter.instrument('taskinator.task.enqueued', instrumentation_payload) do
-          # intentionally left empty
+          Taskinator.queue.enqueue_task(self)
         end
-      end
-
-      def executor
-        @executor ||= Taskinator::Executor.new(@definition, self)
       end
 
       def start
-        # ASSUMPTION: when the method returns, the task is considered to be complete
-        Taskinator.instrumenter.instrument('taskinator.task.executed', instrumentation_payload) do
+        Taskinator.instrumenter.instrument('taskinator.task.started', instrumentation_payload) do
           executor.send(method, *args)
         end
+        # ASSUMPTION: when the method returns, the task is considered to be complete
         complete!
-      end
-
-      def on_completed_entry(*args)
-        Taskinator.instrumenter.instrument('taskinator.task.completed', instrumentation_payload) do
-          # intentionally left empty
-        end
       end
 
       def accept(visitor)
@@ -171,6 +163,10 @@ module Taskinator
         visitor.visit_type(:definition)
         visitor.visit_attribute(:method)
         visitor.visit_args(:args)
+      end
+
+      def executor
+        @executor ||= Taskinator::Executor.new(@definition, self)
       end
 
       def inspect
@@ -197,27 +193,18 @@ module Taskinator
       end
 
       def enqueue
-        Taskinator.queue.enqueue_job(self)
-      end
-
-      def on_enqueued_entry(*args)
-        Taskinator.instrumenter.instrument('taskinator.job.enqueued', instrumentation_payload) do
-          # intentionally left empty
+        Taskinator.instrumenter.instrument('taskinator.task.enqueued', instrumentation_payload) do
+          Taskinator.queue.enqueue_job(self)
         end
       end
 
+      # can't use the start! method, since a block is required
       def perform
-        # ASSUMPTION: when the method returns, the task is considered to be complete
-        Taskinator.instrumenter.instrument('taskinator.job.executed', instrumentation_payload) do
+        Taskinator.instrumenter.instrument('taskinator.task.started', instrumentation_payload) do
           yield(job, args)
         end
+        # ASSUMPTION: when the method returns, the task is considered to be complete
         complete!
-      end
-
-      def on_completed_entry(*args)
-        Taskinator.instrumenter.instrument('taskinator.job.completed', instrumentation_payload) do
-          # intentionally left empty
-        end
       end
 
       def accept(visitor)
@@ -245,24 +232,14 @@ module Taskinator
       end
 
       def enqueue
-        sub_process.enqueue!
-      end
-
-      def on_enqueued_entry(*args)
-        Taskinator.instrumenter.instrument('taskinator.subprocess.enqueued', instrumentation_payload) do
-          # intentionally left empty
+        Taskinator.instrumenter.instrument('taskinator.task.enqueued', instrumentation_payload) do
+          sub_process.enqueue!
         end
       end
 
       def start
-        Taskinator.instrumenter.instrument('taskinator.subprocess.executed', instrumentation_payload) do
+        Taskinator.instrumenter.instrument('taskinator.task.started', instrumentation_payload) do
           sub_process.start!
-        end
-      end
-
-      def on_completed_entry(*args)
-        Taskinator.instrumenter.instrument('taskinator.subprocess.completed', instrumentation_payload) do
-          # intentionally left empty
         end
       end
 

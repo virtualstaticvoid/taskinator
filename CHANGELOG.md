@@ -6,6 +6,7 @@ Added missing instrumentation events for task, job and subprocess completed even
 Bug fix for when `sequential` or `concurrent` steps don't have any tasks to still continue processing.
 Refactoring to remove dead code and "reload" functionality.
 Improvements to console and rake to use console instrumenter.
+Consolidation of instrumentation events. Added `type` to payload.
 
 v0.1.1 - 23 Jul 2015  [Yanked]
 ---

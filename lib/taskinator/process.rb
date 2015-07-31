@@ -106,22 +106,22 @@ module Taskinator
       tasks.empty?
     end
 
-    # callbacks for process events for instrumentation
-
+    # callback for when the process has failed
     def on_failed_entry(*args)
       Taskinator.instrumenter.instrument('taskinator.process.failed', instrumentation_payload) do
         # intentionally left empty
       end
     end
 
+    # callback for when the process was cancelled
     def on_cancelled_entry(*args)
       Taskinator.instrumenter.instrument('taskinator.process.cancelled', instrumentation_payload) do
         # intentionally left empty
       end
     end
 
+    # subclasses must implement this method
     def tasks_completed?(*args)
-      # subclasses must implement this method
       raise NotImplementedError
     end
 
@@ -136,9 +136,11 @@ module Taskinator
     include Persistence
 
     def complete
-      # notify the parent task (if there is one) that this process has completed
-      # note: parent may be a proxy, so explicity check for nil?
-      parent.complete! unless parent.nil?
+      Taskinator.instrumenter.instrument('taskinator.process.completed', instrumentation_payload) do
+        # notify the parent task (if there is one) that this process has completed
+        # note: parent may be a proxy, so explicity check for nil?
+        parent.complete! unless parent.nil?
+      end
     end
 
     # callback for when the process has failed
@@ -160,7 +162,7 @@ module Taskinator
       end
 
       def start
-        Taskinator.instrumenter.instrument('taskinator.process.completed', instrumentation_payload) do
+        Taskinator.instrumenter.instrument('taskinator.process.started', instrumentation_payload) do
           task = tasks.first
           if task
             task.start!
@@ -210,7 +212,7 @@ module Taskinator
       end
 
       def start
-        Taskinator.instrumenter.instrument('taskinator.process.completed', instrumentation_payload) do
+        Taskinator.instrumenter.instrument('taskinator.process.started', instrumentation_payload) do
           if tasks.empty?
             complete! # weren't any tasks to start with
           else
@@ -240,7 +242,6 @@ module Taskinator
       end
 
       def tasks_completed?(*args)
-        # TODO: optimize this
         if (complete_on == CompleteOn::First)
           tasks.any?(&:completed?)
         else

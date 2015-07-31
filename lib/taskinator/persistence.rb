@@ -199,6 +199,7 @@ module Taskinator
         failed_percent    = tasks_count > 0 ? (failed_count.to_i    / tasks_count) * 100.0 : 0.0
 
         return {
+          :type                  => self.class.name,
           :process_uuid          => process_uuid,
           :process_options       => process_options,
           :uuid                  => uuid,
