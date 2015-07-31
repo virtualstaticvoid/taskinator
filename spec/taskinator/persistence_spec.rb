@@ -380,6 +380,7 @@ describe Taskinator::Persistence, :redis => true do
         end
 
         expect(subject.instrumentation_payload(:baz => :qux)).to eq({
+          :type                  => subject.class.name,
           :process_uuid          => subject.uuid,
           :process_options       => {:foo => :bar},
           :uuid                  => subject.uuid,
