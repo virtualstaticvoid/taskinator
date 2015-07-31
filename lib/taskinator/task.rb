@@ -83,7 +83,6 @@ module Taskinator
       on_error do |error, from, to, event, *args|
         Taskinator.logger.error("TASK: #{self.class.name}:#{uuid} :: #{error.message}")
         Taskinator.logger.debug(error.backtrace)
-        fail!(error)
       end
     end
 
