@@ -175,7 +175,9 @@ describe Taskinator::Task do
         error = StandardError.new
         allow(subject.executor).to receive(subject.method).with(*subject.args).and_raise(error)
         expect(subject).to receive(:fail!).with(error)
-        subject.start!
+        expect {
+          subject.start!
+        }.to raise_error(error)
       end
     end
 
@@ -478,7 +480,9 @@ describe Taskinator::Task do
         error = StandardError.new
         allow(sub_process).to receive(:start!).and_raise(error)
         expect(subject).to receive(:fail!).with(error)
-        subject.start!
+        expect {
+          subject.start!
+        }.to raise_error(error)
       end
 
       it "is instrumented" do

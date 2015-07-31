@@ -10,15 +10,8 @@ module Taskinator
     def perform(&block)
       task = Taskinator::Task.fetch(@uuid)
       return if task.paused? || task.cancelled?
-      begin
-        task.start!
-        task.perform(&block)
-      rescue => e
-        Taskinator.logger.error(e)
-        Taskinator.logger.debug(e.backtrace)
-        task.fail!(e)
-        raise e
-      end
+      task.start!
+      task.perform(&block)
     end
   end
 end

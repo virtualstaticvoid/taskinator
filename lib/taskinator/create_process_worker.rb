@@ -19,13 +19,7 @@ module Taskinator
     end
 
     def perform
-      begin
-        @definition._create_process_(false, *@args, :uuid => @uuid).enqueue!
-      rescue => e
-        Taskinator.logger.error(e)
-        Taskinator.logger.debug(e.backtrace)
-        raise e
-      end
+      @definition._create_process_(false, *@args, :uuid => @uuid).enqueue!
     end
 
     private

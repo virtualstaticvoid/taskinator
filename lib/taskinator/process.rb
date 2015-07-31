@@ -95,21 +95,10 @@ module Taskinator
         Taskinator.logger.debug("PROCESS: #{self.class.name}:#{uuid} :: #{from} => #{to}")
       end
 
-      on_error do |error, from, to, event, *args|
-        Taskinator.logger.error("PROCESS: #{self.class.name}:#{uuid} :: #{error.message}")
-        Taskinator.logger.debug(error.backtrace)
-      end
     end
 
     def no_tasks_defined?
       tasks.empty?
-    end
-
-    # callback for when the process has failed
-    def on_failed_entry(*args)
-      Taskinator.instrumenter.instrument('taskinator.process.failed', instrumentation_payload) do
-        # intentionally left empty
-      end
     end
 
     # callback for when the process was cancelled
@@ -144,9 +133,11 @@ module Taskinator
 
     # callback for when the process has failed
     def on_failed_entry(*args)
-      # notify the parent task (if there is one) that this process has failed
-      # note: parent may be a proxy, so explicity check for nil?
-      parent.fail!(*args) unless parent.nil?
+      Taskinator.instrumenter.instrument('taskinator.process.failed', instrumentation_payload) do
+        # notify the parent task (if there is one) that this process has failed
+        # note: parent may be a proxy, so explicity check for nil?
+        parent.fail!(*args) unless parent.nil?
+      end
     end
 
     class Sequential < Process

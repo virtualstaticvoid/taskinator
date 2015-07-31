@@ -80,10 +80,6 @@ module Taskinator
         Taskinator.logger.debug("TASK: #{self.class.name}:#{uuid} :: #{from} => #{to}")
       end
 
-      on_error do |error, from, to, event, *args|
-        Taskinator.logger.error("TASK: #{self.class.name}:#{uuid} :: #{error.message}")
-        Taskinator.logger.debug(error.backtrace)
-      end
     end
 
     # include after defining the workflow
@@ -155,6 +151,12 @@ module Taskinator
         end
         # ASSUMPTION: when the method returns, the task is considered to be complete
         complete!
+
+      rescue => e
+        Taskinator.logger.error(e)
+        Taskinator.logger.debug(e.backtrace)
+        fail!(e)
+        raise e
       end
 
       def accept(visitor)
@@ -204,6 +206,12 @@ module Taskinator
         end
         # ASSUMPTION: when the method returns, the task is considered to be complete
         complete!
+
+      rescue => e
+        Taskinator.logger.error(e)
+        Taskinator.logger.debug(e.backtrace)
+        fail!(e)
+        raise e
       end
 
       def accept(visitor)
@@ -240,6 +248,12 @@ module Taskinator
         Taskinator.instrumenter.instrument('taskinator.task.started', instrumentation_payload) do
           sub_process.start!
         end
+
+      rescue => e
+        Taskinator.logger.error(e)
+        Taskinator.logger.debug(e.backtrace)
+        fail!(e)
+        raise e
       end
 
       def accept(visitor)

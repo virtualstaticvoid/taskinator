@@ -36,40 +36,46 @@ module Taskinator
       # called from respective "create_process" methods
       # parameters can contain options as the last parameter
       define_singleton_method :_create_process_ do |subprocess, *args|
+        begin
 
-        # TODO: better validation of arguments
+          # TODO: better validation of arguments
 
-        # FIXME: arg_list should only contain an array of symbols
+          # FIXME: arg_list should only contain an array of symbols
 
-        raise ArgumentError, "wrong number of arguments (#{args.length} for #{arg_list.length})" if args.length < arg_list.length
+          raise ArgumentError, "wrong number of arguments (#{args.length} for #{arg_list.length})" if args.length < arg_list.length
 
-        options = (args.last.is_a?(Hash) ? args.last : {})
-        process = factory.call(self, options)
+          options = (args.last.is_a?(Hash) ? args.last : {})
+          process = factory.call(self, options)
 
-        # this may take long... up to users definition
-        Taskinator.instrumenter.instrument('taskinator.process.created', :uuid => process.uuid) do
-          Builder.new(process, self, *args).instance_eval(&block)
-        end
+          # this may take long... up to users definition
+          Taskinator.instrumenter.instrument('taskinator.process.created', :uuid => process.uuid) do
+            Builder.new(process, self, *args).instance_eval(&block)
+          end
 
-        # only save "root processes"
-        unless subprocess
+          # only save "root processes"
+          unless subprocess
 
-          # instrument separately
-          Taskinator.instrumenter.instrument('taskinator.process.saved', :uuid => process.uuid) do
+            # instrument separately
+            Taskinator.instrumenter.instrument('taskinator.process.saved', :uuid => process.uuid) do
 
-            # this will visit "sub processes" and persist them too
-            process.save
+              # this will visit "sub processes" and persist them too
+              process.save
 
-            # add it to the list of "root processes"
-            Persistence.add_process_to_list(process)
+              # add it to the list of "root processes"
+              Persistence.add_process_to_list(process)
+
+            end
 
           end
 
+          # this is the "root" process
+          process
+
+        rescue => e
+          Taskinator.logger.error(e)
+          Taskinator.logger.debug(e.backtrace)
+          raise e
         end
-
-        # this is the "root" process
-        process
-
       end
     end
 

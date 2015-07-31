@@ -42,7 +42,6 @@ describe Taskinator::TaskWorker do
     task = mock_task
     allow(Taskinator::Task).to receive(:fetch).with(uuid) { task }
     allow(task).to receive(:start!) { raise StandardError }
-    expect(task).to receive(:fail!).with(StandardError)
     expect {
       subject.perform
     }.to raise_error(StandardError)
