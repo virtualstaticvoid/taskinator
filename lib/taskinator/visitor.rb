@@ -10,6 +10,9 @@ module Taskinator
       def visit_attribute(attribute)
       end
 
+      def visit_attribute_time(attribute)
+      end
+
       def visit_process_reference(attribute)
       end
 

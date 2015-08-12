@@ -196,6 +196,8 @@ describe Taskinator::Process do
         expect(visitor).to receive(:visit_task_reference).with(:parent)
         expect(visitor).to receive(:visit_tasks)
         expect(visitor).to receive(:visit_attribute).with(:queue)
+        expect(visitor).to receive(:visit_attribute_time).with(:created_at)
+        expect(visitor).to receive(:visit_attribute_time).with(:updated_at)
 
         subject.accept(visitor)
       }
@@ -333,6 +335,8 @@ describe Taskinator::Process do
         expect(visitor).to receive(:visit_task_reference).with(:parent)
         expect(visitor).to receive(:visit_tasks)
         expect(visitor).to receive(:visit_attribute).with(:queue)
+        expect(visitor).to receive(:visit_attribute_time).with(:created_at)
+        expect(visitor).to receive(:visit_attribute_time).with(:updated_at)
 
         subject.accept(visitor)
       }
@@ -500,6 +504,8 @@ describe Taskinator::Process do
         expect(visitor).to receive(:visit_task_reference).with(:parent)
         expect(visitor).to receive(:visit_tasks)
         expect(visitor).to receive(:visit_attribute).with(:queue)
+        expect(visitor).to receive(:visit_attribute_time).with(:created_at)
+        expect(visitor).to receive(:visit_attribute_time).with(:updated_at)
 
         subject.accept(visitor)
       }

@@ -24,6 +24,8 @@ module Taskinator
     attr_reader :definition
     attr_reader :options
     attr_reader :queue
+    attr_reader :created_at
+    attr_reader :updated_at
 
     # in the case of sub process tasks, the containing task
     attr_accessor :parent
@@ -36,6 +38,8 @@ module Taskinator
       @definition = definition
       @options = options
       @queue = options.delete(:queue)
+      @created_at = Time.now.utc
+      @updated_at = created_at
     end
 
     def tasks
@@ -49,6 +53,8 @@ module Taskinator
       visitor.visit_tasks(tasks)
       visitor.visit_args(:options)
       visitor.visit_attribute(:queue)
+      visitor.visit_attribute_time(:created_at)
+      visitor.visit_attribute_time(:updated_at)
     end
 
     def <=>(other)

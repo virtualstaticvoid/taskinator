@@ -107,8 +107,22 @@ module Taskinator
       # persists the workflow state
       # this method is called from the workflow gem
       def persist_workflow_state(new_state)
+        time_now = Time.now.utc
         Taskinator.redis do |conn|
-          conn.hset(self.key, :state, new_state)
+          process_key = self.process_key
+          conn.multi do
+            conn.hmset(
+              self.key,
+              :state, new_state,
+              :updated_at, time_now
+            )
+
+            # also update the "root" process
+            conn.hset(
+              process_key,
+              :updated_at, time_now
+            )
+          end
         end
       end
 
@@ -121,7 +135,8 @@ module Taskinator
             self.key,
             :error_type, error.class.name,
             :error_message, error.message,
-            :error_backtrace, JSON.generate(error.backtrace || [])
+            :error_backtrace, JSON.generate(error.backtrace || []),
+            :updated_at, Time.now.utc
           )
         end
       end
@@ -161,7 +176,11 @@ module Taskinator
 
         define_method "incr_#{status}" do
           Taskinator.redis do |conn|
-            conn.hincrby self.process_key, status, 1
+            process_key = self.process_key
+            conn.multi do
+              conn.hincrby process_key, status, 1
+              conn.hset process_key, :updated_at, Time.now.utc
+            end
           end
         end
 
@@ -189,8 +208,8 @@ module Taskinator
         # need to cache here, since this method hits redis, so can't be part of multi statement following
         process_key = self.process_key
 
-        tasks_count, completed_count, cancelled_count, failed_count = Taskinator.redis do |conn|
-          conn.hmget process_key, :tasks_count, :completed, :cancelled, :failed
+        tasks_count, completed_count, cancelled_count, failed_count, created_at, updated_at = Taskinator.redis do |conn|
+          conn.hmget process_key, :tasks_count, :completed, :cancelled, :failed, :created_at, :updated_at
         end
 
         tasks_count = tasks_count.to_f
@@ -206,7 +225,9 @@ module Taskinator
           :percentage_failed     => failed_percent,
           :percentage_cancelled  => cancelled_percent,
           :percentage_completed  => completed_percent,
-          :tasks_count           => tasks_count
+          :tasks_count           => tasks_count,
+          :created_at            => created_at,
+          :updated_at            => updated_at
         }.merge(additional)
 
       end
@@ -270,6 +291,10 @@ module Taskinator
       def visit_attribute(attribute)
         value = @instance.send(attribute)
         @hmset += [attribute, value] if value
+      end
+
+      def visit_attribute_time(attribute)
+        visit_attribute(attribute)
       end
 
       def visit_process_reference(attribute)
@@ -374,7 +399,20 @@ module Taskinator
 
       def visit_attribute(attribute)
         value = @attribute_values[attribute]
-        @instance.instance_variable_set("@#{attribute}", value) if value
+        if value
+          # converted block given?
+          if block_given?
+            @instance.instance_variable_set("@#{attribute}", yield(value))
+          else
+            @instance.instance_variable_set("@#{attribute}", value)
+          end
+        end
+      end
+
+      def visit_attribute_time(attribute)
+        visit_attribute(attribute) do |value|
+          Time.parse(value)
+        end
       end
 
       def visit_type(attribute)
@@ -405,11 +443,11 @@ module Taskinator
       # arbitrary instance to perform it's work
       #
       def lazy_instance_for(base, uuid)
-        type, process_uuid = Taskinator.redis do |conn|
-          conn.hmget(base.key_for(uuid), :type, :process_uuid)
+        type, process_uuid, created_at, updated_at = Taskinator.redis do |conn|
+          conn.hmget(base.key_for(uuid), :type, :process_uuid, :created_at, :updated_at)
         end
         klass = Kernel.const_get(type)
-        LazyLoader.new(klass, uuid, process_uuid, @instance_cache)
+        LazyLoader.new(klass, uuid, process_uuid, created_at, updated_at, @instance_cache)
       end
     end
 
@@ -424,16 +462,24 @@ module Taskinator
       # E.g. this is useful for tasks which refer to their parent processes
       #
 
-      def initialize(type, uuid, process_uuid, instance_cache={})
+      def initialize(type, uuid, process_uuid, created_at, updated_at, instance_cache={})
         @type = type
         @uuid = uuid
         @process_uuid = process_uuid
+
+        @created_at = created_at
+        @updated_at = updated_at
+
         @instance_cache = instance_cache
       end
 
       # shadows the real methods, but will be the same!
-      attr_reader :process_uuid
+      attr_reader :type
       attr_reader :uuid
+      attr_reader :process_uuid
+
+      attr_reader :created_at
+      attr_reader :updated_at
 
       def __getobj__
         # only fetch the object as needed

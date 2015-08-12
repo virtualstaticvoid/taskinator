@@ -139,6 +139,8 @@ describe Taskinator::Task do
         expect(visitor).to receive(:visit_task_reference).with(:next)
         expect(visitor).to receive(:visit_args).with(:options)
         expect(visitor).to receive(:visit_attribute).with(:queue)
+        expect(visitor).to receive(:visit_attribute_time).with(:created_at)
+        expect(visitor).to receive(:visit_attribute_time).with(:updated_at)
 
         subject.accept(visitor)
       }
@@ -294,6 +296,8 @@ describe Taskinator::Task do
         expect(visitor).to receive(:visit_attribute).with(:method)
         expect(visitor).to receive(:visit_args).with(:args)
         expect(visitor).to receive(:visit_attribute).with(:queue)
+        expect(visitor).to receive(:visit_attribute_time).with(:created_at)
+        expect(visitor).to receive(:visit_attribute_time).with(:updated_at)
 
         subject.accept(visitor)
       }
@@ -414,6 +418,8 @@ describe Taskinator::Task do
         expect(visitor).to receive(:visit_type).with(:job)
         expect(visitor).to receive(:visit_args).with(:args)
         expect(visitor).to receive(:visit_attribute).with(:queue)
+        expect(visitor).to receive(:visit_attribute_time).with(:created_at)
+        expect(visitor).to receive(:visit_attribute_time).with(:updated_at)
 
         subject.accept(visitor)
       }
@@ -530,6 +536,8 @@ describe Taskinator::Task do
         expect(visitor).to receive(:visit_args).with(:options)
         expect(visitor).to receive(:visit_process).with(:sub_process)
         expect(visitor).to receive(:visit_attribute).with(:queue)
+        expect(visitor).to receive(:visit_attribute_time).with(:created_at)
+        expect(visitor).to receive(:visit_attribute_time).with(:updated_at)
 
         subject.accept(visitor)
       }

@@ -25,6 +25,8 @@ module Taskinator
     attr_reader :uuid
     attr_reader :options
     attr_reader :queue
+    attr_reader :created_at
+    attr_reader :updated_at
 
     # the next task in the sequence
     attr_accessor :next
@@ -36,6 +38,8 @@ module Taskinator
       @process = process
       @options = options
       @queue = options.delete(:queue)
+      @created_at = Time.now.utc
+      @updated_at = created_at
     end
 
     def accept(visitor)
@@ -44,6 +48,8 @@ module Taskinator
       visitor.visit_task_reference(:next)
       visitor.visit_args(:options)
       visitor.visit_attribute(:queue)
+      visitor.visit_attribute_time(:created_at)
+      visitor.visit_attribute_time(:updated_at)
     end
 
     def <=>(other)
