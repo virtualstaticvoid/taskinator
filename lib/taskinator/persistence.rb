@@ -443,11 +443,11 @@ module Taskinator
       # arbitrary instance to perform it's work
       #
       def lazy_instance_for(base, uuid)
-        type, process_uuid, created_at, updated_at = Taskinator.redis do |conn|
-          conn.hmget(base.key_for(uuid), :type, :process_uuid, :created_at, :updated_at)
+        type = Taskinator.redis do |conn|
+          conn.hget(base.key_for(uuid), :type)
         end
         klass = Kernel.const_get(type)
-        LazyLoader.new(klass, uuid, process_uuid, created_at, updated_at, @instance_cache)
+        LazyLoader.new(klass, uuid, @instance_cache)
       end
     end
 
@@ -462,24 +462,11 @@ module Taskinator
       # E.g. this is useful for tasks which refer to their parent processes
       #
 
-      def initialize(type, uuid, process_uuid, created_at, updated_at, instance_cache={})
+      def initialize(type, uuid, instance_cache={})
         @type = type
         @uuid = uuid
-        @process_uuid = process_uuid
-
-        @created_at = created_at
-        @updated_at = updated_at
-
         @instance_cache = instance_cache
       end
-
-      # shadows the real methods, but will be the same!
-      attr_reader :type
-      attr_reader :uuid
-      attr_reader :process_uuid
-
-      attr_reader :created_at
-      attr_reader :updated_at
 
       def __getobj__
         # only fetch the object as needed
