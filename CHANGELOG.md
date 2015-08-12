@@ -1,3 +1,9 @@
+v0.2.1 - 12 Aug 2015
+---
+Added created_at and updated_at to process and task as attributes.
+Improved serialization visitor to include an optional converter block for deserialization of attribute values.
+Corrections to lazy loader logic and speed improvements.
+
 v0.2.0 - 31 Jul 2015
 ---
 Bug fix for `create_process_remotely` so that it returns the process uuid instead of nil.
