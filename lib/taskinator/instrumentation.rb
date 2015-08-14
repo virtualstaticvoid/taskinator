@@ -27,6 +27,7 @@ module Taskinator
         :process_uuid          => process_uuid,
         :process_options       => process_options,
         :uuid                  => uuid,
+        :state                 => (state || :initial),
         :percentage_failed     => failed_percent,
         :percentage_cancelled  => cancelled_percent,
         :percentage_completed  => completed_percent,

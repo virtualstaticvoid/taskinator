@@ -95,13 +95,16 @@ module Taskinator
         @process_key ||= Taskinator::Process.key_for(process_uuid)
       end
 
+      # cache of the current state (eventually consistent!)
+      attr_reader :state
+
       # retrieves the workflow state
       # this method is called from the workflow gem
       def load_workflow_state
         state = Taskinator.redis do |conn|
           conn.hget(self.key, :state)
         end
-        (state || 'initial').to_sym
+        @state = (state || 'initial').to_sym
       end
 
       # persists the workflow state
@@ -124,6 +127,7 @@ module Taskinator
             )
           end
         end
+        @state = new_state
       end
 
       # persists the error information
@@ -234,6 +238,9 @@ module Taskinator
 
         # add the process uuid and root key, for easy access later!
         @hmset += [:process_uuid, @root.uuid]
+
+        # add the default state
+        @hmset += [:state, :initial]
 
         # NB: splat args
         @conn.hmset(*@hmset)

@@ -71,6 +71,7 @@ describe Taskinator::Instrumentation, :redis => true do
         :process_uuid          => subject.uuid,
         :process_options       => {:foo => :bar},
         :uuid                  => subject.uuid,
+        :state                 => :initial,
         :percentage_failed     => 1.0,
         :percentage_cancelled  => 2.0,
         :percentage_completed  => 3.0,
