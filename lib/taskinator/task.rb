@@ -94,7 +94,7 @@ module Taskinator
     include Persistence
 
     def complete
-      Taskinator.instrumenter.instrument('taskinator.task.completed', instrumentation_payload) do
+      instrument('taskinator.task.completed') do
         # notify the process that this task has completed
         process.task_completed(self)
         self.incr_completed
@@ -103,7 +103,7 @@ module Taskinator
 
     # callback for when the task has failed
     def on_failed_entry(*args)
-      Taskinator.instrumenter.instrument('taskinator.task.failed', instrumentation_payload) do
+      instrument('taskinator.task.failed') do
         self.incr_failed
         # notify the process that this task has failed
         process.task_failed(self, args.last)
@@ -112,7 +112,7 @@ module Taskinator
 
     # callback for when the task has cancelled
     def on_cancelled_entry(*args)
-      Taskinator.instrumenter.instrument('taskinator.task.cancelled', instrumentation_payload) do
+      instrument('taskinator.task.cancelled') do
         self.incr_cancelled
       end
     end
@@ -126,6 +126,8 @@ module Taskinator
     def cancelled?
       process.cancelled?
     end
+
+    include Instrumentation
 
     # a task which invokes the specified method on the definition
     # the args must be intrinsic types, since they are serialized to YAML
@@ -146,13 +148,13 @@ module Taskinator
       end
 
       def enqueue
-        Taskinator.instrumenter.instrument('taskinator.task.enqueued', instrumentation_payload) do
+        instrument('taskinator.task.enqueued') do
           Taskinator.queue.enqueue_task(self)
         end
       end
 
       def start
-        Taskinator.instrumenter.instrument('taskinator.task.started', instrumentation_payload) do
+        instrument('taskinator.task.started') do
           executor.send(method, *args)
         end
         # ASSUMPTION: when the method returns, the task is considered to be complete
@@ -200,14 +202,14 @@ module Taskinator
       end
 
       def enqueue
-        Taskinator.instrumenter.instrument('taskinator.task.enqueued', instrumentation_payload) do
+        instrument('taskinator.task.enqueued') do
           Taskinator.queue.enqueue_job(self)
         end
       end
 
       # can't use the start! method, since a block is required
       def perform
-        Taskinator.instrumenter.instrument('taskinator.task.started', instrumentation_payload) do
+        instrument('taskinator.task.started') do
           yield(job, args)
         end
         # ASSUMPTION: when the method returns, the task is considered to be complete
@@ -245,13 +247,13 @@ module Taskinator
       end
 
       def enqueue
-        Taskinator.instrumenter.instrument('taskinator.task.enqueued', instrumentation_payload) do
+        instrument('taskinator.task.enqueued') do
           sub_process.enqueue!
         end
       end
 
       def start
-        Taskinator.instrumenter.instrument('taskinator.task.started', instrumentation_payload) do
+        instrument('taskinator.task.started') do
           sub_process.start!
         end
 

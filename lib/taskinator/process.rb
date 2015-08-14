@@ -109,7 +109,7 @@ module Taskinator
 
     # callback for when the process was cancelled
     def on_cancelled_entry(*args)
-      Taskinator.instrumenter.instrument('taskinator.process.cancelled', instrumentation_payload) do
+      instrument('taskinator.process.cancelled') do
         # intentionally left empty
       end
     end
@@ -130,7 +130,7 @@ module Taskinator
     include Persistence
 
     def complete
-      Taskinator.instrumenter.instrument('taskinator.process.completed', instrumentation_payload) do
+      instrument('taskinator.process.completed') do
         # notify the parent task (if there is one) that this process has completed
         # note: parent may be a proxy, so explicity check for nil?
         parent.complete! unless parent.nil?
@@ -139,16 +139,18 @@ module Taskinator
 
     # callback for when the process has failed
     def on_failed_entry(*args)
-      Taskinator.instrumenter.instrument('taskinator.process.failed', instrumentation_payload) do
+      instrument('taskinator.process.failed') do
         # notify the parent task (if there is one) that this process has failed
         # note: parent may be a proxy, so explicity check for nil?
         parent.fail!(*args) unless parent.nil?
       end
     end
 
+    include Instrumentation
+
     class Sequential < Process
       def enqueue
-        Taskinator.instrumenter.instrument('taskinator.process.enqueued', instrumentation_payload) do
+        instrument('taskinator.process.enqueued') do
           if tasks.empty?
             complete! # weren't any tasks to start with
           else
@@ -158,7 +160,7 @@ module Taskinator
       end
 
       def start
-        Taskinator.instrumenter.instrument('taskinator.process.started', instrumentation_payload) do
+        instrument('taskinator.process.started') do
           task = tasks.first
           if task
             task.start!
@@ -198,7 +200,7 @@ module Taskinator
       end
 
       def enqueue
-        Taskinator.instrumenter.instrument('taskinator.process.enqueued', instrumentation_payload) do
+        instrument('taskinator.process.enqueued') do
           if tasks.empty?
             complete! # weren't any tasks to start with
           else
@@ -208,7 +210,7 @@ module Taskinator
       end
 
       def start
-        Taskinator.instrumenter.instrument('taskinator.process.started', instrumentation_payload) do
+        instrument('taskinator.process.started') do
           if tasks.empty?
             complete! # weren't any tasks to start with
           else

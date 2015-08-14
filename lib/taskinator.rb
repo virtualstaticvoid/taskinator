@@ -13,6 +13,7 @@ require 'taskinator/definition'
 
 require 'taskinator/visitor'
 require 'taskinator/persistence'
+require 'taskinator/instrumentation'
 
 require 'taskinator/task'
 require 'taskinator/tasks'
