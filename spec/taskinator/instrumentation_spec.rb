@@ -14,9 +14,11 @@ describe Taskinator::Instrumentation, :redis => true do
       end
 
       attr_reader :uuid
+      attr_reader :options
 
       def initialize
         @uuid = SecureRandom.uuid
+        @options = { :bar => :baz }
       end
     end
 
@@ -73,6 +75,7 @@ describe Taskinator::Instrumentation, :redis => true do
         :process_options       => {:foo => :bar},
         :uuid                  => subject.uuid,
         :state                 => :completed,
+        :options               => subject.options,
         :percentage_failed     => 1.0,
         :percentage_cancelled  => 2.0,
         :percentage_completed  => 3.0,
