@@ -2,9 +2,7 @@ module TestFlows
 
   module Worker
     def self.perform(*args)
-    end
-
-    def perform(*args)
+      # nop
     end
   end
 
