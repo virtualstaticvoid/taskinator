@@ -94,17 +94,17 @@ module Taskinator
     include Persistence
 
     def complete
-      instrument('taskinator.task.completed') do
+      self.incr_completed
+      instrument('taskinator.task.completed', completed_payload) do
         # notify the process that this task has completed
         process.task_completed(self)
-        self.incr_completed
       end
     end
 
     # callback for when the task has failed
     def on_failed_entry(*args)
-      instrument('taskinator.task.failed') do
-        self.incr_failed
+      self.incr_failed
+      instrument('taskinator.task.failed', failed_payload) do
         # notify the process that this task has failed
         process.task_failed(self, args.last)
       end
@@ -112,8 +112,9 @@ module Taskinator
 
     # callback for when the task has cancelled
     def on_cancelled_entry(*args)
-      instrument('taskinator.task.cancelled') do
-        self.incr_cancelled
+      self.incr_cancelled
+      instrument('taskinator.task.cancelled', cancelled_payload) do
+        # intentionally left empty
       end
     end
 
@@ -148,13 +149,13 @@ module Taskinator
       end
 
       def enqueue
-        instrument('taskinator.task.enqueued') do
+        instrument('taskinator.task.enqueued', enqueued_payload) do
           Taskinator.queue.enqueue_task(self)
         end
       end
 
       def start
-        instrument('taskinator.task.started') do
+        instrument('taskinator.task.started', started_payload) do
           executor.send(method, *args)
         end
         # ASSUMPTION: when the method returns, the task is considered to be complete
@@ -202,8 +203,8 @@ module Taskinator
       end
 
       def enqueue
-        instrument('taskinator.task.enqueued') do
-          Taskinator.queue.enqueue_job(self)
+        instrument('taskinator.task.enqueued', enqueued_payload) do
+          Taskinator.queue.enqueue_task(self)
         end
       end
 
@@ -248,6 +249,8 @@ module Taskinator
     class SubProcess < Task
       attr_reader :sub_process
 
+      # NOTE: also wraps sequential and concurrent processes
+
       def initialize(process, sub_process, options={})
         super(process, options)
         raise ArgumentError, 'sub_process' if sub_process.nil? || !sub_process.is_a?(Process)
@@ -257,13 +260,13 @@ module Taskinator
       end
 
       def enqueue
-        instrument('taskinator.task.enqueued') do
+        instrument('taskinator.subprocess.enqueued', enqueued_payload) do
           sub_process.enqueue!
         end
       end
 
       def start
-        instrument('taskinator.task.started') do
+        instrument('taskinator.subprocess.started', started_payload) do
           sub_process.start!
         end
 
@@ -272,6 +275,14 @@ module Taskinator
         Taskinator.logger.debug(e.backtrace)
         fail!(e)
         raise e
+      end
+
+      # override the super class
+      def complete
+        instrument('taskinator.subprocess.completed', completed_payload) do
+          # NB: this completion doesn't increment the task count, since SubProcess tasks are excluded from the total
+          process.task_completed(self)
+        end
       end
 
       def accept(visitor)

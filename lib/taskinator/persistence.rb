@@ -257,7 +257,6 @@ module Taskinator
       end
 
       def visit_tasks(tasks)
-        @hmset += [:task_count, tasks.count]  # not used currently, but for informational purposes
         tasks.each do |task|
           RedisSerializationVisitor.new(@conn, task, @base_visitor).visit
           @conn.rpush "#{@key}:tasks", task.uuid

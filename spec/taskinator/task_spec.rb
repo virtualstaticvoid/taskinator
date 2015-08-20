@@ -154,6 +154,7 @@ describe Taskinator::Task do
   end
 
   describe Taskinator::Task::Step do
+
     it_should_behave_like "a task", Taskinator::Task::Step do
       let(:process) { Class.new(Taskinator::Process).new(definition) }
       let(:task) { Taskinator::Task.define_step_task(process, :do_task, {:a => 1, :b => 2}) }
@@ -208,7 +209,7 @@ describe Taskinator::Task do
 
     describe "#start!" do
       before do
-        expect(process).to receive(:task_completed).with(subject)
+        allow(process).to receive(:task_completed).with(subject)
       end
 
       it "invokes executor" do
@@ -264,8 +265,14 @@ describe Taskinator::Task do
     end
 
     describe "#complete" do
+      it "notifies parent process" do
+        expect(process).to receive(:task_completed).with(subject)
+
+        subject.complete!
+      end
+
       it "is instrumented" do
-        allow(process).to receive(:task_completed)
+        allow(process).to receive(:task_completed).with(subject)
 
         instrumentation_block = SpecSupport::Block.new
 
@@ -400,8 +407,14 @@ describe Taskinator::Task do
     end
 
     describe "#complete" do
+      it "notifies parent process" do
+        expect(process).to receive(:task_completed).with(subject)
+
+        subject.complete!
+      end
+
       it "is instrumented" do
-        allow(process).to receive(:task_completed)
+        allow(process).to receive(:task_completed).with(subject)
 
         instrumentation_block = SpecSupport::Block.new
 
@@ -445,6 +458,7 @@ describe Taskinator::Task do
   end
 
   describe Taskinator::Task::SubProcess do
+
     it_should_behave_like "a task", Taskinator::Task::SubProcess do
       let(:process) { Class.new(Taskinator::Process).new(definition) }
       let(:sub_process) { Class.new(Taskinator::Process).new(definition) }
@@ -480,11 +494,11 @@ describe Taskinator::Task do
         instrumentation_block = SpecSupport::Block.new
 
         expect(instrumentation_block).to receive(:call) do |*args|
-          expect(args.first).to eq('taskinator.task.enqueued')
+          expect(args.first).to eq('taskinator.subprocess.enqueued')
         end
 
         # temporary subscription
-        ActiveSupport::Notifications.subscribed(instrumentation_block, /taskinator.task/) do
+        ActiveSupport::Notifications.subscribed(instrumentation_block, /taskinator.subprocess/) do
           subject.enqueue!
         end
       end
@@ -509,28 +523,34 @@ describe Taskinator::Task do
         instrumentation_block = SpecSupport::Block.new
 
         expect(instrumentation_block).to receive(:call) do |*args|
-          expect(args.first).to eq('taskinator.task.started')
+          expect(args.first).to eq('taskinator.subprocess.started')
         end
 
         # temporary subscription
-        ActiveSupport::Notifications.subscribed(instrumentation_block, /taskinator.task/) do
+        ActiveSupport::Notifications.subscribed(instrumentation_block, /taskinator.subprocess/) do
           subject.start!
         end
       end
     end
 
     describe "#complete" do
+      it "notifies parent process" do
+        expect(process).to receive(:task_completed).with(subject)
+
+        subject.complete!
+      end
+
       it "is instrumented" do
-        allow(process).to receive(:task_completed)
+        allow(process).to receive(:task_completed).with(subject)
 
         instrumentation_block = SpecSupport::Block.new
 
         expect(instrumentation_block).to receive(:call) do |*args|
-          expect(args.first).to eq('taskinator.task.completed')
+          expect(args.first).to eq('taskinator.subprocess.completed')
         end
 
         # temporary subscription
-        ActiveSupport::Notifications.subscribed(instrumentation_block, /taskinator.task/) do
+        ActiveSupport::Notifications.subscribed(instrumentation_block, /taskinator.subprocess/) do
           subject.complete!
         end
       end

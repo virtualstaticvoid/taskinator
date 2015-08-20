@@ -109,7 +109,7 @@ module Taskinator
 
     # callback for when the process was cancelled
     def on_cancelled_entry(*args)
-      instrument('taskinator.process.cancelled') do
+      instrument('taskinator.process.cancelled', cancelled_payload) do
         # intentionally left empty
       end
     end
@@ -130,7 +130,7 @@ module Taskinator
     include Persistence
 
     def complete
-      instrument('taskinator.process.completed') do
+      instrument('taskinator.process.completed', completed_payload) do
         # notify the parent task (if there is one) that this process has completed
         # note: parent may be a proxy, so explicity check for nil?
         parent.complete! unless parent.nil?
@@ -139,7 +139,7 @@ module Taskinator
 
     # callback for when the process has failed
     def on_failed_entry(*args)
-      instrument('taskinator.process.failed') do
+      instrument('taskinator.process.failed', failed_payload) do
         # notify the parent task (if there is one) that this process has failed
         # note: parent may be a proxy, so explicity check for nil?
         parent.fail!(*args) unless parent.nil?
@@ -150,7 +150,7 @@ module Taskinator
 
     class Sequential < Process
       def enqueue
-        instrument('taskinator.process.enqueued') do
+        instrument('taskinator.process.enqueued', enqueued_payload) do
           if tasks.empty?
             complete! # weren't any tasks to start with
           else
@@ -160,7 +160,7 @@ module Taskinator
       end
 
       def start
-        instrument('taskinator.process.started') do
+        instrument('taskinator.process.started', started_payload) do
           task = tasks.first
           if task
             task.start!
@@ -200,7 +200,7 @@ module Taskinator
       end
 
       def enqueue
-        instrument('taskinator.process.enqueued') do
+        instrument('taskinator.process.enqueued', enqueued_payload) do
           if tasks.empty?
             complete! # weren't any tasks to start with
           else
@@ -210,7 +210,7 @@ module Taskinator
       end
 
       def start
-        instrument('taskinator.process.started') do
+        instrument('taskinator.process.started', started_payload) do
           if tasks.empty?
             complete! # weren't any tasks to start with
           else
