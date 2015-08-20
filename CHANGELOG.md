@@ -1,8 +1,9 @@
-v0.2.1 - 12 Aug 2015
+v0.2.1 - 20 Aug 2015
 ---
 Added created_at and updated_at to process and task as attributes.
 Improved serialization visitor to include an optional converter block for deserialization of attribute values.
 Corrections to lazy loader logic and speed improvements.
+Removed JobWorker as it's no longer necessary.
 
 v0.2.0 - 31 Jul 2015
 ---

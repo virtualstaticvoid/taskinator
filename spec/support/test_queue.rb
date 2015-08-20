@@ -13,7 +13,6 @@ module Taskinator
 
       attr_reader :creates
       attr_reader :tasks
-      attr_reader :jobs
 
       def initialize
         clear
@@ -31,10 +30,6 @@ module Taskinator
 
       def enqueue_task(task)
         @tasks << task
-      end
-
-      def enqueue_job(job)
-        @jobs << job
       end
 
       def empty?
@@ -59,13 +54,6 @@ module Taskinator
         super
         invoke do
           Taskinator::TaskWorker.new(task.uuid).perform
-        end
-      end
-
-      def enqueue_job(job)
-        super
-        invoke do
-          Taskinator::JobWorker.new(job.uuid).perform
         end
       end
 

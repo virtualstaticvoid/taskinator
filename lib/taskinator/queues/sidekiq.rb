@@ -22,11 +22,6 @@ module Taskinator
         TaskWorker.client_push('class' => TaskWorker, 'args' => [task.uuid], 'queue' => queue)
       end
 
-      def enqueue_job(job)
-        queue = job.queue || job.job.get_sidekiq_options[:queue] || @config[:job_queue]
-        JobWorker.client_push('class' => JobWorker, 'args' => [job.uuid], 'queue' => queue)
-      end
-
       class CreateProcessWorker
         include ::Sidekiq::Worker
 
@@ -43,15 +38,6 @@ module Taskinator
         end
       end
 
-      class JobWorker
-        include ::Sidekiq::Worker
-
-        def perform(job_uuid)
-          Taskinator::JobWorker.new(job_uuid).perform do |job, args|
-            job.new.perform(*args)
-          end
-        end
-      end
     end
   end
 end

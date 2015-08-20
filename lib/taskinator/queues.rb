@@ -39,11 +39,6 @@ module Taskinator
         adapter.enqueue_task(task)
       end
 
-      def enqueue_job(job)
-        Taskinator.logger.info("Enqueuing job #{job}")
-        adapter.enqueue_job(job)
-      end
-
     end
 
   end

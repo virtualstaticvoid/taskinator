@@ -315,6 +315,16 @@ describe Taskinator::Task do
       end
     end
 
+    class TestJobClass
+      def perform(*args)
+      end
+    end
+
+    module TestJobModule
+      def self.perform(*args)
+      end
+    end
+
     it_should_behave_like "a task", Taskinator::Task::Job do
       let(:process) { Class.new(Taskinator::Process).new(definition) }
       let(:task) { Taskinator::Task.define_job_task(process, TestJob, {:a => 1, :b => 2}) }
@@ -334,7 +344,7 @@ describe Taskinator::Task do
       it {
         expect {
           subject.enqueue!
-        }.to change { Taskinator.queue.jobs.length }.by(1)
+        }.to change { Taskinator.queue.tasks.length }.by(1)
       }
 
       it "is instrumented" do
@@ -351,21 +361,25 @@ describe Taskinator::Task do
       end
     end
 
-    describe "#perform" do
-      before do
-        expect(process).to receive(:task_completed).with(subject)
-      end
+    describe "#start" do
+      it {
+        task = Taskinator::Task.define_job_task(process, TestJobClass, {:a => 1, :b => 2})
+        expect(process).to receive(:task_completed).with(task)
+        expect_any_instance_of(TestJobClass).to receive(:perform).with({:a => 1, :b => 2})
+        task.start!
+      }
 
       it {
-        block = SpecSupport::Block.new
-        expect(block).to receive(:call).with(TestJob, {:a => 1, :b => 2})
-
-        subject.perform(&block)
+        task = Taskinator::Task.define_job_task(process, TestJobModule, {:a => 1, :b => 2})
+        expect(process).to receive(:task_completed).with(task)
+        expect(TestJobModule).to receive(:perform).with({:a => 1, :b => 2})
+        task.start!
       }
 
       it "is instrumented" do
-        block = SpecSupport::Block.new
-        allow(block).to receive(:call).with(TestJob, {:a => 1, :b => 2})
+        allow(process).to receive(:task_completed).with(subject)
+
+        allow(TestJob).to receive(:perform).with({:a => 1, :b => 2})
 
         instrumentation_block = SpecSupport::Block.new
 
@@ -380,7 +394,7 @@ describe Taskinator::Task do
 
         # temporary subscription
         ActiveSupport::Notifications.subscribed(instrumentation_block, /taskinator.task/) do
-          subject.perform(&block)
+          subject.start!
         end
       end
     end

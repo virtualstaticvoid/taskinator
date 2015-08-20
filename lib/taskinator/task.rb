@@ -207,12 +207,22 @@ module Taskinator
         end
       end
 
-      # can't use the start! method, since a block is required
-      def perform
-        instrument('taskinator.task.started') do
-          yield(job, args)
+      def start
+        instrument('taskinator.task.started', started_payload) do
+
+          # NNB: if other job types are required, may need to implement how they get invoked here!
+          # FIXME: possible implement using ActiveJob instead, so it doesn't matter how the worker is implemented
+
+          if job.instance_of?(Module)
+            # resque
+            job.perform(args)
+          else
+            # delayedjob and sidekiq
+            job.new.perform(args)
+          end
+
         end
-        # ASSUMPTION: when the method returns, the task is considered to be complete
+        # ASSUMPTION: when the job returns, the task is considered to be complete
         complete!
 
       rescue => e
