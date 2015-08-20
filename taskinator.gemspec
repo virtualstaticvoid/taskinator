@@ -28,22 +28,4 @@ Gem::Specification.new do |spec|
 
   # spec.add_dependency 'workflow'                    , '>= 1.3.0'  # RubyGems not up to date as of 11 Nov 2014.
 
-  # queues
-  spec.add_development_dependency 'sidekiq'         , '>= 3.0.0'
-  spec.add_development_dependency 'rspec-sidekiq'   , '>= 2.0.0'
-
-  spec.add_development_dependency 'delayed_job'     , '>= 4.0.0'
-
-  spec.add_development_dependency 'resque'          , '>= 1.25.2'
-  spec.add_development_dependency 'resque_spec'     , '>= 0.16.0'
-
-  # other
-  spec.add_development_dependency 'bundler'         , '>= 1.6.0'
-  spec.add_development_dependency 'rake'            , '>= 10.3.0'
-  spec.add_development_dependency 'activesupport'   , '>= 4.0.0'
-  spec.add_development_dependency 'rspec'
-  spec.add_development_dependency 'coveralls'       , '>= 0.7.0'
-  spec.add_development_dependency 'pry'             , '>= 0.9.0'
-  spec.add_development_dependency 'pry-byebug'      , '>= 1.3.0'
-
 end
