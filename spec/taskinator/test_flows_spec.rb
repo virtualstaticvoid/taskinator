@@ -128,4 +128,210 @@ describe TestFlows do
     end
   end
 
+  describe "instrumentation" do
+    describe "task" do
+      before do
+        # override enqueue
+        allow_any_instance_of(Taskinator::Task::Step).to receive(:enqueue!) { |task|
+          # emulate the worker starting the task
+          task.start!
+        }
+      end
+
+      let(:task_count) { 10 }
+      let(:definition) { TestFlows::Task }
+      subject { definition.create_process(task_count) }
+
+      it "reports task completed" do
+        block = SpecSupport::Block.new
+        expect(block).to receive(:call).exactly(task_count).times
+
+        ActiveSupport::Notifications.subscribed(block, /taskinator.task.completed/) do
+          subject.start!
+        end
+      end
+
+      it "reports process completed" do
+        block = SpecSupport::Block.new
+        expect(block).to receive(:call).once
+
+        ActiveSupport::Notifications.subscribed(block, /taskinator.process.completed/) do
+          subject.start!
+        end
+      end
+
+      it "reports task percentage completed" do
+        invoke_count = 0
+
+        instrumenter = TestInstrumenter.new do |name, payload|
+          if name =~ /taskinator.task.started/
+            expect(payload[:percentage_completed]).to eq( (invoke_count / task_count.to_f) * 100.0 )
+          elsif name =~ /taskinator.task.completed/
+            invoke_count += 1
+            expect(payload[:percentage_completed]).to eq( (invoke_count / task_count.to_f) * 100.0 )
+          end
+        end
+
+        allow(Taskinator).to receive(:instrumenter).and_return(instrumenter)
+        expect(instrumenter).to receive(:instrument).at_least(task_count).times.and_call_original
+
+        subject.start!
+      end
+
+      it "reports process percentage completed" do
+        instrumenter = TestInstrumenter.new do |name, payload|
+          if name =~ /taskinator.process.started/
+            expect(payload[:process_uuid]).to eq(subject.uuid)
+          elsif name =~ /taskinator.process.completed/
+            expect(payload[:percentage_completed]).to eq(100.0)
+          end
+        end
+
+        allow(Taskinator).to receive(:instrumenter).and_return(instrumenter)
+        expect(instrumenter).to receive(:instrument).at_least(task_count).times.and_call_original
+
+        subject.start!
+      end
+
+    end
+
+    describe "job" do
+      before do
+        # override enqueue
+        allow_any_instance_of(Taskinator::Task::Job).to receive(:enqueue!) { |task|
+          # emulate the worker starting the task
+          task.start!
+        }
+      end
+
+      let(:task_count) { 10 }
+      let(:definition) { TestFlows::Job }
+      subject { definition.create_process(task_count) }
+
+      it "reports task completed" do
+        block = SpecSupport::Block.new
+        expect(block).to receive(:call).exactly(task_count).times
+
+        ActiveSupport::Notifications.subscribed(block, /taskinator.task.completed/) do
+          subject.start!
+        end
+      end
+
+      it "reports process completed" do
+        block = SpecSupport::Block.new
+        expect(block).to receive(:call).once
+
+        ActiveSupport::Notifications.subscribed(block, /taskinator.process.completed/) do
+          subject.start!
+        end
+      end
+
+      it "reports task percentage completed" do
+        invoke_count = 0
+
+        instrumenter = TestInstrumenter.new do |name, payload|
+          if name =~ /taskinator.task.started/
+            expect(payload[:percentage_completed]).to eq( (invoke_count / task_count.to_f) * 100.0 )
+          elsif name =~ /taskinator.task.completed/
+            invoke_count += 1
+            expect(payload[:percentage_completed]).to eq( (invoke_count / task_count.to_f) * 100.0 )
+          end
+        end
+
+        allow(Taskinator).to receive(:instrumenter).and_return(instrumenter)
+        expect(instrumenter).to receive(:instrument).at_least(task_count).times.and_call_original
+
+        subject.start!
+      end
+
+      it "reports process percentage completed" do
+        instrumenter = TestInstrumenter.new do |name, payload|
+          if name =~ /taskinator.process.started/
+            expect(payload[:process_uuid]).to eq(subject.uuid)
+          elsif name =~ /taskinator.process.completed/
+            expect(payload[:percentage_completed]).to eq(100.0)
+          end
+        end
+
+        allow(Taskinator).to receive(:instrumenter).and_return(instrumenter)
+        expect(instrumenter).to receive(:instrument).at_least(task_count).times.and_call_original
+
+        subject.start!
+      end
+
+    end
+
+    describe "sub process" do
+      before do
+        # override enqueue
+        allow_any_instance_of(Taskinator::Task::Step).to receive(:enqueue!) { |task|
+          # emulate the worker starting the task
+          task.start!
+        }
+
+        # override enqueue
+        allow_any_instance_of(Taskinator::Task::SubProcess).to receive(:enqueue!) { |task|
+          # emulate the worker starting the task
+          task.start!
+        }
+      end
+
+      let(:task_count) { 10 }
+      let(:definition) { TestFlows::SubProcess }
+      subject { definition.create_process(task_count) }
+
+      it "reports task completed" do
+        block = SpecSupport::Block.new
+        expect(block).to receive(:call).exactly(task_count).times
+
+        ActiveSupport::Notifications.subscribed(block, /taskinator.task.completed/) do
+          subject.start!
+        end
+      end
+
+      it "reports process completed" do
+        block = SpecSupport::Block.new
+        expect(block).to receive(:call).twice # includes sub process
+
+        ActiveSupport::Notifications.subscribed(block, /taskinator.process.completed/) do
+          subject.start!
+        end
+      end
+
+      it "reports task percentage completed" do
+        invoke_count = 0
+
+        instrumenter = TestInstrumenter.new do |name, payload|
+          if name =~ /taskinator.task.started/
+            expect(payload[:percentage_completed]).to eq( (invoke_count / task_count.to_f) * 100.0 )
+          elsif name =~ /taskinator.task.completed/
+            invoke_count += 1
+            expect(payload[:percentage_completed]).to eq( (invoke_count / task_count.to_f) * 100.0 )
+          end
+        end
+
+        allow(Taskinator).to receive(:instrumenter).and_return(instrumenter)
+        expect(instrumenter).to receive(:instrument).at_least(task_count).times.and_call_original
+
+        subject.start!
+      end
+
+      it "reports process percentage completed" do
+        instrumenter = TestInstrumenter.new do |name, payload|
+          if name =~ /taskinator.process.started/
+            expect(payload[:process_uuid]).to eq(subject.uuid)
+          elsif name =~ /taskinator.process.completed/
+            expect(payload[:percentage_completed]).to eq(100.0)
+          end
+        end
+
+        allow(Taskinator).to receive(:instrumenter).and_return(instrumenter)
+        expect(instrumenter).to receive(:instrument).at_least(task_count).times.and_call_original
+
+        subject.start!
+      end
+
+    end
+  end
+
 end
