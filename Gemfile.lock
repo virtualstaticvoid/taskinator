@@ -121,7 +121,7 @@ GEM
     tilt (2.0.1)
     timers (4.0.1)
       hitimes
-    tins (1.5.4)
+    tins (1.6.0)
     tzinfo (1.2.2)
       thread_safe (~> 0.1)
     unf (0.1.4)
