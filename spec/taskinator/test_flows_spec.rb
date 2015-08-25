@@ -128,6 +128,60 @@ describe TestFlows do
     end
   end
 
+  describe "statuses" do
+    describe "task" do
+      before do
+        # override enqueue
+        allow_any_instance_of(Taskinator::Task::Step).to receive(:enqueue!) { |task|
+          # emulate the worker starting the task
+          task.start!
+        }
+      end
+
+      let(:task_count) { 2 }
+      let(:definition) { TestFlows::Task }
+      subject { definition.create_process(task_count) }
+
+      it "reports process and task state" do
+
+        instrumenter = TestInstrumenter.new do |name, payload|
+
+          case name
+          when 'taskinator.process.created', 'taskinator.process.saved'
+            expect(payload[:state]).to eq(:initial)
+          when 'taskinator.process.started'
+            expect(payload[:state]).to eq(:processing)
+          when 'taskinator.task.started'
+            expect(payload[:state]).to eq(:processing)
+          when 'taskinator.task.completed'
+            expect(payload[:state]).to eq(:completed)
+          when 'taskinator.process.completed'
+            expect(payload[:state]).to eq(:completed)
+          else
+            raise "Unknown event '#{name}'."
+          end
+
+        end
+
+        allow(Taskinator).to receive(:instrumenter).and_return(instrumenter)
+        expect(instrumenter).to receive(:instrument).at_least(task_count).times.and_call_original
+
+        expect(subject.current_state.name).to eq(:initial)
+
+        subject.start!
+      end
+
+    end
+
+    describe "job" do
+
+    end
+
+    describe "subprocess" do
+
+    end
+  end
+
   describe "instrumentation" do
     describe "task" do
       before do

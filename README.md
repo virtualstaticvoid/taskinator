@@ -608,29 +608,30 @@ end
 
 The following instrumentation events are issued:
 
-| Event                              | When                                        |
-|------------------------------------|---------------------------------------------|
-| `taskinator.process.created`       | After a process gets created                |
-| `taskinator.process.saved`         | After a process has been persisted to Redis |
-| `taskinator.process.enqueued`      | After a process is enqueued for processing  |
-| `taskinator.process.completed`     | After a process has completed processing    |
-| `taskinator.process.cancelled`     | After a process has been cancelled          |
-| `taskinator.process.failed`        | After a process has failed                  |
-| `taskinator.task.enqueued`         | After a task has been enqueued              |
-| `taskinator.task.executed`         | After a task has executed                   |
-| `taskinator.job.enqueued`          | After a job has been enqueued               |
-| `taskinator.job.executed`          | After a job has executed                    |
-| `taskinator.subprocess.enqueued`   | After a sub process has been enqueued       |
-| `taskinator.subprocess.executed`   | After a sub process has executed            |
+| Event                              | When                                                      |
+|------------------------------------|-----------------------------------------------------------|
+| `taskinator.process.created`       | After a root process gets created                         |
+| `taskinator.process.saved`         | After a root process has been persisted to Redis          |
+| `taskinator.process.enqueued`      | After a process or subprocess is enqueued for processing  |
+| `taskinator.process.completed`     | After a process or subprocess has completed processing    |
+| `taskinator.process.cancelled`     | After a process or subprocess has been cancelled          |
+| `taskinator.process.failed`        | After a process or subprocess has failed                  |
+| `taskinator.task.enqueued`         | After a task has been enqueued                            |
+| `taskinator.task.executed`         | After a task has executed                                 |
+| `taskinator.task.completed`        | After a task has completed                                |
+| `taskinator.task.cancelled`        | After a task has been cancelled                           |
+| `taskinator.task.failed`           | After a task has failed                                   |
 
 For all events, the data included contains the following information:
 
 | Key                      | Value                                                 |
 |--------------------------|-------------------------------------------------------|
+| `:type`                  | The type name of the component reporting the event    |
 | `:process_uuid`          | The UUID of the root process                          |
 | `:process_options`       | Options hash of the root process                      |
 | `:uuid`                  | The UUID of the respective task, job or sub process   |
-| `:tasks_count`           | The total count of tasks for the given process        |
+| `:options`               | Options hash of the component                         |
+| `:state`                 | State of the component                                |
 | `:percentage_completed`  | The percentage of completed tasks                     |
 | `:percentage_failed`     | The percentage of failed tasks                        |
 | `:percentage_cancelled`  | The percentage of cancelled tasks                     |

@@ -48,7 +48,7 @@ module Taskinator
           process = factory.call(self, options)
 
           # this may take long... up to users definition
-          Taskinator.instrumenter.instrument('taskinator.process.created', :uuid => process.uuid) do
+          Taskinator.instrumenter.instrument('taskinator.process.created', :uuid => process.uuid, :state => :initial) do
             Builder.new(process, self, *args).instance_eval(&block)
           end
 
@@ -56,7 +56,7 @@ module Taskinator
           unless subprocess
 
             # instrument separately
-            Taskinator.instrumenter.instrument('taskinator.process.saved', :uuid => process.uuid) do
+            Taskinator.instrumenter.instrument('taskinator.process.saved', :uuid => process.uuid, :state => :initial) do
 
               # this will visit "sub processes" and persist them too
               process.save

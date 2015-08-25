@@ -79,6 +79,7 @@ describe Taskinator::Instrumentation, :redis => true do
         :percentage_failed     => 1.0,
         :percentage_cancelled  => 2.0,
         :percentage_completed  => 3.0,
+        :instance              => subject,
         :baz                   => :qux
       })
     }
