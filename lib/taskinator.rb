@@ -1,7 +1,6 @@
 require 'json'
 require 'yaml'
 require 'securerandom'
-require 'workflow'
 
 require 'taskinator/version'
 
@@ -10,6 +9,8 @@ require 'taskinator/redis_connection'
 require 'taskinator/logger'
 
 require 'taskinator/definition'
+
+require 'taskinator/workflow'
 
 require 'taskinator/visitor'
 require 'taskinator/persistence'

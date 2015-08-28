@@ -546,7 +546,7 @@ To monitor the state of the processes, use the `Taskinator::Api::Processes` clas
 processes = Taskinator::Api::Processes.new
 processes.each do |process|
   # => output the unique process identifier and current state
-  puts [:process, process.uuid, process.current_state.name]
+  puts [:process, process.uuid, process.current_state]
 end
 ```
 
@@ -613,11 +613,14 @@ The following instrumentation events are issued:
 | `taskinator.process.created`       | After a root process gets created                         |
 | `taskinator.process.saved`         | After a root process has been persisted to Redis          |
 | `taskinator.process.enqueued`      | After a process or subprocess is enqueued for processing  |
+| `taskinator.process.processing`    | When a process or subprocess is processing                |
+| `taskinator.process.paused`        | When a process or subprocess is paused                    |
+| `taskinator.process.resumed`       | When a process or subprocess is resumed                   |
 | `taskinator.process.completed`     | After a process or subprocess has completed processing    |
 | `taskinator.process.cancelled`     | After a process or subprocess has been cancelled          |
 | `taskinator.process.failed`        | After a process or subprocess has failed                  |
 | `taskinator.task.enqueued`         | After a task has been enqueued                            |
-| `taskinator.task.executed`         | After a task has executed                                 |
+| `taskinator.task.processing`       | When a task is processing                                 |
 | `taskinator.task.completed`        | After a task has completed                                |
 | `taskinator.task.cancelled`        | After a task has been cancelled                           |
 | `taskinator.task.failed`           | After a task has failed                                   |

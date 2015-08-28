@@ -25,7 +25,4 @@ Gem::Specification.new do |spec|
   spec.add_dependency 'redis-namespace'             , '>= 1.5.2'
   spec.add_dependency 'connection_pool'             , '>= 2.2.0'
   spec.add_dependency 'json'                        , '>= 1.8.2'
-
-  # spec.add_dependency 'workflow'                    , '>= 1.3.0'  # RubyGems not up to date as of 11 Nov 2014.
-
 end

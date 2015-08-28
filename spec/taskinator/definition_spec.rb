@@ -148,8 +148,7 @@ describe Taskinator::Definition do
           expect(args.first).to eq('taskinator.process.created')
         end
 
-        # temporary subscription
-        ActiveSupport::Notifications.subscribed(instrumentation_block, /taskinator.process.created/) do
+        TestInstrumenter.subscribe(instrumentation_block, /taskinator.process.created/) do
           subject.create_process :foo
         end
       end
@@ -160,8 +159,7 @@ describe Taskinator::Definition do
           expect(args.first).to eq('taskinator.process.saved')
         end
 
-        # temporary subscription
-        ActiveSupport::Notifications.subscribed(instrumentation_block, /taskinator.process.saved/) do
+        TestInstrumenter.subscribe(instrumentation_block, /taskinator.process.saved/) do
           subject.create_process :foo
         end
       end

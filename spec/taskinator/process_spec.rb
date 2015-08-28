@@ -6,7 +6,11 @@ describe Taskinator::Process do
 
   describe "Base" do
 
-    subject { Class.new(Taskinator::Process).new(definition) }
+    subject do
+      Class.new(Taskinator::Process) do
+        include ProcessMethods
+      end.new(definition)
+    end
 
     describe "#initialize" do
       it { expect(subject.uuid).to_not be_nil }
@@ -47,17 +51,9 @@ describe Taskinator::Process do
     end
 
     describe "#current_state" do
-      it { expect(subject).to be_a(::Workflow)  }
+      it { expect(subject).to be_a(Taskinator::Workflow)  }
       it { expect(subject.current_state).to_not be_nil }
-      it { expect(subject.current_state.name).to eq(:initial) }
-    end
-
-    describe "#tasks_completed?" do
-      it {
-        expect {
-          subject.tasks_completed?
-        }.to raise_error(NotImplementedError)
-      }
+      it { expect(subject.current_state).to eq(:initial) }
     end
 
     describe "workflow" do
@@ -70,9 +66,9 @@ describe Taskinator::Process do
         }
 
         it {
-          expect(subject.current_state.name).to eq(:initial)
+          expect(subject.current_state).to eq(:initial)
           subject.enqueue!
-          expect(subject.current_state.name).to eq(:enqueued)
+          expect(subject.current_state).to eq(:enqueued)
         }
       end
 
@@ -83,9 +79,9 @@ describe Taskinator::Process do
           subject.start!
         }
         it {
-          expect(subject.current_state.name).to eq(:initial)
+          expect(subject.current_state).to eq(:initial)
           subject.start!
-          expect(subject.current_state.name).to eq(:processing)
+          expect(subject.current_state).to eq(:processing)
         }
       end
 
@@ -96,9 +92,9 @@ describe Taskinator::Process do
           subject.cancel!
         }
         it {
-          expect(subject.current_state.name).to eq(:initial)
+          expect(subject.current_state).to eq(:initial)
           subject.cancel!
-          expect(subject.current_state.name).to eq(:cancelled)
+          expect(subject.current_state).to eq(:cancelled)
         }
       end
 
@@ -112,7 +108,7 @@ describe Taskinator::Process do
         it {
           subject.start!
           subject.pause!
-          expect(subject.current_state.name).to eq(:paused)
+          expect(subject.current_state).to eq(:paused)
         }
       end
 
@@ -128,7 +124,7 @@ describe Taskinator::Process do
           subject.start!
           subject.pause!
           subject.resume!
-          expect(subject.current_state.name).to eq(:processing)
+          expect(subject.current_state).to eq(:processing)
         }
       end
 
@@ -143,21 +139,22 @@ describe Taskinator::Process do
         it {
           subject.start!
           subject.complete!
-          expect(subject.current_state.name).to eq(:completed)
+          expect(subject.current_state).to eq(:completed)
         }
       end
 
       describe "#fail!" do
         it { expect(subject).to respond_to(:fail!) }
         it {
-          expect(subject).to receive(:fail)
+          error = StandardError.new
+          expect(subject).to receive(:fail).with(error)
           subject.start!
-          subject.fail!
+          subject.fail!(error)
         }
         it {
           subject.start!
-          subject.fail!
-          expect(subject.current_state.name).to eq(:failed)
+          subject.fail!(StandardError.new)
+          expect(subject.current_state).to eq(:failed)
         }
       end
     end
@@ -176,7 +173,7 @@ describe Taskinator::Process do
         subject.parent = double('parent')
         expect(subject.parent).to receive(:fail!)
         subject.start!
-        subject.fail!
+        subject.fail!(StandardError.new)
       end
     end
 
@@ -213,11 +210,9 @@ describe Taskinator::Process do
 
   describe Taskinator::Process::Sequential do
 
-    it_should_behave_like "a process", Taskinator::Process::Sequential do
-      let(:process) { Taskinator::Process.define_sequential_process_for(definition) }
-    end
-
     subject { Taskinator::Process.define_sequential_process_for(definition) }
+
+    it_should_behave_like "a process", Taskinator::Process::Sequential
 
     let(:tasks) {
       [
@@ -348,13 +343,14 @@ describe Taskinator::Process do
   end
 
   describe Taskinator::Process::Concurrent do
-    it_should_behave_like "a process", Taskinator::Process::Concurrent do
-      let(:process) { Taskinator::Process.define_concurrent_process_for(definition, Taskinator::CompleteOn::First) }
-
-      it { expect(process.complete_on).to eq(Taskinator::CompleteOn::First)  }
-    end
 
     subject { Taskinator::Process.define_concurrent_process_for(definition) }
+
+    it_should_behave_like "a process", Taskinator::Process::Concurrent do
+
+      it { expect(subject.complete_on).to eq(Taskinator::CompleteOn::Default)  }
+
+    end
 
     let(:tasks) {
       [
@@ -499,7 +495,7 @@ describe Taskinator::Process do
         visitor = double('visitor')
         expect(visitor).to receive(:visit_type).with(:definition)
         expect(visitor).to receive(:visit_attribute).with(:uuid)
-        expect(visitor).to receive(:visit_attribute).with(:complete_on)
+        expect(visitor).to receive(:visit_attribute_enum).with(:complete_on, Taskinator::CompleteOn)
         expect(visitor).to receive(:visit_args).with(:options)
         expect(visitor).to receive(:visit_task_reference).with(:parent)
         expect(visitor).to receive(:visit_tasks)
