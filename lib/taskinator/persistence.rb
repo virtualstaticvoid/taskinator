@@ -384,11 +384,12 @@ module Taskinator
       end
 
       # NB: assumes the enum type's members have integer values!
-      # NB: assumes the type defines a "Default" member
       def visit_attribute_enum(attribute, type)
         visit_attribute(attribute) do |value|
           const_value = type.constants.select {|c| type.const_get(c) == value.to_i }.first
-          const_value ? type.const_get(const_value) : type::Default
+          const_value ?
+            type.const_get(const_value) :
+            (defined?(type::Default) ? type::Default : nil)
         end
       end
 
