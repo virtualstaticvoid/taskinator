@@ -1,7 +1,10 @@
 module Taskinator
   class Task
     include ::Comparable
-    include ::Workflow
+
+    include Workflow
+    include Persistence
+    include Instrumentation
 
     class << self
       def define_step_task(process, method, args, options={})
@@ -60,75 +63,97 @@ module Taskinator
       "#<#{self.class.name}:#{uuid}>"
     end
 
-    workflow do
-      state :initial do
-        event :enqueue, :transitions_to => :enqueued
-        event :start, :transitions_to => :processing
-        event :complete, :transitions_to => :completed  # specific to a SubProcess which has no tasks
-        event :fail, :transitions_to => :failed
-      end
+    def enqueue!
+      return if paused? || cancelled?
 
-      state :enqueued do
-        event :start, :transitions_to => :processing
-        event :complete, :transitions_to => :completed
-        event :fail, :transitions_to => :failed
-      end
-
-      state :processing do
-        event :complete, :transitions_to => :completed
-        event :fail, :transitions_to => :failed
-      end
-
-      state :completed
-      state :failed
-
-      on_transition do |from, to, event, *args|
-        Taskinator.logger.debug("TASK: #{self.class.name}:#{uuid} :: #{from} => #{to}")
-      end
-
-    end
-
-    # include after defining the workflow
-    # since the load and persist state methods
-    # need to override the ones defined by workflow
-    include Persistence
-
-    def complete
-      self.incr_completed
-      instrument('taskinator.task.completed', completed_payload) do
-        # notify the process that this task has completed
-        process.task_completed(self)
+      transition(:enqueued) do
+        instrument('taskinator.task.enqueued', enqueued_payload) do
+          enqueue
+        end
       end
     end
 
-    # callback for when the task has failed
-    def on_failed_entry(*args)
-      self.incr_failed
-      instrument('taskinator.task.failed', failed_payload) do
-        # notify the process that this task has failed
-        process.task_failed(self, args.last)
+    def start!
+      return if paused? || cancelled?
+      self.incr_processing if incr_count?
+
+      transition(:processing) do
+        instrument('taskinator.task.processing', processing_payload) do
+          start
+        end
       end
     end
 
-    # callback for when the task has cancelled
-    def on_cancelled_entry(*args)
-      self.incr_cancelled
-      instrument('taskinator.task.cancelled', cancelled_payload) do
-        # intentionally left empty
-      end
-    end
+    #
+    # NOTE: a task can't be paused (it's too difficult to implement)
+    #       so rather, the parent process is paused, and the task checks it
+    #
 
-    # helper method, delegating to process
+    # helper method
     def paused?
-      process.paused?
+      super || process.paused?
     end
 
-    # helper method, delegating to process
+    def complete!
+      transition(:completed) do
+        self.incr_completed if incr_count?
+        instrument('taskinator.task.completed', completed_payload) do
+          complete if respond_to?(:complete)
+          # notify the process that this task has completed
+          process.task_completed(self)
+        end
+      end
+    end
+
+    def cancel!
+      transition(:cancelled) do
+        self.incr_cancelled if incr_count?
+        instrument('taskinator.task.cancelled', cancelled_payload) do
+          cancel if respond_to?(:cancel)
+        end
+      end
+    end
+
     def cancelled?
-      process.cancelled?
+      super || process.cancelled?
     end
 
-    include Instrumentation
+    def fail!(error)
+      transition(:failed) do
+        self.incr_failed if incr_count?
+        instrument('taskinator.task.failed', failed_payload(error)) do
+          fail(error) if respond_to?(:fail)
+          # notify the process that this task has failed
+          process.task_failed(self, error)
+        end
+      end
+    end
+
+    def incr_count?
+      true
+    end
+
+    #--------------------------------------------------
+    # subclasses must implement the following methods
+    #--------------------------------------------------
+
+    def enqueue
+      raise NotImplementedError
+    end
+
+    def start
+      raise NotImplementedError
+    end
+
+    #--------------------------------------------------
+    # and optionally, provide methods:
+    #--------------------------------------------------
+    #
+    #  * cancel
+    #  * complete
+    #  * fail(error)
+    #
+    #--------------------------------------------------
 
     # a task which invokes the specified method on the definition
     # the args must be intrinsic types, since they are serialized to YAML
@@ -149,15 +174,11 @@ module Taskinator
       end
 
       def enqueue
-        instrument('taskinator.task.enqueued', enqueued_payload) do
-          Taskinator.queue.enqueue_task(self)
-        end
+        Taskinator.queue.enqueue_task(self)
       end
 
       def start
-        instrument('taskinator.task.started', started_payload) do
-          executor.send(method, *args)
-        end
+        executor.send(method, *args)
         # ASSUMPTION: when the method returns, the task is considered to be complete
         complete!
 
@@ -180,9 +201,11 @@ module Taskinator
       end
 
       def inspect
-        %(#<#{self.class.name}:0x#{self.__id__.to_s(16)} uuid="#{uuid}", method=:#{method}, args=#{args}, state=:#{current_state.name}>)
+        %(#<#{self.class.name}:0x#{self.__id__.to_s(16)} uuid="#{uuid}", method=:#{method}, args=#{args}, current_state=:#{current_state}>)
       end
     end
+
+    #--------------------------------------------------
 
     # a task which invokes the specified background job
     # the args must be intrinsic types, since they are serialized to YAML
@@ -203,26 +226,21 @@ module Taskinator
       end
 
       def enqueue
-        instrument('taskinator.task.enqueued', enqueued_payload) do
-          Taskinator.queue.enqueue_task(self)
-        end
+        Taskinator.queue.enqueue_task(self)
       end
 
       def start
-        instrument('taskinator.task.started', started_payload) do
+        # NNB: if other job types are required, may need to implement how they get invoked here!
+        # FIXME: possible implement using ActiveJob instead, so it doesn't matter how the worker is implemented
 
-          # NNB: if other job types are required, may need to implement how they get invoked here!
-          # FIXME: possible implement using ActiveJob instead, so it doesn't matter how the worker is implemented
-
-          if job.instance_of?(Module)
-            # resque
-            job.perform(args)
-          else
-            # delayedjob and sidekiq
-            job.new.perform(args)
-          end
-
+        if job.instance_of?(Module)
+          # resque
+          job.perform(args)
+        else
+          # delayedjob and sidekiq
+          job.new.perform(args)
         end
+
         # ASSUMPTION: when the job returns, the task is considered to be complete
         complete!
 
@@ -241,9 +259,11 @@ module Taskinator
       end
 
       def inspect
-        %(#<#{self.class.name}:0x#{self.__id__.to_s(16)} uuid="#{uuid}", job=#{job}, args=#{args}, state=:#{current_state.name}>)
+        %(#<#{self.class.name}:0x#{self.__id__.to_s(16)} uuid="#{uuid}", job=#{job}, args=#{args}, current_state=:#{current_state}>)
       end
     end
+
+    #--------------------------------------------------
 
     # a task which delegates to another process
     class SubProcess < Task
@@ -260,15 +280,11 @@ module Taskinator
       end
 
       def enqueue
-        instrument('taskinator.subprocess.enqueued', enqueued_payload) do
-          sub_process.enqueue!
-        end
+        sub_process.enqueue!
       end
 
       def start
-        instrument('taskinator.subprocess.started', started_payload) do
-          sub_process.start!
-        end
+        sub_process.start!
 
       rescue => e
         Taskinator.logger.error(e)
@@ -277,12 +293,10 @@ module Taskinator
         raise e
       end
 
-      # override the super class
-      def complete
-        instrument('taskinator.subprocess.completed', completed_payload) do
-          # NB: this completion doesn't increment the task count, since SubProcess tasks are excluded from the total
-          process.task_completed(self)
-        end
+      def incr_count?
+        # subprocess tasks aren't included in the total count of tasks
+        # since they simply delegate to the tasks of the respective subprocess definition
+        false
       end
 
       def accept(visitor)
@@ -291,7 +305,7 @@ module Taskinator
       end
 
       def inspect
-        %(#<#{self.class.name}:0x#{self.__id__.to_s(16)} uuid="#{uuid}", sub_process=#{sub_process.inspect}, state=:#{current_state.name}>)
+        %(#<#{self.class.name}:0x#{self.__id__.to_s(16)} uuid="#{uuid}", sub_process=#{sub_process.inspect}, current_state=:#{current_state}>)
       end
     end
   end

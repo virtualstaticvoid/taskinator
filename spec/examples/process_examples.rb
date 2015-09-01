@@ -2,15 +2,12 @@ require 'spec_helper'
 
 shared_examples_for "a process" do |process_type|
 
-  # NOTE: definition and process must be defined by callee
+  # NOTE: definition and subject must be defined by callee
 
-  # let(:definition) {}
-  # let(:process) {}
-
-  it { expect(process.definition).to eq(definition)  }
-  it { expect(process.uuid).to_not be_nil }
-  it { expect(process.to_s).to match(/#{process.uuid}/) }
-  it { expect(process.options).to_not be_nil }
-  it { expect(process.tasks).to_not be_nil }
+  it { expect(subject.definition).to eq(definition)  }
+  it { expect(subject.uuid).to_not be_nil }
+  it { expect(subject.to_s).to match(/#{subject.uuid}/) }
+  it { expect(subject.options).to_not be_nil }
+  it { expect(subject.tasks).to_not be_nil }
 
 end

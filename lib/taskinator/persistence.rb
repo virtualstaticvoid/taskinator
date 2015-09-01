@@ -35,17 +35,6 @@ module Taskinator
         "taskinator:#{base_key}:#{uuid}"
       end
 
-      # retrieves the workflow state for the given identifier
-      # this prevents to need to load the entire object when
-      # querying for the status of an instance
-      def state_for(uuid)
-        key = key_for(uuid)
-        state = Taskinator.redis do |conn|
-          conn.hget(key, :state) || 'initial'
-        end
-        state.to_sym
-      end
-
       # fetches the instance for given identifier
       # optionally, provide a hash to use for the instance cache
       # this argument is defaulted, so top level callers don't
@@ -68,10 +57,11 @@ module Taskinator
             visitor = RedisSerializationVisitor.new(conn, self).visit
             conn.hmset(
               Taskinator::Process.key_for(uuid),
-              :tasks_count,     visitor.task_count,
-              :tasks_failed,    0,
-              :tasks_completed, 0,
-              :tasks_cancelled, 0,
+              :tasks_count,      visitor.task_count,
+              :tasks_failed,     0,
+              :tasks_processing, 0,
+              :tasks_completed,  0,
+              :tasks_cancelled,  0,
             )
             true
           end
@@ -95,39 +85,36 @@ module Taskinator
         @process_key ||= Taskinator::Process.key_for(process_uuid)
       end
 
-      # cache of the current state (eventually consistent!)
-      attr_reader :state
-
       # retrieves the workflow state
       # this method is called from the workflow gem
       def load_workflow_state
         state = Taskinator.redis do |conn|
-          conn.hget(self.key, :state)
+          conn.hget(self.key, :state) || 'initial'
         end
-        @state = (state || 'initial').to_sym
+        state.to_sym
       end
 
       # persists the workflow state
       # this method is called from the workflow gem
       def persist_workflow_state(new_state)
-        time_now = Time.now.utc
+        @updated_at = Time.now.utc
         Taskinator.redis do |conn|
           process_key = self.process_key
           conn.multi do
             conn.hmset(
               self.key,
               :state, new_state,
-              :updated_at, time_now
+              :updated_at, @updated_at
             )
 
             # also update the "root" process
             conn.hset(
               process_key,
-              :updated_at, time_now
+              :updated_at, @updated_at
             )
           end
         end
-        @state = new_state
+        new_state
       end
 
       # persists the error information
@@ -152,7 +139,7 @@ module Taskinator
           error_type, error_message, error_backtrace =
             conn.hmget(self.key, :error_type, :error_message, :error_backtrace)
 
-          [error_type, error_message, JSON.parse(error_backtrace)]
+          [error_type, error_message, JSON.parse(error_backtrace || '[]')]
         end
       end
 
@@ -168,12 +155,13 @@ module Taskinator
       %w(
         failed
         cancelled
+        processing
         completed
       ).each do |status|
 
         define_method "count_#{status}" do
           count = Taskinator.redis do |conn|
-            conn.hget self.process_key, status
+            conn.hget self.process_key, "tasks_#{status}"
           end
           count.to_i
         end
@@ -182,7 +170,7 @@ module Taskinator
           Taskinator.redis do |conn|
             process_key = self.process_key
             conn.multi do
-              conn.hincrby process_key, status, 1
+              conn.hincrby process_key, "tasks_#{status}", 1
               conn.hset process_key, :updated_at, Time.now.utc
             end
           end
@@ -270,6 +258,10 @@ module Taskinator
       end
 
       def visit_attribute_time(attribute)
+        visit_attribute(attribute)
+      end
+
+      def visit_attribute_enum(attribute, type)
         visit_attribute(attribute)
       end
 
@@ -388,6 +380,16 @@ module Taskinator
       def visit_attribute_time(attribute)
         visit_attribute(attribute) do |value|
           Time.parse(value)
+        end
+      end
+
+      # NB: assumes the enum type's members have integer values!
+      def visit_attribute_enum(attribute, type)
+        visit_attribute(attribute) do |value|
+          const_value = type.constants.select {|c| type.const_get(c) == value.to_i }.first
+          const_value ?
+            type.const_get(const_value) :
+            (defined?(type::Default) ? type::Default : nil)
         end
       end
 

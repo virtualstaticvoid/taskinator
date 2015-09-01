@@ -6,7 +6,6 @@ describe TestFlows do
     TestFlows::Task,
     TestFlows::Job,
     TestFlows::SubProcess,
-    TestFlows::Sequential,
     TestFlows::Sequential
   ].each do |definition|
 
@@ -149,9 +148,9 @@ describe TestFlows do
           case name
           when 'taskinator.process.created', 'taskinator.process.saved'
             expect(payload[:state]).to eq(:initial)
-          when 'taskinator.process.started'
+          when 'taskinator.process.processing'
             expect(payload[:state]).to eq(:processing)
-          when 'taskinator.task.started'
+          when 'taskinator.task.processing'
             expect(payload[:state]).to eq(:processing)
           when 'taskinator.task.completed'
             expect(payload[:state]).to eq(:completed)
@@ -166,7 +165,7 @@ describe TestFlows do
         allow(Taskinator).to receive(:instrumenter).and_return(instrumenter)
         expect(instrumenter).to receive(:instrument).at_least(task_count).times.and_call_original
 
-        expect(subject.current_state.name).to eq(:initial)
+        expect(subject.current_state).to eq(:initial)
 
         subject.start!
       end
@@ -200,7 +199,7 @@ describe TestFlows do
         block = SpecSupport::Block.new
         expect(block).to receive(:call).exactly(task_count).times
 
-        ActiveSupport::Notifications.subscribed(block, /taskinator.task.completed/) do
+        TestInstrumenter.subscribe(block, /taskinator.task.completed/) do
           subject.start!
         end
       end
@@ -209,7 +208,7 @@ describe TestFlows do
         block = SpecSupport::Block.new
         expect(block).to receive(:call).once
 
-        ActiveSupport::Notifications.subscribed(block, /taskinator.process.completed/) do
+        TestInstrumenter.subscribe(block, /taskinator.process.completed/) do
           subject.start!
         end
       end
@@ -218,7 +217,7 @@ describe TestFlows do
         invoke_count = 0
 
         instrumenter = TestInstrumenter.new do |name, payload|
-          if name =~ /taskinator.task.started/
+          if name =~ /taskinator.task.processing/
             expect(payload[:percentage_completed]).to eq( (invoke_count / task_count.to_f) * 100.0 )
           elsif name =~ /taskinator.task.completed/
             invoke_count += 1
@@ -266,7 +265,7 @@ describe TestFlows do
         block = SpecSupport::Block.new
         expect(block).to receive(:call).exactly(task_count).times
 
-        ActiveSupport::Notifications.subscribed(block, /taskinator.task.completed/) do
+        TestInstrumenter.subscribe(block, /taskinator.task.completed/) do
           subject.start!
         end
       end
@@ -275,7 +274,7 @@ describe TestFlows do
         block = SpecSupport::Block.new
         expect(block).to receive(:call).once
 
-        ActiveSupport::Notifications.subscribed(block, /taskinator.process.completed/) do
+        TestInstrumenter.subscribe(block, /taskinator.process.completed/) do
           subject.start!
         end
       end
@@ -284,7 +283,7 @@ describe TestFlows do
         invoke_count = 0
 
         instrumenter = TestInstrumenter.new do |name, payload|
-          if name =~ /taskinator.task.started/
+          if name =~ /taskinator.task.processing/
             expect(payload[:percentage_completed]).to eq( (invoke_count / task_count.to_f) * 100.0 )
           elsif name =~ /taskinator.task.completed/
             invoke_count += 1
@@ -336,9 +335,11 @@ describe TestFlows do
 
       it "reports task completed" do
         block = SpecSupport::Block.new
-        expect(block).to receive(:call).exactly(task_count).times
 
-        ActiveSupport::Notifications.subscribed(block, /taskinator.task.completed/) do
+        # NOTE: sub process counts for one task
+        expect(block).to receive(:call).exactly(task_count + 1).times
+
+        TestInstrumenter.subscribe(block, /taskinator.task.completed/) do
           subject.start!
         end
       end
@@ -347,7 +348,7 @@ describe TestFlows do
         block = SpecSupport::Block.new
         expect(block).to receive(:call).twice # includes sub process
 
-        ActiveSupport::Notifications.subscribed(block, /taskinator.process.completed/) do
+        TestInstrumenter.subscribe(block, /taskinator.process.completed/) do
           subject.start!
         end
       end
@@ -356,11 +357,13 @@ describe TestFlows do
         invoke_count = 0
 
         instrumenter = TestInstrumenter.new do |name, payload|
-          if name =~ /taskinator.task.started/
+          if name =~ /taskinator.task.processing/
             expect(payload[:percentage_completed]).to eq( (invoke_count / task_count.to_f) * 100.0 )
           elsif name =~ /taskinator.task.completed/
-            invoke_count += 1
-            expect(payload[:percentage_completed]).to eq( (invoke_count / task_count.to_f) * 100.0 )
+            unless payload.type >= Taskinator::Task::SubProcess
+              invoke_count += 1
+              expect(payload[:percentage_completed]).to eq( (invoke_count / task_count.to_f) * 100.0 )
+            end
           end
         end
 
@@ -380,7 +383,9 @@ describe TestFlows do
         end
 
         allow(Taskinator).to receive(:instrumenter).and_return(instrumenter)
-        expect(instrumenter).to receive(:instrument).at_least(task_count).times.and_call_original
+
+        # NOTE: sub process counts for one task
+        expect(instrumenter).to receive(:instrument).at_least(task_count + 1).times.and_call_original
 
         subject.start!
       end

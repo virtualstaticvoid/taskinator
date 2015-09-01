@@ -4,7 +4,10 @@ require 'thwait'
 module Taskinator
   class Process
     include ::Comparable
-    include ::Workflow
+
+    include Workflow
+    include Persistence
+    include Instrumentation
 
     class << self
       def define_sequential_process_for(definition, options={})
@@ -46,6 +49,10 @@ module Taskinator
       @tasks ||= Tasks.new
     end
 
+    def no_tasks_defined?
+      tasks.empty?
+    end
+
     def accept(visitor)
       visitor.visit_attribute(:uuid)
       visitor.visit_task_reference(:parent)
@@ -65,58 +72,79 @@ module Taskinator
       "#<#{self.class.name}:#{uuid}>"
     end
 
-    workflow do
-      state :initial do
-        event :enqueue, :transitions_to => :enqueued
-        event :start, :transitions_to => :processing
-        event :complete, :transitions_to => :completed
-        event :cancel, :transitions_to => :cancelled
-        event :fail, :transitions_to => :failed
-      end
+    def enqueue!
+      return if paused? || cancelled?
 
-      state :enqueued do
-        event :start, :transitions_to => :processing
-        event :complete, :transitions_to => :completed
-        event :cancel, :transitions_to => :cancelled
-        event :fail, :transitions_to => :failed
-      end
-
-      state :processing do
-        event :pause, :transitions_to => :paused
-        event :complete, :transitions_to => :completed
-        event :fail, :transitions_to => :failed
-      end
-
-      state :paused do
-        event :resume, :transitions_to => :processing
-        event :cancel, :transitions_to => :cancelled
-        event :fail, :transitions_to => :failed
-      end
-
-      state :cancelled
-      state :completed
-      state :failed
-
-      on_transition do |from, to, event, *args|
-        Taskinator.logger.debug("PROCESS: #{self.class.name}:#{uuid} :: #{from} => #{to}")
-      end
-
-    end
-
-    def no_tasks_defined?
-      tasks.empty?
-    end
-
-    # callback for when the process was cancelled
-    def on_cancelled_entry(*args)
-      instrument('taskinator.process.cancelled', cancelled_payload) do
-        # intentionally left empty
+      transition(:enqueued) do
+        instrument('taskinator.process.enqueued', enqueued_payload) do
+          enqueue
+        end
       end
     end
 
-    # subclasses must implement this method
-    def tasks_completed?(*args)
-      raise NotImplementedError
+    def start!
+      return if paused? || cancelled?
+
+      transition(:processing) do
+        instrument('taskinator.process.processing', processing_payload) do
+          start
+        end
+      end
+    end
+
+    def pause!
+      return unless enqueued? || processing?
+
+      transition(:paused) do
+        instrument('taskinator.process.paused', paused_payload) do
+          pause if respond_to?(:pause)
+        end
+      end
+    end
+
+    def resume!
+      return unless paused?
+
+      transition(:processing) do
+        instrument('taskinator.process.resumed', resumed_payload) do
+          resume if respond_to?(:resume)
+        end
+      end
+    end
+
+    def complete!
+      transition(:completed) do
+        instrument('taskinator.process.completed', completed_payload) do
+          complete if respond_to?(:complete)
+          # notify the parent task (if there is one) that this process has completed
+          # note: parent may be a proxy, so explicity check for nil?
+          parent.complete! unless parent.nil?
+        end
+      end
+    end
+
+    def tasks_completed?
+      # TODO: optimize this
+      tasks.all?(&:completed?)
+    end
+
+    def cancel!
+      transition(:cancelled) do
+        instrument('taskinator.process.cancelled', cancelled_payload) do
+          cancel if respond_to?(:cancel)
+        end
+      end
+    end
+
+    def fail!(error)
+      transition(:failed) do
+        instrument('taskinator.process.failed', failed_payload(error)) do
+          fail(error) if respond_to?(:fail)
+          # notify the parent task (if there is one) that this process has failed
+          # note: parent may be a proxy, so explicity check for nil?
+          parent.fail!(error) unless parent.nil?
+        end
+      end
     end
 
     def task_failed(task, error)
@@ -124,49 +152,39 @@ module Taskinator
       fail!(error)
     end
 
-    # include after defining the workflow
-    # since the load and persist state methods
-    # need to override the ones defined by workflow
-    include Persistence
+    #--------------------------------------------------
+    # subclasses must implement the following methods
+    #--------------------------------------------------
 
-    def complete
-      instrument('taskinator.process.completed', completed_payload) do
-        # notify the parent task (if there is one) that this process has completed
-        # note: parent may be a proxy, so explicity check for nil?
-        parent.complete! unless parent.nil?
-      end
+    def enqueue
+      raise NotImplementedError
     end
 
-    # callback for when the process has failed
-    def on_failed_entry(*args)
-      instrument('taskinator.process.failed', failed_payload) do
-        # notify the parent task (if there is one) that this process has failed
-        # note: parent may be a proxy, so explicity check for nil?
-        parent.fail!(*args) unless parent.nil?
-      end
+    def start
+      raise NotImplementedError
     end
 
-    include Instrumentation
+    def task_completed(task)
+      raise NotImplementedError
+    end
+
+    #--------------------------------------------------
 
     class Sequential < Process
       def enqueue
-        instrument('taskinator.process.enqueued', enqueued_payload) do
-          if tasks.empty?
-            complete! # weren't any tasks to start with
-          else
-            tasks.first.enqueue!
-          end
+        if tasks.empty?
+          complete! # weren't any tasks to start with
+        else
+          tasks.first.enqueue!
         end
       end
 
       def start
-        instrument('taskinator.process.started', started_payload) do
-          task = tasks.first
-          if task
-            task.start!
-          else
-            complete! # weren't any tasks to start with
-          end
+        task = tasks.first
+        if task
+          task.start!
+        else
+          complete! # weren't any tasks to start with
         end
       end
 
@@ -175,19 +193,16 @@ module Taskinator
         if next_task
           next_task.enqueue!
         else
-          complete!
+          complete! # aren't any more tasks
         end
       end
 
-      def tasks_completed?(*args)
-        # TODO: optimize this
-        tasks.all?(&:completed?)
-      end
-
       def inspect
-        %(#<#{self.class.name}:0x#{self.__id__.to_s(16)} uuid="#{uuid}", state=:#{current_state.name}, tasks=[#{tasks.inspect}]>)
+        %(#<#{self.class.name}:0x#{self.__id__.to_s(16)} uuid="#{uuid}", state=:#{current_state}, tasks=[#{tasks.inspect}]>)
       end
     end
+
+    #--------------------------------------------------
 
     class Concurrent < Process
       attr_reader :complete_on
@@ -200,35 +215,31 @@ module Taskinator
       end
 
       def enqueue
-        instrument('taskinator.process.enqueued', enqueued_payload) do
-          if tasks.empty?
-            complete! # weren't any tasks to start with
-          else
-            tasks.each(&:enqueue!)
-          end
+        if tasks.empty?
+          complete! # weren't any tasks to start with
+        else
+          tasks.each(&:enqueue!)
         end
       end
 
       def start
-        instrument('taskinator.process.started', started_payload) do
-          if tasks.empty?
-            complete! # weren't any tasks to start with
-          else
-            if concurrency_method == :fork
-              tasks.each do |task|
-                fork do
-                  task.start!
-                end
+        if tasks.empty?
+          complete! # weren't any tasks to start with
+        else
+          if concurrency_method == :fork
+            tasks.each do |task|
+              fork do
+                task.start!
               end
-              Process.waitall
-            else
-              threads = tasks.map do |task|
-                Thread.new do
-                  task.start!
-                end
-              end
-              ThreadsWait.all_waits(*threads)
             end
+            Process.waitall
+          else
+            threads = tasks.map do |task|
+              Thread.new do
+                task.start!
+              end
+            end
+            ThreadsWait.all_waits(*threads)
           end
         end
       end
@@ -239,21 +250,21 @@ module Taskinator
         complete!
       end
 
-      def tasks_completed?(*args)
+      def tasks_completed?
         if (complete_on == CompleteOn::First)
           tasks.any?(&:completed?)
         else
-          tasks.all?(&:completed?)
+          super # all
         end
       end
 
       def accept(visitor)
         super
-        visitor.visit_attribute(:complete_on)
+        visitor.visit_attribute_enum(:complete_on, CompleteOn)
       end
 
       def inspect
-        %(#<#{self.class.name}:0x#{self.__id__.to_s(16)} uuid="#{uuid}", state=:#{current_state.name}, complete_on=:#{complete_on}, tasks=[#{tasks.inspect}]>)
+        %(#<#{self.class.name}:0x#{self.__id__.to_s(16)} uuid="#{uuid}", state=:#{current_state}, complete_on=:#{complete_on}, tasks=[#{tasks.inspect}]>)
       end
     end
   end

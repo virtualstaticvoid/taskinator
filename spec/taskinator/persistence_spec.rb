@@ -30,16 +30,6 @@ describe Taskinator::Persistence, :redis => true do
       }
     end
 
-    describe ".state_for" do
-      before do
-        allow(subject).to receive(:base_key) { 'base_key' }
-      end
-
-      it {
-        expect(subject.state_for('uuid')).to eq(:initial)
-      }
-    end
-
     describe ".fetch" do
       before do
         allow(subject).to receive(:base_key) { 'base_key' }
@@ -320,7 +310,7 @@ describe Taskinator::Persistence, :redis => true do
       describe "#count_#{status}" do
         it {
           Taskinator.redis do |conn|
-            conn.hset(subject.process_key, status, 99)
+            conn.hset(subject.process_key, "tasks_#{status}", 99)
           end
 
           expect(subject.send(:"count_#{status}")).to eq(99)
@@ -330,7 +320,7 @@ describe Taskinator::Persistence, :redis => true do
       describe "#incr_#{status}" do
         it {
           Taskinator.redis do |conn|
-            conn.hset(subject.process_key, status, 99)
+            conn.hset(subject.process_key, "tasks_#{status}", 99)
           end
 
           subject.send(:"incr_#{status}")
@@ -345,7 +335,7 @@ describe Taskinator::Persistence, :redis => true do
             conn.hmset(
               subject.process_key,
               [:tasks_count, 100],
-              [status, 1]
+              ["tasks_#{status}", 1]
             )
           end
 

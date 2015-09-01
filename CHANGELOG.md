@@ -1,10 +1,12 @@
-v0.2.1 - 25 Aug 2015
+v0.3.0 - 28 Aug 2015
 ---
 Added created_at and updated_at to process and task as attributes.
 Improved serialization visitor to include an optional converter block for deserialization of attribute values.
 Corrections to lazy loader logic and speed improvements.
 Removed JobWorker as it's no longer necessary.
-Improvements to instrumentation
+Improvements to instrumentation.
+Removed workflow gem, and refactored process and task to implement the basics instead.
+Several bug fixes.
 
 v0.2.0 - 31 Jul 2015
 ---

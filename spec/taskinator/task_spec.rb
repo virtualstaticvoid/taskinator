@@ -4,11 +4,19 @@ describe Taskinator::Task do
 
   let(:definition) { TestDefinition }
 
+  let(:process) do
+    Class.new(Taskinator::Process) do
+      include ProcessMethods
+    end.new(definition)
+  end
+
   describe "Base" do
 
-    let(:process) { Class.new(Taskinator::Process).new(definition) }
-
-    subject { Class.new(Taskinator::Task).new(process) }
+    subject do
+      Class.new(Taskinator::Task) do
+        include TaskMethods
+      end.new(process)
+    end
 
     describe "#initialize" do
       it { expect(subject.process).to_not be_nil }
@@ -45,9 +53,9 @@ describe Taskinator::Task do
     end
 
     describe "#current_state" do
-      it { expect(subject).to be_a(::Workflow)  }
+      it { expect(subject).to be_a(Taskinator::Workflow)  }
       it { expect(subject.current_state).to_not be_nil }
-      it { expect(subject.current_state.name).to eq(:initial) }
+      it { expect(subject.current_state).to eq(:initial) }
     end
 
     describe "workflow" do
@@ -59,7 +67,7 @@ describe Taskinator::Task do
         }
         it {
           subject.enqueue!
-          expect(subject.current_state.name).to eq(:enqueued)
+          expect(subject.current_state).to eq(:enqueued)
         }
       end
 
@@ -71,7 +79,7 @@ describe Taskinator::Task do
         }
         it {
           subject.start!
-          expect(subject.current_state.name).to eq(:processing)
+          expect(subject.current_state).to eq(:processing)
         }
       end
 
@@ -81,7 +89,7 @@ describe Taskinator::Task do
           expect(subject).to receive(:complete)
           subject.start!
           subject.complete!
-          expect(subject.current_state.name).to eq(:completed)
+          expect(subject.current_state).to eq(:completed)
         }
       end
 
@@ -96,8 +104,8 @@ describe Taskinator::Task do
         }
         it {
           subject.start!
-          subject.fail!
-          expect(subject.current_state.name).to eq(:failed)
+          subject.fail!(StandardError.new)
+          expect(subject.current_state).to eq(:failed)
         }
       end
 
@@ -106,7 +114,7 @@ describe Taskinator::Task do
         it {
           process.start!
           process.pause!
-          expect(subject.paused?).to be
+          expect(subject.paused?).to eq(true)
         }
       end
 
@@ -155,13 +163,9 @@ describe Taskinator::Task do
 
   describe Taskinator::Task::Step do
 
-    it_should_behave_like "a task", Taskinator::Task::Step do
-      let(:process) { Class.new(Taskinator::Process).new(definition) }
-      let(:task) { Taskinator::Task.define_step_task(process, :do_task, {:a => 1, :b => 2}) }
-    end
-
-    let(:process) { Class.new(Taskinator::Process).new(definition) }
     subject { Taskinator::Task.define_step_task(process, :do_task, {:a => 1, :b => 2}) }
+
+    it_should_behave_like "a task", Taskinator::Task::Step
 
     describe ".define_step_task" do
       it "sets the queue to use" do
@@ -200,8 +204,7 @@ describe Taskinator::Task do
           expect(args.first).to eq('taskinator.task.enqueued')
         end
 
-        # temporary subscription
-        ActiveSupport::Notifications.subscribed(instrumentation_block, /taskinator.task/) do
+        TestInstrumenter.subscribe(instrumentation_block, /taskinator.task/) do
           subject.enqueue!
         end
       end
@@ -249,16 +252,14 @@ describe Taskinator::Task do
         instrumentation_block = SpecSupport::Block.new
 
         expect(instrumentation_block).to receive(:call) do |*args|
-          expect(args.first).to eq('taskinator.task.started')
+          expect(args.first).to eq('taskinator.task.processing')
         end
 
-        # special case, since when the method returns, the task is considered to be complete
         expect(instrumentation_block).to receive(:call) do |*args|
           expect(args.first).to eq('taskinator.task.completed')
         end
 
-        # temporary subscription
-        ActiveSupport::Notifications.subscribed(instrumentation_block, /taskinator.task/) do
+        TestInstrumenter.subscribe(instrumentation_block) do
           subject.start!
         end
       end
@@ -280,8 +281,7 @@ describe Taskinator::Task do
           expect(args.first).to eq('taskinator.task.completed')
         end
 
-        # temporary subscription
-        ActiveSupport::Notifications.subscribed(instrumentation_block, /taskinator.task/) do
+        TestInstrumenter.subscribe(instrumentation_block, /taskinator.task/) do
           subject.complete!
         end
       end
@@ -332,13 +332,9 @@ describe Taskinator::Task do
       end
     end
 
-    it_should_behave_like "a task", Taskinator::Task::Job do
-      let(:process) { Class.new(Taskinator::Process).new(definition) }
-      let(:task) { Taskinator::Task.define_job_task(process, TestJob, {:a => 1, :b => 2}) }
-    end
-
-    let(:process) { Class.new(Taskinator::Process).new(definition) }
     subject { Taskinator::Task.define_job_task(process, TestJob, {:a => 1, :b => 2}) }
+
+    it_should_behave_like "a task", Taskinator::Task::Job
 
     describe ".define_job_task" do
       it "sets the queue to use" do
@@ -361,8 +357,7 @@ describe Taskinator::Task do
           expect(args.first).to eq('taskinator.task.enqueued')
         end
 
-        # temporary subscription
-        ActiveSupport::Notifications.subscribed(instrumentation_block, /taskinator.task/) do
+        TestInstrumenter.subscribe(instrumentation_block, /taskinator.task/) do
           subject.enqueue!
         end
       end
@@ -391,7 +386,7 @@ describe Taskinator::Task do
         instrumentation_block = SpecSupport::Block.new
 
         expect(instrumentation_block).to receive(:call) do |*args|
-          expect(args.first).to eq('taskinator.task.started')
+          expect(args.first).to eq('taskinator.task.processing')
         end
 
         # special case, since when the method returns, the task is considered to be complete
@@ -399,8 +394,7 @@ describe Taskinator::Task do
           expect(args.first).to eq('taskinator.task.completed')
         end
 
-        # temporary subscription
-        ActiveSupport::Notifications.subscribed(instrumentation_block, /taskinator.task/) do
+        TestInstrumenter.subscribe(instrumentation_block, /taskinator.task/) do
           subject.start!
         end
       end
@@ -422,8 +416,7 @@ describe Taskinator::Task do
           expect(args.first).to eq('taskinator.task.completed')
         end
 
-        # temporary subscription
-        ActiveSupport::Notifications.subscribed(instrumentation_block, /taskinator.task/) do
+        TestInstrumenter.subscribe(instrumentation_block, /taskinator.task/) do
           subject.complete!
         end
       end
@@ -459,15 +452,15 @@ describe Taskinator::Task do
 
   describe Taskinator::Task::SubProcess do
 
-    it_should_behave_like "a task", Taskinator::Task::SubProcess do
-      let(:process) { Class.new(Taskinator::Process).new(definition) }
-      let(:sub_process) { Class.new(Taskinator::Process).new(definition) }
-      let(:task) { Taskinator::Task.define_sub_process_task(process, sub_process) }
+    let(:sub_process) do
+      Class.new(Taskinator::Process) do
+        include ProcessMethods
+      end.new(definition)
     end
 
-    let(:process) { Class.new(Taskinator::Process).new(definition) }
-    let(:sub_process) { Class.new(Taskinator::Process).new(definition) }
     subject { Taskinator::Task.define_sub_process_task(process, sub_process) }
+
+    it_should_behave_like "a task", Taskinator::Task::SubProcess
 
     describe ".define_sub_process_task" do
       it "sets the queue to use" do
@@ -494,11 +487,10 @@ describe Taskinator::Task do
         instrumentation_block = SpecSupport::Block.new
 
         expect(instrumentation_block).to receive(:call) do |*args|
-          expect(args.first).to eq('taskinator.subprocess.enqueued')
+          expect(args.first).to eq('taskinator.task.enqueued')
         end
 
-        # temporary subscription
-        ActiveSupport::Notifications.subscribed(instrumentation_block, /taskinator.subprocess/) do
+        TestInstrumenter.subscribe(instrumentation_block, /taskinator.task/) do
           subject.enqueue!
         end
       end
@@ -523,11 +515,10 @@ describe Taskinator::Task do
         instrumentation_block = SpecSupport::Block.new
 
         expect(instrumentation_block).to receive(:call) do |*args|
-          expect(args.first).to eq('taskinator.subprocess.started')
+          expect(args.first).to eq('taskinator.task.processing')
         end
 
-        # temporary subscription
-        ActiveSupport::Notifications.subscribed(instrumentation_block, /taskinator.subprocess/) do
+        TestInstrumenter.subscribe(instrumentation_block, /taskinator.task/) do
           subject.start!
         end
       end
@@ -546,11 +537,10 @@ describe Taskinator::Task do
         instrumentation_block = SpecSupport::Block.new
 
         expect(instrumentation_block).to receive(:call) do |*args|
-          expect(args.first).to eq('taskinator.subprocess.completed')
+          expect(args.first).to eq('taskinator.task.completed')
         end
 
-        # temporary subscription
-        ActiveSupport::Notifications.subscribed(instrumentation_block, /taskinator.subprocess/) do
+        TestInstrumenter.subscribe(instrumentation_block, /taskinator.task/) do
           subject.complete!
         end
       end

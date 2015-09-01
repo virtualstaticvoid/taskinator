@@ -52,7 +52,7 @@ describe Taskinator::Instrumentation, :redis => true do
   describe "#enqueued_payload" do
   end
 
-  describe "#started_payload" do
+  describe "#processing_payload" do
   end
 
   describe "#completed_payload" do
@@ -63,25 +63,29 @@ describe Taskinator::Instrumentation, :redis => true do
           subject.process_key,
           [:options, YAML.dump({:foo => :bar})],
           [:tasks_count, 100],
-          [:completed, 3],
-          [:cancelled, 2],
-          [:failed, 1]
+          [:tasks_processing, 1],
+          [:tasks_completed, 2],
+          [:tasks_cancelled, 3],
+          [:tasks_failed, 4]
         )
       end
 
-      expect(subject.completed_payload(:baz => :qux)).to eq({
-        :type                  => subject.class.name,
-        :process_uuid          => subject.uuid,
-        :process_options       => {:foo => :bar},
-        :uuid                  => subject.uuid,
-        :state                 => :completed,
-        :options               => subject.options,
-        :percentage_failed     => 1.0,
-        :percentage_cancelled  => 2.0,
-        :percentage_completed  => 3.0,
-        :instance              => subject,
-        :baz                   => :qux
-      })
+      expect(subject.completed_payload(:baz => :qux)).to eq(
+        OpenStruct.new({
+          :type                   => subject.class,
+          :process_uuid           => subject.uuid,
+          :process_options        => {:foo => :bar},
+          :uuid                   => subject.uuid,
+          :state                  => :completed,
+          :options                => subject.options,
+          :percentage_processing  => 1.0,
+          :percentage_completed   => 2.0,
+          :percentage_cancelled   => 3.0,
+          :percentage_failed      => 4.0,
+          :instance               => subject,
+          :baz                    => :qux
+        })
+      )
     }
   end
 
