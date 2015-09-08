@@ -19,7 +19,17 @@ module Taskinator
     end
 
     def perform
-      @definition._create_process_(false, *@args, :uuid => @uuid).enqueue!
+      options = begin
+        if @args.is_a?(Array)
+          (@args.last.is_a?(Hash) ? args.last : {}).merge(:uuid => @uuid)
+        elsif @args.is_a?(Hash)
+          @args.merge(:uuid => @uuid)
+        else
+          {}
+        end
+      end
+
+      @definition._create_process_(false, *@args, options).enqueue!
     end
 
     private
