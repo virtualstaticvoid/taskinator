@@ -2,7 +2,7 @@ module Taskinator
   module Workflow
 
     def current_state
-      @current_state ||= load_workflow_state
+      @current_state = load_workflow_state
     end
 
     def current_state=(new_state)
@@ -27,7 +27,7 @@ module Taskinator
     ).each do |state|
 
       define_method :"#{state}?" do
-        @current_state == state
+        current_state == state
       end
 
     end
