@@ -248,7 +248,17 @@ module Taskinator
       def task_completed(task)
         # when complete on first, then don't bother with subsequent tasks completing
         return if completed? || failed?
-        complete!
+
+        if tasks_completed?
+          # prevent re-entrance so that two tasks completing
+          # simultaneously can't complete the process twice,
+          # which enqueues/starts the same subsequent task
+          Taskinator.redis_mutex(uuid) do
+            # double check, since the status may have
+            # changed while waiting in the mutex
+            complete! if tasks_completed?
+          end
+        end
       end
 
       def tasks_completed?
