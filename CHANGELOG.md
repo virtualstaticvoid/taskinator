@@ -1,3 +1,7 @@
+v0.3.1 - 16 Sep 2015
+---
+Added redis-semaphore gem, for fix to concurrent processes completion logic.
+
 v0.3.0 - 28 Aug 2015
 ---
 Added created_at and updated_at to process and task as attributes.
