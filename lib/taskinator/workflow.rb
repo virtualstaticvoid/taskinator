@@ -2,7 +2,8 @@ module Taskinator
   module Workflow
 
     def current_state
-      @current_state ||= load_workflow_state
+      # NB: don't memoize this value (i.e. re-read it each time)
+      @current_state = load_workflow_state
     end
 
     def current_state=(new_state)
