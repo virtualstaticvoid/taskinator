@@ -1,6 +1,7 @@
 require 'json'
 require 'yaml'
 require 'securerandom'
+require 'redis-semaphore'
 
 require 'taskinator/version'
 
@@ -60,6 +61,13 @@ module Taskinator
     def redis(&block)
       raise ArgumentError, "requires a block" unless block_given?
       redis_pool.with(&block)
+    end
+
+    def redis_mutex(lockid, options={}, &block)
+      raise ArgumentError, "requires a block" unless block_given?
+      redis do |r|
+        Redis::Semaphore.new(lockid, {:redis => r}.merge(options)).lock(&block)
+      end
     end
 
     def redis_pool
