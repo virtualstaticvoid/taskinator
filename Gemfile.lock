@@ -1,6 +1,6 @@
 GIT
   remote: git://github.com/mperham/sidekiq.git
-  revision: b0cdd4cc868e7564b78ee34965067e025ec41689
+  revision: 50fc8ee7c3f7c5e4049db598c0e14465a67a877c
   specs:
     sidekiq (3.5.0)
       celluloid (~> 0.17.0)
@@ -12,16 +12,17 @@ GIT
 PATH
   remote: .
   specs:
-    taskinator (0.3.0)
+    taskinator (0.3.1)
       connection_pool (>= 2.2.0)
       json (>= 1.8.2)
       redis (>= 3.2.1)
       redis-namespace (>= 1.5.2)
+      redis-semaphore (>= 0.2.4)
 
 GEM
   remote: https://rubygems.org/
   specs:
-    activesupport (4.2.3)
+    activesupport (4.2.4)
       i18n (~> 0.7)
       json (~> 1.7, >= 1.7.7)
       minitest (~> 5.1)
@@ -29,7 +30,7 @@ GEM
       tzinfo (~> 1.1)
     byebug (5.0.0)
       columnize (= 0.9.0)
-    celluloid (0.17.1.1)
+    celluloid (0.17.1.2)
       bundler
       celluloid-essentials
       celluloid-extras
@@ -39,37 +40,37 @@ GEM
       dotenv
       nenv
       rspec-logsplit (>= 0.1.2)
-      timers (~> 4.0.0)
-    celluloid-essentials (0.20.2)
+      timers (>= 4.1.1)
+    celluloid-essentials (0.20.2.1)
       bundler
       dotenv
       nenv
       rspec-logsplit (>= 0.1.2)
-      timers (~> 4.0.0)
-    celluloid-extras (0.20.0)
+      timers (>= 4.1.1)
+    celluloid-extras (0.20.1)
       bundler
       dotenv
       nenv
       rspec-logsplit (>= 0.1.2)
-      timers (~> 4.0.0)
-    celluloid-fsm (0.20.0)
+      timers (>= 4.1.1)
+    celluloid-fsm (0.20.1)
       bundler
       dotenv
       nenv
       rspec-logsplit (>= 0.1.2)
-      timers (~> 4.0.0)
-    celluloid-pool (0.20.0)
+      timers (>= 4.1.1)
+    celluloid-pool (0.20.1)
       bundler
       dotenv
       nenv
       rspec-logsplit (>= 0.1.2)
-      timers (~> 4.0.0)
-    celluloid-supervision (0.20.1)
+      timers (>= 4.1.1)
+    celluloid-supervision (0.20.1.1)
       bundler
       dotenv
       nenv
       rspec-logsplit (>= 0.1.2)
-      timers (~> 4.0.0)
+      timers (>= 4.1.1)
     coderay (1.1.0)
     columnize (0.9.0)
     connection_pool (2.2.0)
@@ -86,13 +87,13 @@ GEM
     domain_name (0.5.24)
       unf (>= 0.0.5, < 1.0.0)
     dotenv (2.0.2)
-    hitimes (1.2.2)
+    hitimes (1.2.3)
     http-cookie (1.0.2)
       domain_name (~> 0.5)
     i18n (0.7.0)
     json (1.8.3)
     method_source (0.8.2)
-    mime-types (2.6.1)
+    mime-types (2.6.2)
     minitest (5.8.0)
     mono_logger (1.1.0)
     multi_json (1.11.2)
@@ -112,6 +113,8 @@ GEM
     redis (3.2.1)
     redis-namespace (1.5.2)
       redis (~> 3.0, >= 3.0.4)
+    redis-semaphore (0.2.4)
+      redis
     resque (1.25.2)
       mono_logger (~> 1.0)
       multi_json (~> 1.0)
@@ -159,7 +162,7 @@ GEM
     thor (0.19.1)
     thread_safe (0.3.5)
     tilt (2.0.1)
-    timers (4.0.1)
+    timers (4.1.1)
       hitimes
     tins (1.6.0)
     tzinfo (1.2.2)

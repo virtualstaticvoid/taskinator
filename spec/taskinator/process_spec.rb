@@ -344,7 +344,9 @@ describe Taskinator::Process do
 
   describe Taskinator::Process::Concurrent do
 
-    subject { Taskinator::Process.define_concurrent_process_for(definition) }
+    let(:complete_on) { Taskinator::CompleteOn::Default }
+
+    subject { Taskinator::Process.define_concurrent_process_for(definition, complete_on) }
 
     it_should_behave_like "a process", Taskinator::Process::Concurrent do
 
@@ -414,12 +416,33 @@ describe Taskinator::Process do
     end
 
     describe "#task_completed" do
-      it "completes when tasks complete" do
-        tasks.each {|t| subject.tasks << t }
+      it "completes when tasks complete (CompleteOn::First)" do
+        allow_any_instance_of(Taskinator::Task).to receive(:completed?) { true }
 
-        expect(subject).to receive(:complete!)
+        process = Taskinator::Process.define_concurrent_process_for(definition, Taskinator::CompleteOn::First)
+        tasks.each {|t| process.tasks << t }
 
-        subject.task_completed(tasks.first)
+        expect(process).to receive(:complete!).and_call_original
+
+        process.task_completed(tasks.first)
+
+        # remaining tasks should do nothing...
+        tasks.each do |task|
+          process.task_completed(task)
+        end
+      end
+
+      it "completes when tasks complete (CompleteOn::Last)" do
+        allow_any_instance_of(Taskinator::Task).to receive(:completed?) { true }
+
+        process = Taskinator::Process.define_concurrent_process_for(definition, Taskinator::CompleteOn::Last)
+        tasks.each {|t| process.tasks << t }
+
+        expect(process).to receive(:complete!).and_call_original
+
+        tasks.each do |task|
+          process.task_completed(task)
+        end
       end
     end
 
