@@ -222,6 +222,7 @@ module Taskinator
         end
       end
 
+      # this method only called in-process (usually from the console)
       def start
         if tasks.empty?
           complete! # weren't any tasks to start with
