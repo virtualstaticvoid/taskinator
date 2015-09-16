@@ -17,6 +17,7 @@ PATH
       json (>= 1.8.2)
       redis (>= 3.2.1)
       redis-namespace (>= 1.5.2)
+      redis-semaphore (>= 0.2.4)
 
 GEM
   remote: https://rubygems.org/
@@ -112,6 +113,8 @@ GEM
     redis (3.2.1)
     redis-namespace (1.5.2)
       redis (~> 3.0, >= 3.0.4)
+    redis-semaphore (0.2.4)
+      redis
     resque (1.25.2)
       mono_logger (~> 1.0)
       multi_json (~> 1.0)
