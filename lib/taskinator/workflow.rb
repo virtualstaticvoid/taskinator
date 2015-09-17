@@ -28,7 +28,7 @@ module Taskinator
     ).each do |state|
 
       define_method :"#{state}?" do
-        @current_state == state
+        current_state == state
       end
 
     end
