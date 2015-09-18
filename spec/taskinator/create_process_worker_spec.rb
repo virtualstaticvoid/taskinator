@@ -4,9 +4,9 @@ describe Taskinator::CreateProcessWorker do
 
   let(:definition) { MockDefinition.create }
   let(:uuid) { SecureRandom.uuid }
-  let(:args) { {:foo => :bar} }
+  let(:args) { [{:foo => :bar}] }
 
-  subject { Taskinator::CreateProcessWorker.new(definition.name, uuid, Taskinator::Persistence.serialize(:foo => :bar)) }
+  subject { Taskinator::CreateProcessWorker.new(definition.name, uuid, Taskinator::Persistence.serialize(args)) }
 
   describe "#initialize" do
     it {
@@ -14,19 +14,19 @@ describe Taskinator::CreateProcessWorker do
     }
 
     it {
-      Taskinator::CreateProcessWorker.new(definition.name, uuid, Taskinator::Persistence.serialize(:foo => :bar))
+      Taskinator::CreateProcessWorker.new(definition.name, uuid, Taskinator::Persistence.serialize(args))
       expect(subject.definition).to eq(definition)
     }
 
     it {
       MockDefinition.const_set(definition.name, definition)
-      Taskinator::CreateProcessWorker.new("MockDefinition::#{definition.name}", uuid, Taskinator::Persistence.serialize(:foo => :bar))
+      Taskinator::CreateProcessWorker.new("MockDefinition::#{definition.name}", uuid, Taskinator::Persistence.serialize(args))
       expect(subject.definition).to eq(definition)
     }
 
     it {
       expect {
-        Taskinator::CreateProcessWorker.new("NonExistent", uuid, Taskinator::Persistence.serialize(:foo => :bar))
+        Taskinator::CreateProcessWorker.new("NonExistent", uuid, Taskinator::Persistence.serialize(args))
       }.to raise_error(NameError)
     }
 
@@ -40,9 +40,42 @@ describe Taskinator::CreateProcessWorker do
   end
 
   describe "#perform" do
-    it "should create the process" do
-      expect(definition).to receive(:_create_process_).with(false, *args, args.merge(:uuid => uuid)).and_return(double('process', :enqueue! => nil))
-      subject.perform
+    describe "create the process" do
+      it "with no arguments" do
+        process_args = [{:uuid => uuid}]
+        args = Taskinator::Persistence.serialize([])
+
+        expect(definition).to receive(:_create_process_).with(false, *process_args).and_return(double('process', :enqueue! => nil))
+
+        Taskinator::CreateProcessWorker.new(definition.name, uuid, args).perform
+      end
+
+      it "with arguments" do
+        process_args = [:foo, :bar, {:uuid => uuid}]
+        serialized_args = Taskinator::Persistence.serialize([:foo, :bar])
+
+        expect(definition).to receive(:_create_process_).with(false, *process_args).and_return(double('process', :enqueue! => nil))
+
+        Taskinator::CreateProcessWorker.new(definition.name, uuid, serialized_args).perform
+      end
+
+      it "with options" do
+        process_args = [{:foo => :bar, :uuid => uuid}]
+        serialized_args = Taskinator::Persistence.serialize([{:foo => :bar}])
+
+        expect(definition).to receive(:_create_process_).with(false, *process_args).and_return(double('process', :enqueue! => nil))
+
+        Taskinator::CreateProcessWorker.new(definition.name, uuid, serialized_args).perform
+      end
+
+      it "with arguments and options" do
+        process_args = [:foo, {:bar => :baz, :uuid => uuid}]
+        serialized_args = Taskinator::Persistence.serialize([:foo, {:bar => :baz}])
+
+        expect(definition).to receive(:_create_process_).with(false, *process_args).and_return(double('process', :enqueue! => nil))
+
+        Taskinator::CreateProcessWorker.new(definition.name, uuid, serialized_args).perform
+      end
     end
 
     it "should enqueue the process" do
