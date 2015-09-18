@@ -1,3 +1,7 @@
+v0.3.2 - 18 Sep 2015
+---
+Bug fix to argument handling when using `create_process_remotely` method.
+
 v0.3.1 - 16 Sep 2015
 ---
 Added redis-semaphore gem, for fix to concurrent processes completion logic.
