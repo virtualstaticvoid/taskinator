@@ -156,6 +156,8 @@ describe Taskinator::Task do
 
     describe "#tasks_count" do
       it {
+        process_uuid = SecureRandom.hex
+        allow(subject).to receive(:process_uuid) { process_uuid }
         expect(subject.tasks_count).to eq(0)
       }
     end
