@@ -1,3 +1,7 @@
+v0.3.3 - 29 Oct 2015
+---
+Bug fix for options handling when defining processes using `define_concurrent_process`.
+
 v0.3.2 - 18 Sep 2015
 ---
 Bug fix to argument handling when using `create_process_remotely` method.
