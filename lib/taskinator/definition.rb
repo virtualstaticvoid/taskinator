@@ -19,7 +19,8 @@ module Taskinator
 
     def define_concurrent_process(*arg_list, &block)
       factory = lambda {|definition, options|
-        Process.define_concurrent_process_for(definition, options)
+        complete_on = options.delete(:complete_on) || CompleteOn::Default
+        Process.define_concurrent_process_for(definition, complete_on, options)
       }
       define_process(*arg_list + [factory], &block)
     end
