@@ -50,9 +50,11 @@ describe Taskinator::Instrumentation, :redis => true do
   end
 
   describe "#enqueued_payload" do
+    pending
   end
 
   describe "#processing_payload" do
+    pending
   end
 
   describe "#completed_payload" do
@@ -90,9 +92,11 @@ describe Taskinator::Instrumentation, :redis => true do
   end
 
   describe "#cancelled_payload" do
+    pending
   end
 
   describe "#failed_payload" do
+    pending
   end
 
 end
