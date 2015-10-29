@@ -194,6 +194,25 @@ module Taskinator
         end
       end
 
+      def cleanup
+        Taskinator.redis do |conn|
+
+          process_key = self.process_key
+
+          # delete processes/tasks data
+          conn.scan_each(:match => "#{process_key}:*", :count => 1000) do |key|
+            conn.del(key)
+          end
+
+          # remove the process
+          conn.del process_key
+
+          # remove from the list
+          conn.srem "taskinator:#{Persistence.list_key}", uuid
+
+        end
+      end
+
     end
 
     class RedisSerializationVisitor < Visitor::Base

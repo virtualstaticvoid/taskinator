@@ -120,7 +120,11 @@ module Taskinator
           complete if respond_to?(:complete)
           # notify the parent task (if there is one) that this process has completed
           # note: parent may be a proxy, so explicity check for nil?
-          parent.complete! unless parent.nil?
+          unless parent.nil?
+            parent.complete!
+          else
+            cleanup
+          end
         end
       end
     end
