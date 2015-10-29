@@ -22,6 +22,7 @@ require 'taskinator/tasks'
 require 'taskinator/process'
 
 require 'taskinator/task_worker'
+require 'taskinator/process_worker'
 require 'taskinator/create_process_worker'
 
 require 'taskinator/executor'
