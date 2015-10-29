@@ -46,6 +46,10 @@ module Taskinator
       @options = opts
     end
 
+    def generate_uuid
+      SecureRandom.uuid
+    end
+
     ##
     # Configuration for Taskinator client, use like:
     #

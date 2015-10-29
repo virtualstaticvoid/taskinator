@@ -208,7 +208,7 @@ describe Taskinator::Persistence, :redis => true do
         attr_reader :uuid
 
         def initialize
-          @uuid = SecureRandom.uuid
+          @uuid = Taskinator.generate_uuid
         end
       end
       klass.new

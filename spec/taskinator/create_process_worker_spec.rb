@@ -3,7 +3,7 @@ require 'spec_helper'
 describe Taskinator::CreateProcessWorker do
 
   let(:definition) { MockDefinition.create }
-  let(:uuid) { SecureRandom.uuid }
+  let(:uuid) { Taskinator.generate_uuid }
   let(:args) { [{:foo => :bar}] }
 
   subject { Taskinator::CreateProcessWorker.new(definition.name, uuid, Taskinator::Persistence.serialize(args)) }

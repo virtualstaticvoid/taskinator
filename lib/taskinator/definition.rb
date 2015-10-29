@@ -98,7 +98,7 @@ module Taskinator
     #
     def create_process_remotely(*args)
       assert_valid_process_module
-      uuid = SecureRandom.uuid
+      uuid = Taskinator.generate_uuid
 
       Taskinator.queue.enqueue_create_process(self, uuid, args)
 

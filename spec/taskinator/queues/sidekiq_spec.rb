@@ -7,7 +7,7 @@ describe Taskinator::Queues::SidekiqAdapter, :sidekiq do
   end
 
   let(:adapter) { Taskinator::Queues::SidekiqAdapter }
-  let(:uuid) {  SecureRandom.uuid }
+  let(:uuid) {  Taskinator.generate_uuid }
 
   subject { adapter.new }
 

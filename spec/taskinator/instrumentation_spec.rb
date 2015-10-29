@@ -17,7 +17,7 @@ describe Taskinator::Instrumentation, :redis => true do
       attr_reader :options
 
       def initialize
-        @uuid = SecureRandom.uuid
+        @uuid = Taskinator.generate_uuid
         @options = { :bar => :baz }
       end
     end

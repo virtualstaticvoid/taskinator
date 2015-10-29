@@ -37,7 +37,7 @@ module Taskinator
     def initialize(process, options={})
       raise ArgumentError, 'process' if process.nil? || !process.is_a?(Process)
 
-      @uuid = SecureRandom.uuid
+      @uuid = Taskinator.generate_uuid
       @process = process
       @options = options
       @queue = options.delete(:queue)

@@ -6,7 +6,7 @@ describe Taskinator::TaskWorker do
     double('task', :paused? => paused, :cancelled? => cancelled, :can_complete? => can_complete)
   end
 
-  let(:uuid) { SecureRandom.uuid }
+  let(:uuid) { Taskinator.generate_uuid }
 
   subject { Taskinator::TaskWorker.new(uuid) }
 

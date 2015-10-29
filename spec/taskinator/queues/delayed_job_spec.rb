@@ -5,7 +5,7 @@ describe Taskinator::Queues::DelayedJobAdapter, :delayed_job do
   it_should_behave_like "a queue adapter", :delayed_job, Taskinator::Queues::DelayedJobAdapter
 
   let(:adapter) { Taskinator::Queues::DelayedJobAdapter }
-  let(:uuid) {  SecureRandom.uuid }
+  let(:uuid) {  Taskinator.generate_uuid }
 
   subject { adapter.new }
 
