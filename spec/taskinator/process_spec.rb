@@ -162,7 +162,7 @@ describe Taskinator::Process do
     describe "#parent" do
       it "notifies parent when completed" do
         allow(subject).to receive(:tasks_completed?) { true }
-        subject.parent = double('parent')
+        subject.parent = double('parent', :uuid => 'foobar')
         expect(subject.parent).to receive(:complete!)
         subject.start!
         subject.complete!
@@ -170,7 +170,7 @@ describe Taskinator::Process do
 
       it "notifies parent when failed" do
         allow(subject).to receive(:tasks_completed?) { true }
-        subject.parent = double('parent')
+        subject.parent = double('parent', :uuid => 'foobar')
         expect(subject.parent).to receive(:fail!)
         subject.start!
         subject.fail!(StandardError.new)

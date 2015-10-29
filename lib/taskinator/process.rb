@@ -27,7 +27,7 @@ module Taskinator
     attr_reader :updated_at
 
     # in the case of sub process tasks, the containing task
-    attr_accessor :parent
+    attr_reader :parent
 
     def initialize(definition, options={})
       raise ArgumentError, 'definition' if definition.nil?
@@ -39,6 +39,12 @@ module Taskinator
       @queue = options.delete(:queue)
       @created_at = Time.now.utc
       @updated_at = created_at
+    end
+
+    def parent=(value)
+      @parent = value
+      # update the uuid to be "scoped" within the parent task
+      @uuid = "#{@parent.uuid}:subprocess"
     end
 
     def tasks
