@@ -17,10 +17,6 @@ module Taskinator
       def define_concurrent_process_for(definition, complete_on=CompleteOn::Default, options={})
         Process::Concurrent.new(definition, complete_on, options)
       end
-
-      def base_key
-        'process'
-      end
     end
 
     attr_reader :uuid
@@ -31,18 +27,24 @@ module Taskinator
     attr_reader :updated_at
 
     # in the case of sub process tasks, the containing task
-    attr_accessor :parent
+    attr_reader :parent
 
     def initialize(definition, options={})
       raise ArgumentError, 'definition' if definition.nil?
       raise ArgumentError, "#{definition.name} does not extend the #{Definition.name} module" unless definition.kind_of?(Definition)
 
-      @uuid = options.delete(:uuid) || SecureRandom.uuid
+      @uuid = options.delete(:uuid) || Taskinator.generate_uuid
       @definition = definition
       @options = options
       @queue = options.delete(:queue)
       @created_at = Time.now.utc
       @updated_at = created_at
+    end
+
+    def parent=(value)
+      @parent = value
+      # update the uuid to be "scoped" within the parent task
+      @uuid = "#{@parent.uuid}:subprocess"
     end
 
     def tasks
@@ -118,7 +120,11 @@ module Taskinator
           complete if respond_to?(:complete)
           # notify the parent task (if there is one) that this process has completed
           # note: parent may be a proxy, so explicity check for nil?
-          parent.complete! unless parent.nil?
+          unless parent.nil?
+            parent.complete!
+          else
+            cleanup
+          end
         end
       end
     end

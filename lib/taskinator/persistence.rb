@@ -27,7 +27,7 @@ module Taskinator
       # to provide the base key to use for storing
       # it's instances, and it must be unique!
       def base_key
-        raise NotImplementedError
+        @base_key ||= 'shared'
       end
 
       # returns the storage key for the given identifier
@@ -191,6 +191,25 @@ module Taskinator
             conn.hget(self.process_key, :options)
           end
           yaml ? Taskinator::Persistence.deserialize(yaml) : {}
+        end
+      end
+
+      def cleanup
+        Taskinator.redis do |conn|
+
+          process_key = self.process_key
+
+          # delete processes/tasks data
+          conn.scan_each(:match => "#{process_key}:*", :count => 1000) do |key|
+            conn.del(key)
+          end
+
+          # remove the process
+          conn.del process_key
+
+          # remove from the list
+          conn.srem "taskinator:#{Persistence.list_key}", uuid
+
         end
       end
 

@@ -1,3 +1,9 @@
+v0.3.4 - 30 Oct 2015
+---
+Updated the keys used when persisting processes and tasks in Redis, so they fall in the same key space.
+Added clean up code to remove data from Redis when a process completes.
+Introduced `Taskinator.generate_uuid` method
+
 v0.3.3 - 29 Oct 2015
 ---
 Bug fix for options handling when defining processes using `define_concurrent_process`.

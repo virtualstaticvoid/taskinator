@@ -11,14 +11,6 @@ describe Taskinator::Persistence, :redis => true do
       end
     }
 
-    describe ".base_key" do
-      it {
-        expect {
-          subject.base_key
-        }.to raise_error(NotImplementedError)
-      }
-    end
-
     describe ".key_for" do
       before do
         allow(subject).to receive(:base_key) { 'base_key' }
@@ -208,7 +200,7 @@ describe Taskinator::Persistence, :redis => true do
         attr_reader :uuid
 
         def initialize
-          @uuid = SecureRandom.uuid
+          @uuid = Taskinator.generate_uuid
         end
       end
       klass.new
@@ -220,7 +212,7 @@ describe Taskinator::Persistence, :redis => true do
 
     describe "#key" do
       it {
-        expect(subject.key).to match(/taskinator:base_key:#{subject.uuid}/)
+        expect(subject.key).to match(/#{subject.uuid}/)
       }
     end
 
@@ -240,7 +232,7 @@ describe Taskinator::Persistence, :redis => true do
           conn.hset(subject.key, :process_uuid, subject.uuid)
         end
 
-        expect(subject.process_key).to match(/taskinator:process:#{subject.uuid}/)
+        expect(subject.process_key).to match(/#{subject.uuid}/)
       }
     end
 

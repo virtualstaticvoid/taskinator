@@ -5,7 +5,7 @@ describe Taskinator::Queues::ResqueAdapter, :resque do
   it_should_behave_like "a queue adapter", :resque, Taskinator::Queues::ResqueAdapter
 
   let(:adapter) { Taskinator::Queues::ResqueAdapter }
-  let(:uuid) {  SecureRandom.uuid }
+  let(:uuid) {  Taskinator.generate_uuid }
 
   subject { adapter.new }
 

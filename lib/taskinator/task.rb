@@ -18,10 +18,6 @@ module Taskinator
       def define_sub_process_task(process, sub_process, options={})
         SubProcess.new(process, sub_process, options)
       end
-
-      def base_key
-        'task'
-      end
     end
 
     attr_reader :process
@@ -37,7 +33,7 @@ module Taskinator
     def initialize(process, options={})
       raise ArgumentError, 'process' if process.nil? || !process.is_a?(Process)
 
-      @uuid = SecureRandom.uuid
+      @uuid = "#{process.uuid}:task:#{Taskinator.generate_uuid}"
       @process = process
       @options = options
       @queue = options.delete(:queue)
