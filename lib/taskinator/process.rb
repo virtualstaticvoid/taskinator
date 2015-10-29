@@ -17,10 +17,6 @@ module Taskinator
       def define_concurrent_process_for(definition, complete_on=CompleteOn::Default, options={})
         Process::Concurrent.new(definition, complete_on, options)
       end
-
-      def base_key
-        'process'
-      end
     end
 
     attr_reader :uuid

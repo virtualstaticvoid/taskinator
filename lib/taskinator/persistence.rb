@@ -27,7 +27,7 @@ module Taskinator
       # to provide the base key to use for storing
       # it's instances, and it must be unique!
       def base_key
-        raise NotImplementedError
+        @base_key ||= 'shared'
       end
 
       # returns the storage key for the given identifier
