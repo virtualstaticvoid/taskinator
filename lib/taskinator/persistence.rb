@@ -53,7 +53,7 @@ module Taskinator
 
       def save
         Taskinator.redis do |conn|
-          conn.multi do
+          conn.pipelined do
             visitor = RedisSerializationVisitor.new(conn, self).visit
             conn.hmset(
               Taskinator::Process.key_for(uuid),
