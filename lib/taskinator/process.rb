@@ -22,6 +22,7 @@ module Taskinator
     attr_reader :uuid
     attr_reader :definition
     attr_reader :options
+    attr_reader :scope
     attr_reader :queue
     attr_reader :created_at
     attr_reader :updated_at
@@ -36,6 +37,7 @@ module Taskinator
       @uuid = options.delete(:uuid) || Taskinator.generate_uuid
       @definition = definition
       @options = options
+      @scope = options.delete(:scope)
       @queue = options.delete(:queue)
       @created_at = Time.now.utc
       @updated_at = created_at
@@ -61,6 +63,7 @@ module Taskinator
       visitor.visit_type(:definition)
       visitor.visit_tasks(tasks)
       visitor.visit_args(:options)
+      visitor.visit_attribute(:scope)
       visitor.visit_attribute(:queue)
       visitor.visit_attribute_time(:created_at)
       visitor.visit_attribute_time(:updated_at)

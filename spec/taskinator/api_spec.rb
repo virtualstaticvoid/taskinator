@@ -18,7 +18,7 @@ describe Taskinator::Api, :redis => true do
 
         Taskinator.redis do |conn|
           conn.multi do
-            3.times {|i| conn.sadd("taskinator:#{Taskinator::Persistence.list_key}", i) }
+            3.times {|i| conn.sadd(Taskinator::Persistence.processes_list_key, i) }
           end
         end
 
@@ -35,7 +35,7 @@ describe Taskinator::Api, :redis => true do
       it "yields the number of processes" do
         Taskinator.redis do |conn|
           conn.multi do
-            3.times {|i| conn.sadd("taskinator:#{Taskinator::Persistence.list_key}", i) }
+            3.times {|i| conn.sadd(Taskinator::Persistence.processes_list_key, i) }
           end
         end
 
