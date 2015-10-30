@@ -106,6 +106,26 @@ describe Taskinator::Definition do
       expect(subject.create_process).to be_a(Taskinator::Process)
     end
 
+    it "defaults the scope to :shared" do
+      block = SpecSupport::Block.new
+      allow(block).to receive(:to_proc) {
+        Proc.new {|*args| }
+      }
+      subject.define_process(&block)
+
+      expect(subject.create_process.scope).to eq(:shared)
+    end
+
+    it "sets the scope" do
+      block = SpecSupport::Block.new
+      allow(block).to receive(:to_proc) {
+        Proc.new {|*args| }
+      }
+      subject.define_process(&block)
+
+      expect(subject.create_process(:scope => :foo).scope).to eq(:foo)
+    end
+
     it "receives options" do
       block = SpecSupport::Block.new
       allow(block).to receive(:to_proc) {

@@ -46,6 +46,8 @@ module Taskinator
           raise ArgumentError, "wrong number of arguments (#{args.length} for #{arg_list.length})" if args.length < arg_list.length
 
           options = (args.last.is_a?(Hash) ? args.last : {})
+          options[:scope] ||= :shared
+
           process = factory.call(self, options)
 
           # this may take long... up to users definition

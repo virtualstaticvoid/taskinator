@@ -2,14 +2,14 @@ module Taskinator
   module Persistence
 
     class << self
-      def add_process_to_list(process)
-        Taskinator.redis do |conn|
-          conn.sadd "taskinator:#{list_key}", process.uuid
-        end
+      def processes_list_key(scope=:shared)
+        "taskinator:#{scope}:processes"
       end
 
-      def list_key
-        'processes'
+      def add_process_to_list(process)
+        Taskinator.redis do |conn|
+          conn.sadd processes_list_key(process.scope), process.uuid
+        end
       end
     end
 
@@ -208,7 +208,7 @@ module Taskinator
           conn.del process_key
 
           # remove from the list
-          conn.srem "taskinator:#{Persistence.list_key}", uuid
+          conn.srem Persistence.processes_list_key(scope), uuid
 
         end
       end
@@ -302,6 +302,12 @@ module Taskinator
       def visit_args(attribute)
         values = @instance.send(attribute)
         yaml = Taskinator::Persistence.serialize(values)
+
+        # greater than 2 MB?
+        if (yaml.bytesize / (1024.0**2)) > 2
+          Taskinator.logger.warn("Large argument data detected for '#{self.to_s}'. Consider using intrinsic types instead, or try to reduce the amount of data provided.")
+        end
+
         @hmset += [attribute, yaml]
       end
 
