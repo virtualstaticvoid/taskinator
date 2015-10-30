@@ -302,6 +302,12 @@ module Taskinator
       def visit_args(attribute)
         values = @instance.send(attribute)
         yaml = Taskinator::Persistence.serialize(values)
+
+        # greater than 2 MB?
+        if (yaml.bytesize / (1024.0**2)) > 2
+          Taskinator.logger.warn("Large argument data detected for '#{self.to_s}'. Consider using intrinsic types instead, or try to reduce the amount of data provided.")
+        end
+
         @hmset += [attribute, yaml]
       end
 
