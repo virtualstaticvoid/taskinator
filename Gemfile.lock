@@ -1,8 +1,8 @@
 GIT
   remote: git://github.com/mperham/sidekiq.git
-  revision: a087e1db6b3bd4707e63b99858e03d06cf785a78
+  revision: c556c85b689af3a4f6a1da76c9f8b5208b9753c3
   specs:
-    sidekiq (4.0.0.pre1)
+    sidekiq (4.0.0.pre2)
       concurrent-ruby (= 1.0.0.pre4)
       connection_pool (~> 2.2, >= 2.2.0)
       json (~> 1.0)
@@ -57,7 +57,7 @@ GEM
     minitest (5.8.2)
     mono_logger (1.1.0)
     multi_json (1.11.2)
-    netrc (0.10.3)
+    netrc (0.11.0)
     pry (0.10.3)
       coderay (~> 1.1.0)
       method_source (~> 0.8.1)
