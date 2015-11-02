@@ -16,6 +16,7 @@ require 'taskinator/workflow'
 require 'taskinator/visitor'
 require 'taskinator/persistence'
 require 'taskinator/instrumentation'
+require 'taskinator/xml_visitor'
 
 require 'taskinator/task'
 require 'taskinator/tasks'
