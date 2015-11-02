@@ -1,8 +1,13 @@
-v0.3.4 - 30 Oct 2015
+v0.3.5 - 02 Nov 2015
 ---
 Updated the keys used when persisting processes and tasks in Redis, so they fall in the same key space.
 Added clean up code to remove data from Redis when a process completes.
 Introduced `Taskinator.generate_uuid` method
+Use Redis pipelined mode to persist processes and tasks.
+Added warning output to log if serialized arguments are bigger than 2MB.
+Introduced scoping for keys in Redis in order to better support multi-tenancy requirements.
+Added XmlVisitor for extracting processes/tasks into XML.
+Introduced `ProcessWorker` (incomplete) which will be used to incrementally build sub-process in order to speed up overall processing for big processes.
 
 v0.3.3 - 29 Oct 2015
 ---
