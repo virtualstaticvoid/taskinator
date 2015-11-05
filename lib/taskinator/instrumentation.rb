@@ -57,17 +57,16 @@ module Taskinator
 
       return OpenStruct.new(
         {
-          :type                   => self.class,
+          :type                   => self.class.name,
           :process_uuid           => process_uuid,
-          :process_options        => process_options,
+          :process_options        => process_options.dup,
           :uuid                   => uuid,
-          :options                => options,
+          :options                => options.dup,
           :state                  => state,
           :percentage_failed      => (tasks_count > 0) ? (failed_count.to_i     / tasks_count) * 100.0 : 0.0,
           :percentage_cancelled   => (tasks_count > 0) ? (cancelled_count.to_i  / tasks_count) * 100.0 : 0.0,
           :percentage_processing  => (tasks_count > 0) ? (processing_count.to_i / tasks_count) * 100.0 : 0.0,
           :percentage_completed   => (tasks_count > 0) ? (completed_count.to_i  / tasks_count) * 100.0 : 0.0,
-          :instance               => self
         }.merge(additional)
       ).freeze
 
