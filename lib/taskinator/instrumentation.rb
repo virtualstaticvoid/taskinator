@@ -41,6 +41,9 @@ module Taskinator
 
     def payload_for(state, additional={})
 
+      # performance testing, omit completely for now...
+      return {}
+
       # need to cache here, since this method hits redis, so can't be part of multi statement following
       process_key = self.process_key
 
