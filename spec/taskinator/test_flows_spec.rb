@@ -360,7 +360,7 @@ describe TestFlows do
           if name =~ /taskinator.task.processing/
             expect(payload[:percentage_completed]).to eq( (invoke_count / task_count.to_f) * 100.0 )
           elsif name =~ /taskinator.task.completed/
-            unless payload.type >= Taskinator::Task::SubProcess
+            unless payload.type.constantize >= Taskinator::Task::SubProcess
               invoke_count += 1
               expect(payload[:percentage_completed]).to eq( (invoke_count / task_count.to_f) * 100.0 )
             end
