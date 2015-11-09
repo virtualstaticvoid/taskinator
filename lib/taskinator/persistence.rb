@@ -197,25 +197,18 @@ module Taskinator
       def cleanup
         Taskinator.redis do |conn|
 
-          process_key = self.process_key
-
-          # delete processes/tasks data
-          conn.scan_each(:match => "#{process_key}:*", :count => 1000) do |key|
-            conn.del(key)
-          end
-
-          # remove the process
-          conn.del process_key
+          # use the "clean up" visitor
+          RedisCleanupVisitor.new(conn, self).visit
 
           # remove from the list
-          conn.srem Persistence.processes_list_key(scope), uuid
+          conn.srem(Persistence.processes_list_key(scope), uuid)
 
         end
       end
 
     end
 
-    class RedisSerializationVisitor < Visitor::Base
+    class RedisSerializationVisitor < Taskinator::Visitor::Base
 
       #
       # the redis connection is passed in since it is
@@ -452,6 +445,34 @@ module Taskinator
         klass = Kernel.const_get(type)
         LazyLoader.new(klass, uuid, @instance_cache)
       end
+    end
+
+    class RedisCleanupVisitor < Taskinator::Visitor::Base
+
+      attr_reader :instance
+
+      def initialize(conn, instance)
+        @conn = conn
+        @instance = instance
+        @key = instance.key
+      end
+
+      def visit
+        @instance.accept(self)
+        @conn.del(@key)
+      end
+
+      def visit_process(attribute)
+        process = @instance.send(attribute)
+        RedisCleanupVisitor.new(@conn, process).visit if process
+      end
+
+      def visit_tasks(tasks)
+        tasks.each do |task|
+          RedisCleanupVisitor.new(@conn, task).visit unless task.nil?
+        end
+      end
+
     end
 
     # lazily loads the object specified by the type and uuid
