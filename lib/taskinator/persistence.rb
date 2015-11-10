@@ -469,7 +469,7 @@ module Taskinator
 
       def visit_tasks(tasks)
         tasks.each do |task|
-          RedisCleanupVisitor.new(@conn, task).visit unless task.nil?
+          RedisCleanupVisitor.new(@conn, task).visit
         end
       end
 
