@@ -74,7 +74,7 @@ describe Taskinator::Instrumentation, :redis => true do
 
       expect(subject.completed_payload(:baz => :qux)).to eq(
         OpenStruct.new({
-          :type                   => subject.class,
+          :type                   => subject.class.name,
           :process_uuid           => subject.uuid,
           :process_options        => {:foo => :bar},
           :uuid                   => subject.uuid,
@@ -84,7 +84,6 @@ describe Taskinator::Instrumentation, :redis => true do
           :percentage_completed   => 2.0,
           :percentage_cancelled   => 3.0,
           :percentage_failed      => 4.0,
-          :instance               => subject,
           :baz                    => :qux
         })
       )

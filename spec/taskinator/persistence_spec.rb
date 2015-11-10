@@ -347,5 +347,37 @@ describe Taskinator::Persistence, :redis => true do
       }
     end
 
+    describe "#cleanup" do
+
+      [
+        TestFlows::Task,
+        TestFlows::Job,
+        TestFlows::SubProcess,
+        TestFlows::Sequential,
+        TestFlows::Concurrent
+      ].each do |definition|
+
+        describe definition.name do
+          it {
+            process = definition.create_process(1)
+
+            Taskinator.redis do |conn|
+              expect(conn.hget(process.key, :uuid)).to eq(process.uuid)
+
+              process.cleanup
+
+              expect(conn.hget(process.key, :uuid)).to be_nil
+
+              recursively_enumerate_tasks(process.tasks) do |task|
+                expect(conn.hget(task.key, :uuid)).to be_nil
+              end
+
+            end
+          }
+        end
+
+      end
+    end
+
   end
 end
