@@ -194,11 +194,13 @@ module Taskinator
         end
       end
 
-      def cleanup
+      EXPIRE_IN = 10 * 60 # 10 minutes
+
+      def cleanup(expire_at=Time.now+EXPIRE_IN)
         Taskinator.redis do |conn|
 
           # use the "clean up" visitor
-          RedisCleanupVisitor.new(conn, self).visit
+          RedisCleanupVisitor.new(conn, self, expire_at).visit
 
           # remove from the list
           conn.srem(Persistence.processes_list_key(scope), uuid)
@@ -450,26 +452,28 @@ module Taskinator
     class RedisCleanupVisitor < Taskinator::Visitor::Base
 
       attr_reader :instance
+      attr_reader :expire_at
 
-      def initialize(conn, instance)
+      def initialize(conn, instance, expire_at)
         @conn = conn
         @instance = instance
+        @expire_at = expire_at.utc
         @key = instance.key
       end
 
       def visit
         @instance.accept(self)
-        @conn.del(@key)
+        @conn.expireat(@key, expire_at.to_i)
       end
 
       def visit_process(attribute)
         process = @instance.send(attribute)
-        RedisCleanupVisitor.new(@conn, process).visit if process
+        RedisCleanupVisitor.new(@conn, process, expire_at).visit if process
       end
 
       def visit_tasks(tasks)
         tasks.each do |task|
-          RedisCleanupVisitor.new(@conn, task).visit
+          RedisCleanupVisitor.new(@conn, task, expire_at).visit
         end
       end
 

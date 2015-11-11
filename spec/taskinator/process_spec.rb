@@ -138,7 +138,6 @@ describe Taskinator::Process do
         }
         it {
           subject.start!
-          allow(subject).to receive(:cleanup) # prevent deletion of the data
           subject.complete!
           expect(subject.current_state).to eq(:completed)
         }
@@ -423,7 +422,6 @@ describe Taskinator::Process do
         allow_any_instance_of(Taskinator::Task).to receive(:completed?) { true }
 
         process = Taskinator::Process.define_concurrent_process_for(definition, Taskinator::CompleteOn::First)
-        allow(process).to receive(:cleanup) # prevent deletion of the data
 
         tasks.each {|t| process.tasks << t }
 
@@ -441,7 +439,6 @@ describe Taskinator::Process do
         allow_any_instance_of(Taskinator::Task).to receive(:completed?) { true }
 
         process = Taskinator::Process.define_concurrent_process_for(definition, Taskinator::CompleteOn::Last)
-        allow(process).to receive(:cleanup) # prevent deletion of the data
 
         tasks.each {|t| process.tasks << t }
 

@@ -357,14 +357,14 @@ describe Taskinator::Persistence, :redis => true do
         TestFlows::Concurrent
       ].each do |definition|
 
-        describe definition.name do
+        describe "#{definition.name} expire immediately" do
           it {
             process = definition.create_process(1)
 
             Taskinator.redis do |conn|
               expect(conn.hget(process.key, :uuid)).to eq(process.uuid)
 
-              process.cleanup
+              process.cleanup(Time.now)
 
               expect(conn.hget(process.key, :uuid)).to be_nil
 
@@ -377,6 +377,34 @@ describe Taskinator::Persistence, :redis => true do
         end
 
       end
+
+      describe "expires in future" do
+        it {
+          process = TestFlows::Task.create_process(1)
+
+          Taskinator.redis do |conn|
+            expect(conn.hget(process.key, :uuid)).to eq(process.uuid)
+
+            process.cleanup(Time.now + 1)
+
+            # still available...
+            expect(conn.hget(process.key, :uuid)).to_not be_nil
+            recursively_enumerate_tasks(process.tasks) do |task|
+              expect(conn.hget(task.key, :uuid)).to_not be_nil
+            end
+
+            sleep 2
+
+            # gone!
+            expect(conn.hget(process.key, :uuid)).to be_nil
+            recursively_enumerate_tasks(process.tasks) do |task|
+              expect(conn.hget(task.key, :uuid)).to be_nil
+            end
+
+          end
+        }
+      end
+
     end
 
   end
