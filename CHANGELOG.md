@@ -1,3 +1,9 @@
+v0.3.6 - 11 Nov 2015
+---
+Added visitor for performing clean up of completed processes/tasks.
+Performance improvement to instrumentation payload; removed references to task/process and use intrinsic types.
+Clean up of keys, via `cleanup` method use key expiry.
+
 v0.3.5 - 02 Nov 2015
 ---
 Updated the keys used when persisting processes and tasks in Redis, so they fall in the same key space.
