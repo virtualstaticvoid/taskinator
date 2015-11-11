@@ -1,9 +1,9 @@
 GIT
   remote: git://github.com/mperham/sidekiq.git
-  revision: c556c85b689af3a4f6a1da76c9f8b5208b9753c3
+  revision: 8cac86b47d294044bc7a277e4dd0b44faf34f624
   specs:
     sidekiq (4.0.0.pre2)
-      concurrent-ruby (= 1.0.0.pre4)
+      concurrent-ruby (~> 1.0.0.pre5)
       connection_pool (~> 2.2, >= 2.2.0)
       json (~> 1.0)
       redis (~> 3.2, >= 3.2.1)
@@ -12,7 +12,7 @@ GIT
 PATH
   remote: .
   specs:
-    taskinator (0.3.5)
+    taskinator (0.3.6)
       builder (>= 3.2.2)
       connection_pool (>= 2.2.0)
       json (>= 1.8.2)
@@ -30,13 +30,11 @@ GEM
       thread_safe (~> 0.3, >= 0.3.4)
       tzinfo (~> 1.1)
     builder (3.2.2)
-    byebug (5.0.0)
-      columnize (= 0.9.0)
+    byebug (8.1.0)
     coderay (1.1.0)
-    columnize (0.9.0)
-    concurrent-ruby (1.0.0.pre4)
+    concurrent-ruby (1.0.0.pre5)
     connection_pool (2.2.0)
-    coveralls (0.8.3)
+    coveralls (0.8.5)
       json (~> 1.8)
       rest-client (>= 1.6.8, < 2)
       simplecov (~> 0.10.0)
@@ -62,8 +60,8 @@ GEM
       coderay (~> 1.1.0)
       method_source (~> 0.8.1)
       slop (~> 3.4)
-    pry-byebug (3.2.0)
-      byebug (~> 5.0)
+    pry-byebug (3.3.0)
+      byebug (~> 8.0)
       pry (~> 0.10)
     rack (1.6.4)
     rack-protection (1.5.3)
@@ -120,7 +118,7 @@ GEM
     thor (0.19.1)
     thread_safe (0.3.5)
     tilt (2.0.1)
-    tins (1.6.0)
+    tins (1.7.0)
     tzinfo (1.2.2)
       thread_safe (~> 0.1)
     unf (0.1.4)
