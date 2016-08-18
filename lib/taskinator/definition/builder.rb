@@ -16,7 +16,7 @@ module Taskinator
       end
 
       def option?(key, &block)
-        yield if builder_options.key?(key) && builder_options[key]
+        yield if builder_options[key]
       end
 
       # defines a sub process of tasks which are executed sequentially
