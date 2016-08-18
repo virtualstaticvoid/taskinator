@@ -4,7 +4,7 @@ source 'https://rubygems.org'
 gemspec
 
 # queues
-gem 'sidekiq'         , '>= 3.5.0', :github => "mperham/sidekiq"
+gem 'sidekiq'         , '>= 3.5.0'
 gem 'rspec-sidekiq'   , '>= 2.1.0'
 
 gem 'delayed_job'     , '~> 4.1.0'
