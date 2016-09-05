@@ -509,14 +509,14 @@ module Taskinator
         # special case, convert models to global id's
         if values.is_a?(Array)
           values = values.collect {|value|
-            value.respond_to?(:global_id) ? value.global_id : value
+            value.respond_to?(:to_global_id) ? value.to_global_id : value
           }
         elsif values.is_a?(Hash)
           values.each {|key, value|
-            values[key] = value.global_id if value.respond_to?(:global_id)
+            values[key] = value.to_global_id if value.respond_to?(:to_global_id)
           }
-        elsif values.respond_to?(:global_id)
-          values = values.global_id
+        elsif values.respond_to?(:to_global_id)
+          values = values.to_global_id
         end
         YAML.dump(values)
       end
