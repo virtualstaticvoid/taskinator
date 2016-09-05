@@ -87,7 +87,7 @@ describe Taskinator::Persistence, :redis => true do
         }
 
         it {
-          expect(subject.serialize([MockModel.new])).to eq(YAML.dump([{:model_id => 1, :model_type => 'TypeX'}]))
+          expect(subject.serialize([MockModel.new])).to eq("---\n- !ruby/object:MockModel\n  model_id: 1\n  model_type: TypeX\n")
         }
       end
 
@@ -105,7 +105,7 @@ describe Taskinator::Persistence, :redis => true do
         }
 
         it {
-          expect(subject.serialize({:foo => MockModel.new})).to eq(YAML.dump({:foo => {:model_id => 1, :model_type => 'TypeX'}}))
+          expect(subject.serialize({:foo => MockModel.new})).to eq("---\n:foo: !ruby/object:MockModel\n  model_id: 1\n  model_type: TypeX\n")
         }
       end
 
@@ -123,7 +123,7 @@ describe Taskinator::Persistence, :redis => true do
         }
 
         it {
-          expect(subject.serialize(MockModel.new)).to eq(YAML.dump({:model_id => 1, :model_type => 'TypeX'}))
+          expect(subject.serialize(MockModel.new)).to eq("--- !ruby/object:MockModel\nmodel_id: 1\nmodel_type: TypeX\n")
         }
       end
     end
@@ -144,7 +144,7 @@ describe Taskinator::Persistence, :redis => true do
 
         it {
           expect_any_instance_of(MockModel).to receive(:find)
-          subject.deserialize(YAML.dump([MockModel.new]))
+          subject.deserialize("---\n!ruby/object:MockModel\n  model_id: 1\n  model_type: TypeX\n")
         }
       end
 
@@ -163,7 +163,7 @@ describe Taskinator::Persistence, :redis => true do
 
         it {
           expect_any_instance_of(MockModel).to receive(:find)
-          subject.deserialize(YAML.dump({:foo => MockModel.new}))
+          subject.deserialize("---\n:foo: !ruby/object:MockModel\n  model_id: 1\n  model_type: TypeX\n")
         }
       end
 
@@ -182,7 +182,7 @@ describe Taskinator::Persistence, :redis => true do
 
         it {
           expect_any_instance_of(MockModel).to receive(:find)
-          subject.deserialize(YAML.dump(MockModel.new))
+          subject.deserialize("---\n!ruby/object:MockModel\n  model_id: 1\n  model_type: TypeX\n")
         }
       end
     end
