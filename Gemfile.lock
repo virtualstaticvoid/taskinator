@@ -1,9 +1,10 @@
 PATH
   remote: .
   specs:
-    taskinator (0.3.7)
+    taskinator (0.3.8)
       builder (>= 3.2.2)
       connection_pool (>= 2.2.0)
+      globalid (~> 0.3)
       json (>= 1.8.2)
       redis (>= 3.2.1)
       redis-namespace (>= 1.5.2)
@@ -33,6 +34,8 @@ GEM
       activesupport (>= 3.0, < 5.1)
     diff-lcs (1.2.5)
     docile (1.1.5)
+    globalid (0.3.7)
+      activesupport (>= 4.1.0)
     i18n (0.7.0)
     json (1.8.3)
     method_source (0.8.2)
@@ -70,7 +73,7 @@ GEM
       rspec-core (~> 3.5.0)
       rspec-expectations (~> 3.5.0)
       rspec-mocks (~> 3.5.0)
-    rspec-core (3.5.2)
+    rspec-core (3.5.3)
       rspec-support (~> 3.5.0)
     rspec-expectations (3.5.0)
       diff-lcs (>= 1.2.0, < 2.0)
