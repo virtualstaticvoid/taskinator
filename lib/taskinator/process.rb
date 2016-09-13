@@ -41,6 +41,7 @@ module Taskinator
       @queue = options.delete(:queue)
       @created_at = Time.now.utc
       @updated_at = created_at
+      @current_state = :initial
     end
 
     def parent=(value)
