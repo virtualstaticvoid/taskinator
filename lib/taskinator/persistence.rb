@@ -262,7 +262,10 @@ module Taskinator
         tasks.each do |task|
           RedisSerializationVisitor.new(@conn, task, @base_visitor).visit
           @conn.rpush "#{@key}:tasks", task.uuid
-          @base_visitor.incr_task_count unless task.is_a?(Task::SubProcess)
+          unless task.is_a?(Task::SubProcess)
+            incr_task_count unless self == @base_visitor
+            @base_visitor.incr_task_count
+          end
         end
       end
 
