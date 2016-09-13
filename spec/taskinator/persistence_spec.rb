@@ -210,6 +210,10 @@ describe Taskinator::Persistence, :redis => true do
       pending __FILE__
     end
 
+    describe "#to_xml" do
+      pending __FILE__
+    end
+
     describe "#key" do
       it {
         expect(subject.key).to match(/#{subject.uuid}/)

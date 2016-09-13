@@ -68,6 +68,15 @@ module Taskinator
         end
       end
 
+      def to_xml
+        builder = ::Builder::XmlMarkup.new
+        builder.instruct!
+        builder.tag!('process', :key => self.key) do |xml|
+          XmlSerializationVisitor.new(xml, self).visit
+        end
+        builder
+      end
+
       # the persistence key
       def key
         @key ||= self.class.key_for(self.uuid)
@@ -307,6 +316,118 @@ module Taskinator
         end
 
         @hmset += [attribute, yaml]
+      end
+
+      def task_count
+        @task_count
+      end
+
+      def incr_task_count
+        @task_count += 1
+      end
+    end
+
+    class XmlSerializationVisitor < Taskinator::Visitor::Base
+
+      #
+      # the redis connection is passed in since it is
+      # in the multi statement mode in order to produce
+      # one roundtrip to the redis server
+      #
+
+      attr_reader :builder
+      attr_reader :instance
+
+      def initialize(builder, instance, base_visitor=self)
+        @builder      = builder
+        @instance     = instance
+        @key          = instance.key
+        @root         = base_visitor.instance
+        @base_visitor = base_visitor
+        @task_count   = 0
+      end
+
+      # the starting point for serializing the instance
+      def visit
+        @attributes = []
+        @attributes << [:type, @instance.class.name]
+        @attributes << [:process_uuid, @root.uuid]
+        @attributes << [:state, :initial]
+
+        @instance.accept(self)
+
+        @attributes << [:task_count, @task_count]
+
+        @attributes.each do |(name, value)|
+          builder.tag!('attribute', name => value)
+        end
+
+        self
+      end
+
+      def visit_process(attribute)
+        process = @instance.send(attribute)
+        if process
+          @attributes << [attribute, process.uuid]
+
+          builder.tag!('process', :key => process.key) do |xml|
+            XmlSerializationVisitor.new(xml, process, @base_visitor).visit
+          end
+        end
+      end
+
+      def visit_tasks(tasks)
+        builder.tag!('tasks') do |xml|
+          tasks.each do |task|
+            xml.tag!('task', :key => task.key) do |xml2|
+              XmlSerializationVisitor.new(xml2, task, @base_visitor).visit
+              unless task.is_a?(Task::SubProcess)
+                incr_task_count unless self == @base_visitor
+                @base_visitor.incr_task_count
+              end
+            end
+          end
+        end
+      end
+
+      def visit_attribute(attribute)
+        value = @instance.send(attribute)
+        @attributes << [attribute, value] if value
+      end
+
+      def visit_attribute_time(attribute)
+        visit_attribute(attribute)
+      end
+
+      def visit_attribute_enum(attribute, type)
+        visit_attribute(attribute)
+      end
+
+      def visit_process_reference(attribute)
+        process = @instance.send(attribute)
+        @attributes << [attribute, process.uuid] if process
+      end
+
+      def visit_task_reference(attribute)
+        task = @instance.send(attribute)
+        @attributes << [attribute, task.uuid] if task
+      end
+
+      def visit_type(attribute)
+        type = @instance.send(attribute)
+        @attributes << [attribute, type.name] if type
+      end
+
+      def visit_args(attribute)
+        values = @instance.send(attribute)
+        yaml = Taskinator::Persistence.serialize(values)
+
+        # greater than 2 MB?
+        if (yaml.bytesize / (1024.0**2)) > 2
+          Taskinator.logger.warn("Large argument data detected for '#{self.to_s}'. Consider using intrinsic types instead, or try to reduce the amount of data provided.")
+        end
+
+        @attributes << [attribute, yaml]
       end
 
       def task_count
