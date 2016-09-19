@@ -7,19 +7,24 @@ module Taskinator
     attr_reader :head
     alias_method :first, :head
 
+    attr_reader :count
+    alias_method :length, :count
+
     def initialize(first=nil)
-      @head = first
+      add(first) if first
     end
 
     def add(task)
       if @head.nil?
         @head = task
+        @count = 1
       else
         current = @head
         while current.next
           current = current.next
         end
         current.next = task
+        @count += 1
       end
       task
     end
