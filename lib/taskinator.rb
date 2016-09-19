@@ -72,12 +72,13 @@ module Taskinator
 
     def redis_mutex(lockid, options={}, &block)
       raise ArgumentError, "requires a block" unless block_given?
+      logger.info("Entering mutex")
       m = Benchmark.measure do
         redis do |r|
           Redis::Semaphore.new(lockid, {:redis => r}.merge(options)).lock(&block)
         end
       end
-      logger.debug("Time spent in mutex: #{m.real}")
+      logger.info("Time spent in mutex: #{m.real}")
     end
 
     def redis_pool
