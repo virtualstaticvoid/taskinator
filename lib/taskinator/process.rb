@@ -228,6 +228,9 @@ module Taskinator
         if tasks.empty?
           complete! # weren't any tasks to start with
         else
+          Taskinator.redis do |conn|
+            conn.incrby("#{key}.pending", tasks.count)
+          end
           tasks.each(&:enqueue!)
         end
       end
@@ -259,16 +262,11 @@ module Taskinator
         # when complete on first, then don't bother with subsequent tasks completing
         return if completed? || failed?
 
-        if tasks_completed?
-          # prevent re-entrance so that two tasks completing
-          # simultaneously can't complete the process twice,
-          # which enqueues/starts the same subsequent task
-          Taskinator.redis_mutex(uuid) do
-            # double check, since the status may have
-            # changed while waiting in the mutex
-            complete! if tasks_completed?
-          end
+        pending = Taskinator.redis do |conn|
+          conn.incrby("#{key}.pending", -1)
         end
+
+        complete! if pending < 1
       end
 
       def tasks_completed?
