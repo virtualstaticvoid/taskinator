@@ -231,6 +231,7 @@ module Taskinator
           Taskinator.redis do |conn|
             conn.incrby("#{key}.pending", tasks.count)
           end
+          Taskinator.statsd_client.gauge("taskinator.#{definition.name.underscore.parameterize}.#{uuid}.pending", tasks.count)
           tasks.each(&:enqueue!)
         end
       end
@@ -265,6 +266,8 @@ module Taskinator
         pending = Taskinator.redis do |conn|
           conn.incrby("#{key}.pending", -1)
         end
+
+        Taskinator.statsd_client.gauge("taskinator.#{definition.name.underscore.parameterize}.#{uuid}.pending", pending)
 
         complete! if pending < 1
       end
