@@ -8,6 +8,7 @@ module Taskinator
 
     def perform
       task = Taskinator::Task.fetch(@uuid)
+      raise "ERROR: Task '#{@uuid}' not found." unless task
       return if task.paused? || task.cancelled?
       task.start!
     end
