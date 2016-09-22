@@ -6,6 +6,8 @@ require 'benchmark'
 
 require 'taskinator/version'
 
+require 'taskinator/log_stats'
+
 require 'taskinator/complete_on'
 require 'taskinator/redis_connection'
 require 'taskinator/logger'
@@ -84,6 +86,14 @@ module Taskinator
 
     def logger=(log)
       Taskinator::Logging.logger = log
+    end
+
+    def statsd_client
+      Taskinator::LogStats.client
+    end
+
+    def statsd_client=(client)
+      Taskinator::LogStats.client = client
     end
 
     # the queue adapter to use

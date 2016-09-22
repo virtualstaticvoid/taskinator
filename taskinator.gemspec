@@ -28,4 +28,5 @@ Gem::Specification.new do |spec|
   spec.add_dependency 'json'                        , '>= 1.8.2'
   spec.add_dependency 'builder'                     , '>= 3.2.2'
   spec.add_dependency 'globalid'                    , '~> 0.3'
+  spec.add_dependency 'statsd-ruby'                 , '~> 1.2.0'
 end
