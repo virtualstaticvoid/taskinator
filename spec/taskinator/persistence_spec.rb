@@ -368,7 +368,7 @@ describe Taskinator::Persistence, :redis => true do
             Taskinator.redis do |conn|
               expect(conn.hget(process.key, :uuid)).to eq(process.uuid)
 
-              process.cleanup(Time.now)
+              process.cleanup(0) # immediately
 
               expect(conn.hget(process.key, :uuid)).to be_nil
 
@@ -389,7 +389,7 @@ describe Taskinator::Persistence, :redis => true do
           Taskinator.redis do |conn|
             expect(conn.hget(process.key, :uuid)).to eq(process.uuid)
 
-            process.cleanup(Time.now + 1)
+            process.cleanup(2)
 
             # still available...
             expect(conn.hget(process.key, :uuid)).to_not be_nil
@@ -397,7 +397,7 @@ describe Taskinator::Persistence, :redis => true do
               expect(conn.hget(task.key, :uuid)).to_not be_nil
             end
 
-            sleep 2
+            sleep 3
 
             # gone!
             expect(conn.hget(process.key, :uuid)).to be_nil
