@@ -231,7 +231,7 @@ module Taskinator
           Taskinator.redis do |conn|
             conn.incrby("#{key}.pending", tasks.count)
           end
-          Taskinator.statsd_client.count("taskinator.#{definition.name.underscore.parameterize}.#{uuid}.pending", tasks.count)
+          Taskinator.statsd_client.count("taskinator.#{definition.name.underscore.parameterize}.pending", tasks.count)
           Taskinator.logger.info("Enqueuing #{tasks.count} tasks for process '#{uuid}'.")
           tasks.each(&:enqueue!)
         end
@@ -268,7 +268,7 @@ module Taskinator
           conn.incrby("#{key}.pending", -1)
         end
 
-        Taskinator.statsd_client.count("taskinator.#{definition.name.underscore.parameterize}.#{uuid}.pending", pending)
+        Taskinator.statsd_client.count("taskinator.#{definition.name.underscore.parameterize}.pending", pending)
         Taskinator.logger.info("Completed task for process '#{uuid}'. Pending is #{pending}.")
 
         complete! if pending < 1
