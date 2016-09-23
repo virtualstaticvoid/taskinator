@@ -232,6 +232,7 @@ module Taskinator
             conn.incrby("#{key}.pending", tasks.count)
           end
           Taskinator.statsd_client.gauge("taskinator.#{definition.name.underscore.parameterize}.#{uuid}.pending", tasks.count)
+          Taskinator.logger.info("Enqueuing #{tasks.count} tasks for process '#{uuid}'.")
           tasks.each(&:enqueue!)
         end
       end
@@ -268,6 +269,7 @@ module Taskinator
         end
 
         Taskinator.statsd_client.gauge("taskinator.#{definition.name.underscore.parameterize}.#{uuid}.pending", pending)
+        Taskinator.logger.info("Completed task for process '#{uuid}'. Pending is #{pending}.")
 
         complete! if pending < 1
       end
