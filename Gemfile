@@ -20,3 +20,5 @@ gem 'rspec'
 gem 'coveralls'       , '>= 0.7.0'
 gem 'pry'             , '>= 0.9.0'
 gem 'pry-byebug'      , '>= 1.3.0'
+
+gem 'fakeredis'       , '~> 0.6.0'

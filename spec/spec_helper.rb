@@ -15,6 +15,8 @@ SimpleCov.start do
   add_filter 'spec'
 end
 
+require 'fakeredis/rspec'
+
 require 'delayed_job'
 
 require 'sidekiq'
