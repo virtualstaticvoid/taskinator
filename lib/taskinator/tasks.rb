@@ -11,7 +11,14 @@ module Taskinator
     alias_method :length, :count
 
     def initialize(first=nil)
+      @count = 0
       add(first) if first
+    end
+
+    def attach(task, count)
+      @head = task
+      @count = count
+      task
     end
 
     def add(task)

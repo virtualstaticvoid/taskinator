@@ -228,9 +228,6 @@ module Taskinator
         if tasks.empty?
           complete! # weren't any tasks to start with
         else
-          Taskinator.redis do |conn|
-            conn.incrby("#{key}.pending", tasks.count)
-          end
           Taskinator.statsd_client.count("taskinator.#{definition.name.underscore.parameterize}.pending", tasks.count)
           Taskinator.logger.info("Enqueuing #{tasks.count} tasks for process '#{uuid}'.")
           tasks.each(&:enqueue!)
