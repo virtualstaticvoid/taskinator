@@ -276,6 +276,8 @@ module Taskinator
             @base_visitor.incr_task_count
           end
         end
+        @conn.set("#{@key}.count", tasks.count)
+        @conn.set("#{@key}.pending", tasks.count)
       end
 
       def visit_attribute(attribute)
@@ -377,7 +379,7 @@ module Taskinator
       end
 
       def visit_tasks(tasks)
-        builder.tag!('tasks') do |xml|
+        builder.tag!('tasks', :count => tasks.count) do |xml|
           tasks.each do |task|
             xml.tag!('task', :key => task.key) do |xml2|
               XmlSerializationVisitor.new(xml2, task, @base_visitor).visit
@@ -495,7 +497,7 @@ module Taskinator
         # tasks are a linked list, so just get the first one
         Taskinator.redis do |conn|
           uuid = conn.lindex("#{@key}:tasks", 0)
-          tasks << lazy_instance_for(Task, uuid) if uuid
+          tasks.attach(lazy_instance_for(Task, uuid), conn.get("#{@key}.count").to_i) if uuid
         end
       end
 
