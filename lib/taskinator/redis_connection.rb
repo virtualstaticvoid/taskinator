@@ -60,8 +60,6 @@ module Taskinator
           opts.delete(:network_timeout)
         end
 
-        opts[:driver] = opts[:driver] || 'ruby'
-
         opts
       end
 
