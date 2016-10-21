@@ -341,6 +341,18 @@ describe Taskinator::Persistence, :redis => true do
 
     end
 
+    describe "#deincr_pending_tasks" do
+      it {
+        Taskinator.redis do |conn|
+          conn.set("#{subject.key}.pending", 99)
+        end
+
+        pending = subject.deincr_pending_tasks
+
+        expect(pending).to eq(98)
+      }
+    end
+
     describe "#process_options" do
       it {
         Taskinator.redis do |conn|

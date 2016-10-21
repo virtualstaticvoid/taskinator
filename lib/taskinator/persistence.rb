@@ -191,6 +191,12 @@ module Taskinator
 
       end
 
+      def deincr_pending_tasks
+        Taskinator.redis do |conn|
+          conn.incrby("#{key}.pending", -1)
+        end
+      end
+
       # retrieves the process options of the root process
       # this is so that meta data of the process can be maintained
       # and accessible to instrumentation subscribers
