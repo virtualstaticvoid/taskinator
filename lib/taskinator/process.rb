@@ -258,17 +258,21 @@ module Taskinator
       end
 
       def task_completed(task)
-        # when complete on first, then don't bother with subsequent tasks completing
-        return if completed? || failed?
+        # skip if failed
+        return if failed?
 
-        pending = Taskinator.redis do |conn|
-          conn.incrby("#{key}.pending", -1)
-        end
+        # deincrement the count of pending concurrent tasks
+        pending = deincr_pending_tasks
 
         Taskinator.statsd_client.count("taskinator.#{definition.name.underscore.parameterize}.pending", pending)
         Taskinator.logger.info("Completed task for process '#{uuid}'. Pending is #{pending}.")
 
-        complete! if pending < 1
+        # when complete on first, then don't bother with subsequent tasks completing
+        if (complete_on == CompleteOn::First)
+          complete! unless completed?
+        else
+          complete! if pending < 1
+        end
       end
 
       def tasks_completed?

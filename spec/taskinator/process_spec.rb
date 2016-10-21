@@ -419,15 +419,16 @@ describe Taskinator::Process do
 
     describe "#task_completed" do
       it "completes when tasks complete (CompleteOn::First)" do
-        allow_any_instance_of(Taskinator::Task).to receive(:completed?) { true }
-
         process = Taskinator::Process.define_concurrent_process_for(definition, Taskinator::CompleteOn::First)
-
         tasks.each {|t| process.tasks << t }
 
-        expect(process).to receive(:complete!).and_call_original
+        allow(process).to receive(:deincr_pending_tasks) { tasks.count - 1 }
+
+        expect(process).to receive(:complete!).once.and_call_original
 
         process.task_completed(tasks.first)
+
+        expect(process.completed?).to be(true)
 
         # remaining tasks should do nothing...
         tasks.each do |task|
@@ -436,16 +437,17 @@ describe Taskinator::Process do
       end
 
       it "completes when tasks complete (CompleteOn::Last)" do
-        allow_any_instance_of(Taskinator::Task).to receive(:completed?) { true }
-
         process = Taskinator::Process.define_concurrent_process_for(definition, Taskinator::CompleteOn::Last)
-
         tasks.each {|t| process.tasks << t }
 
-        expect(process).to receive(:complete!).and_call_original
+        pending_count = tasks.count
+        allow(process).to receive(:deincr_pending_tasks) { pending_count -= 1 }
+
+        expect(process).to receive(:complete!).once.and_call_original
 
         tasks.each do |task|
           process.task_completed(task)
+          expect(process.completed?).to be(false) unless pending_count < 1
         end
       end
     end
