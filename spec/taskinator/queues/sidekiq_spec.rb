@@ -18,7 +18,7 @@ describe Taskinator::Queues::SidekiqAdapter, :sidekiq do
       worker = adapter::CreateProcessWorker
       definition = MockDefinition.create
       subject.enqueue_create_process(definition, uuid, :foo => :bar)
-      expect(worker).to have_enqueued_job(definition.name, uuid, args)
+      expect(worker).to have_enqueued_sidekiq_job(definition.name, uuid, args)
     end
 
     it "enqueues to specified queue" do
@@ -38,7 +38,7 @@ describe Taskinator::Queues::SidekiqAdapter, :sidekiq do
       worker = adapter::ProcessWorker
       process = double('process', :uuid => uuid, :queue => nil)
       subject.enqueue_process(process)
-      expect(worker).to have_enqueued_job(process.uuid)
+      expect(worker).to have_enqueued_sidekiq_job(process.uuid)
     end
 
     it "enqueues process to specified queue" do
@@ -57,7 +57,7 @@ describe Taskinator::Queues::SidekiqAdapter, :sidekiq do
       worker = adapter::TaskWorker
       task = double('task', :uuid => uuid, :queue => nil)
       subject.enqueue_task(task)
-      expect(worker).to have_enqueued_job(task.uuid)
+      expect(worker).to have_enqueued_sidekiq_job(task.uuid)
     end
 
     it "enqueues task to specified queue" do
