@@ -60,10 +60,7 @@ RSpec.configure do |config|
   end
 
   config.before(:each, :redis => true) do
-    Taskinator.redis = { :namespace => 'taskinator:test' }
-    Taskinator.redis do |conn|
-      conn.flushdb
-    end
+    Taskinator.redis = { :namespace => "taskinator:test:#{SecureRandom.uuid}" }
   end
 
   config.before(:each, :sidekiq => true) do
