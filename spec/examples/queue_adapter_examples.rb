@@ -14,9 +14,9 @@ shared_examples_for "a queue adapter" do |adapter_name, adapter_type|
     it { expect(subject).to respond_to(:enqueue_create_process) }
 
     it "should enqueue a create process" do
-      expect {
+      expect(
         subject.enqueue_create_process(double('definition', :name => 'definition', :queue => nil), 'xx-xx-xx-xx', :foo => :bar)
-      }.to_not raise_error(StandardError)
+      ).to_not be_nil
     end
   end
 
@@ -24,9 +24,9 @@ shared_examples_for "a queue adapter" do |adapter_name, adapter_type|
     it { expect(subject).to respond_to(:enqueue_task) }
 
     it "should enqueue a task" do
-      expect {
+      expect(
         subject.enqueue_task(double('task', :uuid => 'xx-xx-xx-xx', :queue => nil))
-      }.to_not raise_error(StandardError)
+      ).to_not be_nil
     end
   end
 
