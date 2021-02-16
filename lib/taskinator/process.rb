@@ -258,9 +258,6 @@ module Taskinator
       end
 
       def task_completed(task)
-        # skip if failed
-        return if failed?
-
         # deincrement the count of pending concurrent tasks
         pending = deincr_pending_tasks
 
