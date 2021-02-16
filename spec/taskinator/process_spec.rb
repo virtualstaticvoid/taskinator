@@ -296,6 +296,28 @@ describe Taskinator::Process do
 
         subject.task_completed(task2)
       end
+
+      it "completes if failed task gets retried" do
+        tasks.each {|t| subject.tasks << t }
+        task1 = tasks[0]
+        task2 = tasks[1]
+
+        allow(task2).to receive(:enqueue!)
+
+        expect(subject).to receive(:fail!).and_call_original
+        expect(subject).to receive(:complete!).and_call_original
+
+        subject.task_completed(task1)
+        subject.task_failed(task2, NotImplementedError.new)
+
+        expect(subject.failed?).to be(true)
+
+        # "retry" the task
+        subject.task_completed(task2)
+
+        expect(subject.failed?).to_not be(true)
+        expect(subject.completed?).to be(true)
+      end
     end
 
     describe "#tasks_completed?" do
@@ -449,6 +471,30 @@ describe Taskinator::Process do
           process.task_completed(task)
           expect(process.completed?).to be(false) unless pending_count < 1
         end
+      end
+
+      it "completes if failed task gets retried" do
+        tasks.each {|t| subject.tasks << t }
+        task1 = tasks[0]
+        task2 = tasks[1]
+
+        pending_count = tasks.count
+        allow(subject).to receive(:deincr_pending_tasks) { pending_count -= 1 }
+        allow(task2).to receive(:enqueue!)
+
+        expect(subject).to receive(:fail!).and_call_original
+        expect(subject).to receive(:complete!).and_call_original
+
+        subject.task_completed(task1)
+        subject.task_failed(task2, NotImplementedError.new)
+
+        expect(subject.failed?).to be(true)
+
+        # "retry" the task
+        subject.task_completed(task2)
+
+        expect(subject.failed?).to_not be(true)
+        expect(subject.completed?).to be(true)
       end
     end
 
