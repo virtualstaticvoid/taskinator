@@ -199,6 +199,12 @@ module Taskinator
       end
 
       def task_completed(task)
+        # deincrement the count of pending sequential tasks
+        pending = deincr_pending_tasks
+
+        Taskinator.statsd_client.count("taskinator.#{definition.name.underscore.parameterize}.pending", pending)
+        Taskinator.logger.info("Completed task for process '#{uuid}'. Pending is #{pending}.")
+
         next_task = task.next
         if next_task
           next_task.enqueue!
