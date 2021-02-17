@@ -1,12 +1,12 @@
+os: linux
+dist: xenial
 language: ruby
-sudo: false  # See http://docs.travis-ci.com/user/migrating-from-legacy
 cache: bundler
 
 services:
-  - redis-server
+  - redis
 
 rvm:
-  - 2.4.10
   - 2.5.8
   - 2.6.6
   - 2.7.2
