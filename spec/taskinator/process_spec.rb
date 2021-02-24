@@ -288,6 +288,23 @@ describe Taskinator::Process do
         subject.task_completed(task1)
       end
 
+      it "deincrements the pending task count" do
+        tasks.each {|t| subject.tasks << t }
+        task1 = tasks[0]
+        task2 = tasks[1]
+
+        allow(task2).to receive(:enqueue!)
+
+        pending_count = tasks.count
+        allow(subject).to receive(:deincr_pending_tasks) { pending_count -= 1 }
+
+        subject.task_completed(task1)
+        expect(pending_count).to eq(tasks.count - 1)
+
+        subject.task_completed(task2)
+        expect(pending_count).to eq(tasks.count - 2)
+      end
+
       it "completes if no more tasks" do
         tasks.each {|t| subject.tasks << t }
         task2 = tasks[1]
@@ -295,6 +312,30 @@ describe Taskinator::Process do
         expect(subject).to receive(:complete!)
 
         subject.task_completed(task2)
+      end
+
+      it "completes if failed task gets retried" do
+        tasks.each {|t| subject.tasks << t }
+        task1 = tasks[0]
+        task2 = tasks[1]
+
+        allow(task2).to receive(:enqueue!)
+
+        expect(subject).to receive(:fail!).and_call_original
+        expect(subject).to receive(:complete!).and_call_original
+
+        subject.task_completed(task1)
+        expect(subject.completed?).to_not be
+        expect(subject.failed?).to_not be
+
+        subject.task_failed(task2, StandardError.new)
+        expect(subject.completed?).to_not be
+        expect(subject.failed?).to be
+
+        # "retry" the task
+        subject.task_completed(task2)
+        expect(subject.completed?).to be
+        expect(subject.failed?).to_not be
       end
     end
 
@@ -312,6 +353,28 @@ describe Taskinator::Process do
         }
 
         expect(subject.tasks_completed?).to be
+      end
+    end
+
+    describe "#task_failed" do
+      it "fails when tasks fail" do
+        tasks.each {|t| subject.tasks << t }
+
+        error = StandardError.new
+
+        expect(subject).to receive(:fail!).with(error)
+
+        subject.task_failed(tasks.first, error)
+      end
+
+      it "doesn't deincement pending task count" do
+        tasks.each {|t| subject.tasks << t }
+
+        expect(subject).to_not receive(:deincr_pending_tasks)
+
+        error = StandardError.new
+
+        subject.task_failed(tasks.first, error)
       end
     end
 
@@ -422,7 +485,8 @@ describe Taskinator::Process do
         process = Taskinator::Process.define_concurrent_process_for(definition, Taskinator::CompleteOn::First)
         tasks.each {|t| process.tasks << t }
 
-        allow(process).to receive(:deincr_pending_tasks) { tasks.count - 1 }
+        pending_count = tasks.count
+        allow(process).to receive(:deincr_pending_tasks) { pending_count -= 1 }
 
         expect(process).to receive(:complete!).once.and_call_original
 
@@ -450,6 +514,82 @@ describe Taskinator::Process do
           expect(process.completed?).to be(false) unless pending_count < 1
         end
       end
+
+      it "deincrements the pending task count" do
+        tasks.each {|t| subject.tasks << t }
+        task1 = tasks[0]
+        task2 = tasks[1]
+
+        pending_count = tasks.count
+        allow(subject).to receive(:deincr_pending_tasks) { pending_count -= 1 }
+
+        subject.task_completed(task1)
+        expect(pending_count).to eq(tasks.count - 1)
+
+        subject.task_completed(task2)
+        expect(pending_count).to eq(tasks.count - 2)
+      end
+
+      describe "completes if failed task gets retried" do
+        it "after first task succeeds" do
+          tasks.each {|t| subject.tasks << t }
+          task1 = tasks[0]
+          task2 = tasks[1]
+
+          pending_count = tasks.count
+          allow(subject).to receive(:deincr_pending_tasks) { pending_count -= 1 }
+          allow(task2).to receive(:enqueue!)
+
+          expect(subject).to receive(:fail!).and_call_original
+          expect(subject).to receive(:complete!).and_call_original
+
+          # first task succeeds
+          subject.task_completed(task1)
+          expect(pending_count).to eq(tasks.count - 1)
+
+          # second task fails
+          subject.task_failed(task2, StandardError.new)
+
+          expect(subject.failed?).to be
+          expect(pending_count).to eq(tasks.count - 1)
+
+          # "retry" the task
+          subject.task_completed(task2)
+
+          expect(pending_count).to eq(tasks.count - 2)
+          expect(subject.failed?).to_not be
+          expect(subject.completed?).to be
+        end
+
+        it "after first task fails" do
+          tasks.each {|t| subject.tasks << t }
+          task1 = tasks[0]
+          task2 = tasks[1]
+
+          pending_count = tasks.count
+          allow(subject).to receive(:deincr_pending_tasks) { pending_count -= 1 }
+          allow(task2).to receive(:enqueue!)
+
+          expect(subject).to receive(:fail!).and_call_original
+          expect(subject).to receive(:complete!).and_call_original
+
+          # first task fails
+          subject.task_failed(task2, StandardError.new)
+          expect(subject.failed?).to be
+          expect(pending_count).to eq(tasks.count)
+
+          # second task succeeds
+          subject.task_completed(task1)
+          expect(pending_count).to eq(tasks.count - 1)
+
+          # "retry" the task
+          subject.task_completed(task2)
+
+          expect(pending_count).to eq(tasks.count - 2)
+          expect(subject.failed?).to_not be
+          expect(subject.completed?).to be
+        end
+      end
     end
 
     describe "#task_failed" do
@@ -459,6 +599,16 @@ describe Taskinator::Process do
         error = StandardError.new
 
         expect(subject).to receive(:fail!).with(error)
+
+        subject.task_failed(tasks.first, error)
+      end
+
+      it "doesn't deincement pending task count" do
+        tasks.each {|t| subject.tasks << t }
+
+        expect(subject).to_not receive(:deincr_pending_tasks)
+
+        error = StandardError.new
 
         subject.task_failed(tasks.first, error)
       end
