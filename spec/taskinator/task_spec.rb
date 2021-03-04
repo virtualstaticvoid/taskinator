@@ -334,13 +334,23 @@ describe Taskinator::Task do
       end
     end
 
-    subject { Taskinator::Task.define_job_task(process, TestJob, {:a => 1, :b => 2}) }
+    class TestJobClassNoArgs
+      def perform
+      end
+    end
+
+    module TestJobModuleNoArgs
+      def self.perform
+      end
+    end
+
+    subject { Taskinator::Task.define_job_task(process, TestJob, [1, {:a => 1, :b => 2}]) }
 
     it_should_behave_like "a task", Taskinator::Task::Job
 
     describe ".define_job_task" do
       it "sets the queue to use" do
-        task = Taskinator::Task.define_job_task(process, TestJob, {:a => 1, :b => 2}, :queue => :foo)
+        task = Taskinator::Task.define_job_task(process, TestJob, [1, {:a => 1, :b => 2}], :queue => :foo)
         expect(task.queue).to eq(:foo)
       end
     end
@@ -367,23 +377,37 @@ describe Taskinator::Task do
 
     describe "#start" do
       it {
-        task = Taskinator::Task.define_job_task(process, TestJobClass, {:a => 1, :b => 2})
+        task = Taskinator::Task.define_job_task(process, TestJobClass, [1, {:a => 1, :b => 2}])
         expect(process).to receive(:task_completed).with(task)
-        expect_any_instance_of(TestJobClass).to receive(:perform).with({:a => 1, :b => 2})
+        expect_any_instance_of(TestJobClass).to receive(:perform).with(1, {:a => 1, :b => 2})
         task.start!
       }
 
       it {
-        task = Taskinator::Task.define_job_task(process, TestJobModule, {:a => 1, :b => 2})
+        task = Taskinator::Task.define_job_task(process, TestJobModule, [2, {:a => 1, :b => 2}])
         expect(process).to receive(:task_completed).with(task)
-        expect(TestJobModule).to receive(:perform).with({:a => 1, :b => 2})
+        expect(TestJobModule).to receive(:perform).with(2, {:a => 1, :b => 2})
+        task.start!
+      }
+
+      it {
+        task = Taskinator::Task.define_job_task(process, TestJobClassNoArgs, nil)
+        expect(process).to receive(:task_completed).with(task)
+        expect_any_instance_of(TestJobClassNoArgs).to receive(:perform).and_call_original
+        task.start!
+      }
+
+      it {
+        task = Taskinator::Task.define_job_task(process, TestJobModuleNoArgs, nil)
+        expect(process).to receive(:task_completed).with(task)
+        expect(TestJobModuleNoArgs).to receive(:perform).and_call_original
         task.start!
       }
 
       it "is instrumented" do
         allow(process).to receive(:task_completed).with(subject)
 
-        allow(TestJob).to receive(:perform).with({:a => 1, :b => 2})
+        allow(TestJob).to receive(:perform).with(1, {:a => 1, :b => 2})
 
         instrumentation_block = SpecSupport::Block.new
 

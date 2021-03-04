@@ -232,10 +232,10 @@ module Taskinator
 
         if job.instance_of?(Module)
           # resque
-          job.perform(args)
+          job.perform(*args)
         else
           # delayedjob and sidekiq
-          job.new.perform(args)
+          job.new.perform(*args)
         end
 
         # ASSUMPTION: when the job returns, the task is considered to be complete
