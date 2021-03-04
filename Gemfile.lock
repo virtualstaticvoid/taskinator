@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    taskinator (0.3.16)
+    taskinator (0.4.0)
       builder (>= 3.2.2)
       connection_pool (>= 2.2.0)
       globalid (~> 0.3)
@@ -43,7 +43,7 @@ GEM
       concurrent-ruby (~> 1.0)
     json (2.5.1)
     method_source (1.0.0)
-    minitest (5.14.3)
+    minitest (5.14.4)
     mono_logger (1.1.0)
     multi_json (1.15.0)
     mustermann (1.1.1)
@@ -139,4 +139,4 @@ DEPENDENCIES
   taskinator!
 
 BUNDLED WITH
-   2.2.11
+   2.2.13
