@@ -227,7 +227,7 @@ describe Taskinator::Task do
 
         method = subject.method
 
-        executor.class_eval do
+        executor.singleton_class.class_eval do
           define_method method do |*args|
             # this method executes in the scope of the executor
             # store the context in an instance variable
