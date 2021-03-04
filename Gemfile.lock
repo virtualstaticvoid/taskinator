@@ -8,7 +8,6 @@ PATH
       json (>= 1.8.2)
       redis (>= 3.2.1)
       redis-namespace (>= 1.5.2)
-      redis-semaphore (>= 0.2.4)
       statsd-ruby (~> 1.4.0)
       thwait (~> 0.2)
 
@@ -62,8 +61,6 @@ GEM
     redis (4.2.5)
     redis-namespace (1.8.1)
       redis (>= 3.0.4)
-    redis-semaphore (0.3.1)
-      redis
     resque (2.0.0)
       mono_logger (~> 1.0)
       multi_json (~> 1.0)

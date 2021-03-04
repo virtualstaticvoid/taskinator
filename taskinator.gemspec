@@ -23,7 +23,6 @@ Gem::Specification.new do |spec|
   # core
   spec.add_dependency 'redis'                       , '>= 3.2.1'
   spec.add_dependency 'redis-namespace'             , '>= 1.5.2'
-  spec.add_dependency 'redis-semaphore'             , '>= 0.2.4'
   spec.add_dependency 'connection_pool'             , '>= 2.2.0'
   spec.add_dependency 'json'                        , '>= 1.8.2'
   spec.add_dependency 'builder'                     , '>= 3.2.2'
