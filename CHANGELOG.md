@@ -1,6 +1,7 @@
 v0.4.0 - 4 Mar 2021
 ---
-Bug for `job` tasks which have no arguments in the `perform` method.
+Bug fix `job` tasks which have no arguments to the `perform` method.
+Added support for having `perform` method as a class method.
 
 v0.3.16 - 17 Feb 2021
 ---
