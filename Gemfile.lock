@@ -1,14 +1,13 @@
 PATH
   remote: .
   specs:
-    taskinator (0.3.16)
+    taskinator (0.4.0)
       builder (>= 3.2.2)
       connection_pool (>= 2.2.0)
       globalid (~> 0.3)
       json (>= 1.8.2)
       redis (>= 3.2.1)
       redis-namespace (>= 1.5.2)
-      redis-semaphore (>= 0.2.4)
       statsd-ruby (~> 1.4.0)
       thwait (~> 0.2)
 
@@ -44,7 +43,7 @@ GEM
       concurrent-ruby (~> 1.0)
     json (2.5.1)
     method_source (1.0.0)
-    minitest (5.14.3)
+    minitest (5.14.4)
     mono_logger (1.1.0)
     multi_json (1.15.0)
     mustermann (1.1.1)
@@ -62,8 +61,6 @@ GEM
     redis (4.2.5)
     redis-namespace (1.8.1)
       redis (>= 3.0.4)
-    redis-semaphore (0.3.1)
-      redis
     resque (2.0.0)
       mono_logger (~> 1.0)
       multi_json (~> 1.0)
@@ -142,4 +139,4 @@ DEPENDENCIES
   taskinator!
 
 BUNDLED WITH
-   2.2.11
+   2.2.13

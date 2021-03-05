@@ -1,3 +1,51 @@
+v0.4.0 - 4 Mar 2021
+---
+Bug fix `job` tasks which have no arguments to the `perform` method.
+Added support for having `perform` method as a class method.
+
+v0.3.16 - 17 Feb 2021
+---
+Bug fix to deincrement pending counts for sequential tasks.
+Bug fix to allow concurrent tasks to be retried (via Resque) and to complete processes.
+
+v0.3.15 - 22 Nov 2018
+---
+Updated dependencies.
+
+v0.3.14 - 13 Jul 2018
+---
+Updated dependencies.
+Removed gemnasium.
+
+v0.3.13 - 23 Sep 2017
+---
+Updated dependencies.
+
+v0.3.12 - 23 Sep 2017
+---
+Spec fixes.
+Updated dependencies.
+
+v0.3.11 - 1 Nov 2016
+---
+Removed `redis-semaphore` gem and use INCRBY to track pending concurrent tasks instead.
+Added instrumentation using statsd.
+Bug fixes to key expiry logic.
+Refactored process and task state transistions.
+
+v0.3.10 - 1 Nov 2016
+---
+Added support for serializing to XML.
+Improvements to process and task states.
+
+v0.3.9 - 12 Sep 2016
+---
+Added benchmark for redis-mutex.
+
+v0.3.7 - 18 Aug 2016
+---
+Bug fix to `option?` method.
+
 v0.3.6 - 11 Nov 2015
 ---
 Added visitor for performing clean up of completed processes/tasks.

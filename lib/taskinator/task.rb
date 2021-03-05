@@ -230,12 +230,12 @@ module Taskinator
         # NNB: if other job types are required, may need to implement how they get invoked here!
         # FIXME: possible implement using ActiveJob instead, so it doesn't matter how the worker is implemented
 
-        if job.instance_of?(Module)
+        if job.respond_to?(:perform)
           # resque
-          job.perform(args)
+          job.perform(*args)
         else
           # delayedjob and sidekiq
-          job.new.perform(args)
+          job.new.perform(*args)
         end
 
         # ASSUMPTION: when the job returns, the task is considered to be complete
