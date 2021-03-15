@@ -1,3 +1,8 @@
+v0.4.1 - 15 Mar 2021
+---
+Optimisation to exclude sub-processes which don't have any tasks.
+Preparations for upgrade to Ruby 3 and ActiveSupport 6
+
 v0.4.0 - 4 Mar 2021
 ---
 Bug fix `job` tasks which have no arguments to the `perform` method.
