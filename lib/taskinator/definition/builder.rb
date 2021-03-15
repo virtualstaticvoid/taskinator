@@ -24,7 +24,10 @@ module Taskinator
         raise ArgumentError, 'block' unless block_given?
 
         sub_process = Process.define_sequential_process_for(@definition, options)
-        Builder.new(define_sub_process_task(@process, sub_process, options), @definition, *@args).instance_eval(&block)
+        task = define_sub_process_task(@process, sub_process, options)
+        Builder.new(sub_process, @definition, *@args).instance_eval(&block)
+        @process.tasks << task if sub_process.tasks.any?
+        nil
       end
 
       # defines a sub process of tasks which are executed concurrently
@@ -32,7 +35,10 @@ module Taskinator
         raise ArgumentError, 'block' unless block_given?
 
         sub_process = Process.define_concurrent_process_for(@definition, complete_on, options)
-        Builder.new(define_sub_process_task(@process, sub_process, options), @definition, *@args).instance_eval(&block)
+        task = define_sub_process_task(@process, sub_process, options)
+        Builder.new(sub_process, @definition, *@args).instance_eval(&block)
+        @process.tasks << task if sub_process.tasks.any?
+        nil
       end
 
       # dynamically defines tasks, using the given @iterator method
@@ -51,6 +57,7 @@ module Taskinator
         @executor.send(method, *method_args) do |*args|
           Builder.new(@process, @definition, *args).instance_eval(&block)
         end
+        nil
       end
 
       alias_method :transform, :for_each
@@ -61,6 +68,7 @@ module Taskinator
         raise NoMethodError, method unless @executor.respond_to?(method)
 
         define_step_task(@process, method, @args, options)
+        nil
       end
 
       # defines a task which executes the given @job
@@ -70,6 +78,7 @@ module Taskinator
         raise ArgumentError, 'job' unless job.methods.include?(:perform) || job.instance_methods.include?(:perform)
 
         define_job_task(@process, job, @args, options)
+        nil
       end
 
       # defines a sub process task, for the given @definition
@@ -82,7 +91,10 @@ module Taskinator
         # TODO: decide whether the sub process to dynamically receive arguments
 
         sub_process = definition.create_sub_process(*@args, combine_options(options))
-        Builder.new(define_sub_process_task(@process, sub_process, options), definition, *@args)
+        task = define_sub_process_task(@process, sub_process, options)
+        Builder.new(sub_process, definition, *@args)
+        @process.tasks << task if sub_process.tasks.any?
+        nil
       end
 
     private
@@ -100,10 +112,7 @@ module Taskinator
       end
 
       def define_sub_process_task(process, sub_process, options={})
-        define_task(process) {
-          Task.define_sub_process_task(process, sub_process, combine_options(options))
-        }
-        sub_process
+        Task.define_sub_process_task(process, sub_process, combine_options(options))
       end
 
       def define_task(process)

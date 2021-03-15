@@ -75,6 +75,22 @@ describe Taskinator::Definition::Builder do
       expect(Taskinator::Process).to receive(:define_sequential_process_for).with(definition, options).and_call_original
       subject.sequential(options, &define_block)
     end
+
+    it "adds sub-process task" do
+      block = Proc.new {|p|
+        p.task :task_method
+      }
+      expect(process.tasks).to be_empty
+      subject.sequential(options, &block)
+      expect(process.tasks).to_not be_empty
+    end
+
+    it "ignores sub-processes without tasks" do
+      allow(block).to receive(:call)
+      expect(process.tasks).to be_empty
+      subject.sequential(options, &define_block)
+      expect(process.tasks).to be_empty
+    end
   end
 
   describe "#concurrent" do
@@ -99,6 +115,22 @@ describe Taskinator::Definition::Builder do
       allow(block).to receive(:call)
       expect(Taskinator::Process).to receive(:define_concurrent_process_for).with(definition, Taskinator::CompleteOn::First, options).and_call_original
       subject.concurrent(Taskinator::CompleteOn::First, options, &define_block)
+    end
+
+    it "adds sub-process task" do
+      block = Proc.new {|p|
+        p.task :task_method
+      }
+      expect(process.tasks).to be_empty
+      subject.sequential(options, &block)
+      expect(process.tasks).to_not be_empty
+    end
+
+    it "ignores sub-processes without tasks" do
+      allow(block).to receive(:call)
+      expect(process.tasks).to be_empty
+      subject.sequential(options, &define_block)
+      expect(process.tasks).to be_empty
     end
   end
 
@@ -234,6 +266,22 @@ describe Taskinator::Definition::Builder do
     it "includes options" do
       expect(sub_definition).to receive(:create_sub_process).with(*args, builder_options.merge(options)).and_call_original
       subject.sub_process(sub_definition, options)
+    end
+
+    it "adds sub-process task" do
+      block = Proc.new {|p|
+        p.task :task_method
+      }
+      expect(process.tasks).to be_empty
+      subject.sequential(options, &block)
+      expect(process.tasks).to_not be_empty
+    end
+
+    it "ignores sub-processes without tasks" do
+      allow(block).to receive(:call)
+      expect(process.tasks).to be_empty
+      subject.sequential(options, &define_block)
+      expect(process.tasks).to be_empty
     end
   end
 
