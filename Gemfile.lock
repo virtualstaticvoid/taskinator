@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    taskinator (0.4.1)
+    taskinator (0.4.2)
       builder (>= 3.2.2)
       connection_pool (>= 2.2.0)
       globalid (~> 0.3)
