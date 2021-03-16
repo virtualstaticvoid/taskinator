@@ -1,3 +1,7 @@
+v0.4.2 - 16 Mar 2021
+---
+Bug fix for process/task keys not expired upon completion.
+
 v0.4.1 - 15 Mar 2021
 ---
 Optimisation to exclude sub-processes which don't have any tasks.
