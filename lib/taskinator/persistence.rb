@@ -604,6 +604,9 @@ module Taskinator
       end
 
       def visit_tasks(tasks)
+        @conn.expire "#{@key}:tasks", expire_in
+        @conn.expire "#{@key}.count", expire_in
+        @conn.expire "#{@key}.pending", expire_in
         tasks.each do |task|
           RedisCleanupVisitor.new(@conn, task, expire_in).visit
         end

@@ -370,24 +370,27 @@ describe Taskinator::Persistence, :redis => true do
         TestFlows::Job,
         TestFlows::SubProcess,
         TestFlows::Sequential,
-        TestFlows::Concurrent
+        TestFlows::Concurrent,
+        TestFlows::EmptySequentialProcessTest,
+        TestFlows::EmptyConcurrentProcessTest,
+        TestFlows::NestedTask,
       ].each do |definition|
 
         describe "#{definition.name} expire immediately" do
           it {
-            process = definition.create_process(1)
-
             Taskinator.redis do |conn|
+              # sanity check
+              expect(conn.keys).to be_empty
+
+              process = definition.create_process(1)
+
+              # sanity check
               expect(conn.hget(process.key, :uuid)).to eq(process.uuid)
 
               process.cleanup(0) # immediately
 
-              expect(conn.hget(process.key, :uuid)).to be_nil
-
-              recursively_enumerate_tasks(process.tasks) do |task|
-                expect(conn.hget(task.key, :uuid)).to be_nil
-              end
-
+              # ensure nothing left behind
+              expect(conn.keys).to be_empty
             end
           }
         end
@@ -396,9 +399,14 @@ describe Taskinator::Persistence, :redis => true do
 
       describe "expires in future" do
         it {
-          process = TestFlows::Task.create_process(1)
-
           Taskinator.redis do |conn|
+
+            # sanity check
+            expect(conn.keys).to be_empty
+
+            process = TestFlows::Task.create_process(1)
+
+            # sanity check
             expect(conn.hget(process.key, :uuid)).to eq(process.uuid)
 
             process.cleanup(2)
@@ -411,12 +419,8 @@ describe Taskinator::Persistence, :redis => true do
 
             sleep 3
 
-            # gone!
-            expect(conn.hget(process.key, :uuid)).to be_nil
-            recursively_enumerate_tasks(process.tasks) do |task|
-              expect(conn.hget(task.key, :uuid)).to be_nil
-            end
-
+            # ensure nothing left behind
+            expect(conn.keys).to be_empty
           end
         }
       end

@@ -132,4 +132,42 @@ module TestFlows
     end
   end
 
+  module NestedTask
+    extend Taskinator::Definition
+    include Support
+
+    define_process :task_count do
+      task :task_1
+
+      concurrent do
+        task :task_2
+        task :task_3
+
+        sequential do
+          task :task_4
+          task :task_5
+
+          concurrent do
+            task :task_6
+            task :task_7
+
+            sequential do
+              task :task_8
+              task :task_9
+
+            end
+
+            task :task_10
+          end
+
+          task :task_11
+        end
+
+        task :task_12
+      end
+
+      task :task_13
+    end
+  end
+
 end
