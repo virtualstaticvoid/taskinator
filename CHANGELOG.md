@@ -1,3 +1,9 @@
+v0.4.3 - 14 Jan 2022
+---
+Add `#find_process` and `#find_task` methods to `Taskinator::Api`.
+Bug fix to API when enumerating processes.
+Updated dependencies.
+
 v0.4.2 - 16 Mar 2021
 ---
 Bug fix for process/task keys not expired upon completion.
