@@ -13,12 +13,13 @@ module Taskinator
       def each(&block)
         return to_enum(__method__) unless block_given?
 
+        identifiers = Taskinator.redis do |conn|
+          conn.smembers(@processes_list_key)
+        end
+
         instance_cache = {}
-        Taskinator.redis do |conn|
-          uuids = conn.smembers(@processes_list_key)
-          uuids.each do |uuid|
-            yield Process.fetch(uuid, instance_cache)
-          end
+        identifiers.each do |identifier|
+          yield Process.fetch(identifier, instance_cache)
         end
       end
 
