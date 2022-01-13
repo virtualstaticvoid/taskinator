@@ -28,5 +28,13 @@ module Taskinator
         end
       end
     end
+
+    def self.find_process(identifier)
+      Process.fetch(identifier)
+    end
+
+    def self.find_task(identifier)
+      Task.fetch(identifier)
+    end
   end
 end

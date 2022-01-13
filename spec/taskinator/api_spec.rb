@@ -44,4 +44,20 @@ describe Taskinator::Api, :redis => true do
     end
   end
 
+  describe "#find_process" do
+    it {
+      # fetch method is covered by persistence spec
+      expect(Taskinator::Process).to receive(:fetch) {}
+      subject.find_process 'foo:bar:process'
+    }
+  end
+
+  describe "#find_task" do
+    it {
+      # fetch method is covered by persistence spec
+      expect(Taskinator::Task).to receive(:fetch) {}
+      subject.find_task 'foo:bar:process:baz:task'
+    }
+  end
+
 end
