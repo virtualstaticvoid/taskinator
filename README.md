@@ -5,21 +5,25 @@
 [![Code Climate](https://codeclimate.com/github/virtualstaticvoid/taskinator.png)](https://codeclimate.com/github/virtualstaticvoid/taskinator)
 [![Coverage Status](https://coveralls.io/repos/virtualstaticvoid/taskinator/badge.png)](https://coveralls.io/r/virtualstaticvoid/taskinator)
 
-A simple orchestration library for running complex processes or workflows in Ruby. Processes are defined using a simple DSL, where the sequences and
-tasks are defined. Processes can then be queued for execution. Sequences can be synchronous or asynchronous, and the overall process can be monitored
-for completion or failure.
+A simple orchestration library for running complex processes or workflows in Ruby.
+Processes are defined using a simple DSL, where the sequences and tasks are defined.
+Processes can then be queued for execution. Sequences can be synchronous or asynchronous,
+and the overall process can be monitored for completion or failure.
 
-Processes and tasks are executed by background workers and you can use any one of the following gems:
+Processes and tasks are executed by background workers and you can use any one of the
+following gems:
 
 * [resque](https://github.com/resque/resque)
 * [sidekiq](https://github.com/mperham/sidekiq)
 * [delayed_job](https://github.com/collectiveidea/delayed_job)
 
-The configuration and state of each process and their respective tasks is stored using Redis key/values.
+The configuration and state of each process and their respective tasks is stored using
+Redis key/values.
 
 ## Requirements
 
-The latest MRI (2.1, 2.0) version. Other versions/VMs are untested but might work fine. MRI 1.9 is not supported.
+The latest MRI (2.1, 2.0) version. Other versions/VMs are untested but might work fine.
+MRI 1.9 is not supported.
 
 Redis 2.4 or greater is required.
 
@@ -68,7 +72,8 @@ module MyProcess
 end
 ```
 
-The `define_process` method optionally takes the list of expected arguments which are used to validate the arguments supplied when creating a new process.
+The `define_process` method optionally takes the list of expected arguments which are used
+to validate the arguments supplied when creating a new process.
 These should be specified with symbols.
 
 ```ruby
@@ -87,7 +92,8 @@ process = MyProcess.create_process Date.today, :option_1 => true
 
 _NOTE:_ The current implementation performs a naive check on the count of arguments.
 
-Next, specify the tasks with their corresponding implementation methods, that make up the process, using the `task` method and providing the `method` to execute for the task.
+Next, specify the tasks with their corresponding implementation methods, that make up the
+process, using the `task` method and providing the `method` to execute for the task.
 
 ```ruby
 module MyProcess
@@ -108,7 +114,8 @@ module MyProcess
 end
 ```
 
-More complex processes may define sequential or concurrent steps, using the `sequential` and `concurrent` methods respectively.
+More complex processes may define sequential or concurrent steps, using the `sequential`
+and `concurrent` methods respectively.
 
 ```ruby
 module MyProcess
@@ -141,10 +148,15 @@ module MyProcess
 end
 ```
 
-It is likely that you already have worker classes for one of the queueing libraries, such as resque or delayed_job, and wish to reuse them for executing them in the sequence defined by the process definition.
+It is likely that you already have worker classes for one of the queueing libraries,
+such as resque or delayed_job, and wish to reuse them for executing them in the sequence
+defined by the process definition.
 
-Define a `job` step, providing the class of the worker, and then taskinator will execute that worker as part of the process definition.
-The `job` step will be queued and executed on same queue as configured by `delayed_job`, or that of the worker for `resque` and `sidekiq`.
+Define a `job` step, providing the class of the worker, and then taskinator will execute
+that worker as part of the process definition.
+
+The `job` step will be queued and executed on same queue as configured by `delayed_job`, or
+that of the worker for `resque` and `sidekiq`.
 
 ```ruby
 # E.g. A resque worker
@@ -168,8 +180,11 @@ module MyProcess
 end
 ```
 
-You can also define data driven tasks using the `for_each` method, which takes an iterator method name as an argument.
-The iterator method yields the parameters necessary for the task or job. Notice that the task method takes a parameter in this case, which will be the return values provided by the iterator.
+You can also define data driven tasks using the `for_each` method, which takes an iterator method
+name as an argument.
+
+The iterator method yields the parameters necessary for the task or job. Notice that the task
+method takes a parameter in this case, which will be the return values provided by the iterator.
 
 ```ruby
 module MyProcess
@@ -192,8 +207,9 @@ module MyProcess
 end
 ```
 
-It is possible to branch the process logic based on the options hash passed in when creating a process.
-The `options?` method takes the options key as an argument and calls the supplied block if the option is present and it's value is truthy.
+It is possible to branch the process logic based on the options hash passed in when creating
+a process. The `options?` method takes the options key as an argument and calls the supplied
+block if the option is present and it's value is _truthy_.
 
 ```ruby
 module MyProcess
@@ -227,8 +243,11 @@ process2 = MyProcess.create_process
 process2.tasks.count #=> 1
 ```
 
-In addition, it is possible to transform the arguments used by a task or job, by including a `transform` step in the definition.
-Similarly for the `for_each` method, `transform` takes a method name as an argument. The transformer method must yield the new arguments as required.
+In addition, it is possible to transform the arguments used by a task or job, by including
+a `transform` step in the definition.
+
+Similarly for the `for_each` method, `transform` takes a method name as an argument.
+The transformer method must yield the new arguments as required.
 
 ```ruby
 module MyProcess
@@ -273,7 +292,8 @@ module MyProcess
 end
 ```
 
-Any combination or nesting of `task`, `sequential`, `concurrent` and `for_each` steps are possible. E.g.
+Any combination or nesting of `task`, `sequential`, `concurrent` and `for_each` steps are
+possible. E.g.
 
 ```ruby
 module MyProcess
@@ -306,13 +326,17 @@ module MyProcess
 end
 ```
 
-In this example, the `work_step_begin` is executed, followed by the `work_step_all_at_once` steps which are executed concurrently, then
-the sub process `MySubProcess` is created and executed, followed by the `work_step_one_by_one` tasks which are executed sequentially and
+In this example, the `work_step_begin` is executed, followed by the `work_step_all_at_once`
+steps which are executed concurrently, then the sub process `MySubProcess` is created and
+executed, followed by the `work_step_one_by_one` tasks which are executed sequentially and
 finally the `work_step_end` is executed.
 
-It is also possible to embed conditional logic within the process definition stages in order to produce steps based on the required logic.
-All builder methods are available within the scope of the `define_process` block. These methods include `args` and `options`
-which are passed into the `create_process` method of the definition.
+It is also possible to embed conditional logic within the process definition stages in
+order to produce steps based on the required logic.
+
+All builder methods are available within the scope of the `define_process` block. These
+methods include `args` and `options` which are passed into the `create_process` method
+of the definition.
 
 E.g.
 
@@ -332,7 +356,8 @@ module MyProcess
 end
 
 # when creating this proces, you supply to option when calling `create_process`
-# in this example, 'args' will be an array [1,2,3] and options will be a Hash {:send_notification => true}
+# in this example, 'args' will be an array [1,2,3]
+# and options will be a Hash {:send_notification => true}
 MyProcess.create_process(1, 2, 3, :send_notification => true)
 
 ```
@@ -364,8 +389,12 @@ To best understand how arguments are handled, you need to break it down into 3 p
   * Creation and
   * Execution
 
-Firstly, a process definition is declarative in that the `define_process` and a mix of `sequential`, `concurrent`, `for_each`, `task` and `job` directives provide the way to specify the sequencing of the steps for the process.
-Taskinator will interprete this definition and execute each step in the desired sequence or concurrency.
+Firstly, a process definition is declarative in that the `define_process` and a mix of
+`sequential`, `concurrent`, `for_each`, `task` and `job` directives provide the way to
+specify the sequencing of the steps for the process.
+
+Taskinator will interprete this definition and execute each step in the desired sequence
+or concurrency.
 
 Consider the following process definition:
 
@@ -411,11 +440,17 @@ end
 
 There are three tasks; namely `:work_step_1`, `:work_step_2` and `:work_step_3`.
 
-The third task, `:work_step_3`, is built up using the `for_each` iterator, which means that the number of `:work_step_3` tasks will depend on how many times the `additional_step` iterator method yields to the definition.
+The third task, `:work_step_3`, is built up using the `for_each` iterator, which means that
+the number of `:work_step_3` tasks will depend on how many times the `additional_step`
+iterator method yields to the definition.
 
-This brings us to the creation part. When `create_process` is called on the given module, you provide arguments to it, which will get passed onto the respective `task` and `for_each` iterator methods.
+This brings us to the creation part. When `create_process` is called on the given module,
+you provide arguments to it, which will get passed onto the respective `task` and
+`for_each` iterator methods.
 
-So, considering the `MySimpleProcess` module shown above, `work_step_1`, `work_step_2` and `work_step_3` methods each expect arguments.
+So, considering the `MySimpleProcess` module shown above, `work_step_1`, `work_step_2`
+and `work_step_3` methods each expect arguments.
+
 These will ultimately come from the arguments passed into the `create_process` method.
 
 E.g.
@@ -438,7 +473,8 @@ process = MySimpleProcess.create_process(options)
 
 ```
 
-To best understand how the process is created, consider the following "procedural" code for how it could work.
+To best understand how the process is created, consider the following "procedural" code
+for how it could work.
 
 ```ruby
 # A process, which maps the target and a list of steps
@@ -535,7 +571,9 @@ process.execute
 
 ```
 
-In reality, each task is executed by a worker process, possibly on another host, so the execution process isn't as simple, but this example should help you to understand conceptually how the process is executed, and how the arguments are propagated through.
+In reality, each task is executed by a worker process, possibly on another host, so the
+execution process isn't as simple, but this example should help you to understand
+conceptually how the process is executed, and how the arguments are propagated through.
 
 ### Monitoring
 
@@ -600,7 +638,10 @@ The types include:
 
 ### Redis
 
-By default Taskinator assumes Redis is located at `localhost:6397`. This is fine for development, but for many production environments you will need to point to an external Redis server. You may also what to use a namespace for the Redis keys.
+By default Taskinator assumes Redis is located at `localhost:6397`. This is fine for development,
+but for many production environments you will need to point to an external Redis server.
+You may also what to use a namespace for the Redis keys.
+
 _NOTE:_ The configuration hash _must_ have symbolized keys.
 
 ```ruby
@@ -615,15 +656,19 @@ end
 Or, alternatively, via an `ENV` variable
 
 Set the `REDIS_PROVIDER` environment variable to the Redis server url.
-E.g. On Heroku, with RedisGreen: set REDIS_PROVIDER=REDISGREEN_URL and Taskinator will use the value of the `REDISGREEN_URL` environment variable when connecting to Redis.
+E.g. On Heroku, with RedisGreen: set REDIS_PROVIDER=REDISGREEN_URL and Taskinator will use the
+value of the `REDISGREEN_URL` environment variable when connecting to Redis.
 
 You may also use the generic `REDIS_URL` which may be set to your own private Redis server.
 
-The Redis configuration leverages the same setup as `sidekiq`. For advanced options, checkout the [Sidekiq Advanced Options](https://github.com/mperham/sidekiq/wiki/Advanced-Options#complete-control) wiki for more information.
+The Redis configuration leverages the same setup as `sidekiq`. For advanced options, checkout the
+[Sidekiq Advanced Options](https://github.com/mperham/sidekiq/wiki/Advanced-Options#complete-control)
+wiki page for more information.
 
 ### Queues
 
-By default the queue names for process and task workers is `default`, however, you can specify the queue names as follows:
+By default the queue names for process and task workers is `default`, however, you can specify
+the queue names as follows:
 
 ```ruby
 Taskinator.configure do |config|
@@ -636,7 +681,8 @@ end
 
 ### Instrumentation
 
-It is possible to instrument processes, tasks and jobs by providing an instrumeter such as `ActiveSupport::Notifications`.
+It is possible to instrument processes, tasks and jobs by providing an instrumeter such
+as `ActiveSupport::Notifications`.
 
 ```ruby
 Taskinator.configure do |config|
@@ -654,40 +700,41 @@ end
 
 The following instrumentation events are issued:
 
-| Event                              | When                                                      |
-|------------------------------------|-----------------------------------------------------------|
-| `taskinator.process.created`       | After a root process gets created                         |
-| `taskinator.process.saved`         | After a root process has been persisted to Redis          |
-| `taskinator.process.enqueued`      | After a process or subprocess is enqueued for processing  |
-| `taskinator.process.processing`    | When a process or subprocess is processing                |
-| `taskinator.process.paused`        | When a process or subprocess is paused                    |
-| `taskinator.process.resumed`       | When a process or subprocess is resumed                   |
-| `taskinator.process.completed`     | After a process or subprocess has completed processing    |
-| `taskinator.process.cancelled`     | After a process or subprocess has been cancelled          |
-| `taskinator.process.failed`        | After a process or subprocess has failed                  |
-| `taskinator.task.enqueued`         | After a task has been enqueued                            |
-| `taskinator.task.processing`       | When a task is processing                                 |
-| `taskinator.task.completed`        | After a task has completed                                |
-| `taskinator.task.cancelled`        | After a task has been cancelled                           |
-| `taskinator.task.failed`           | After a task has failed                                   |
+| Event                           | When                                                     |
+|---------------------------------|----------------------------------------------------------|
+| `taskinator.process.created`    | After a root process gets created                        |
+| `taskinator.process.saved`      | After a root process has been persisted to Redis         |
+| `taskinator.process.enqueued`   | After a process or subprocess is enqueued for processing |
+| `taskinator.process.processing` | When a process or subprocess is processing               |
+| `taskinator.process.paused`     | When a process or subprocess is paused                   |
+| `taskinator.process.resumed`    | When a process or subprocess is resumed                  |
+| `taskinator.process.completed`  | After a process or subprocess has completed processing   |
+| `taskinator.process.cancelled`  | After a process or subprocess has been cancelled         |
+| `taskinator.process.failed`     | After a process or subprocess has failed                 |
+| `taskinator.task.enqueued`      | After a task has been enqueued                           |
+| `taskinator.task.processing`    | When a task is processing                                |
+| `taskinator.task.completed`     | After a task has completed                               |
+| `taskinator.task.cancelled`     | After a task has been cancelled                          |
+| `taskinator.task.failed`        | After a task has failed                                  |
 
 For all events, the data included contains the following information:
 
-| Key                      | Value                                                 |
-|--------------------------|-------------------------------------------------------|
-| `:type`                  | The type name of the component reporting the event    |
-| `:process_uuid`          | The UUID of the root process                          |
-| `:process_options`       | Options hash of the root process                      |
-| `:uuid`                  | The UUID of the respective task, job or sub process   |
-| `:options`               | Options hash of the component                         |
-| `:state`                 | State of the component                                |
-| `:percentage_completed`  | The percentage of completed tasks                     |
-| `:percentage_failed`     | The percentage of failed tasks                        |
-| `:percentage_cancelled`  | The percentage of cancelled tasks                     |
+| Key                             | Value                                                    |
+|---------------------------------|----------------------------------------------------------|
+| `:type`                         | The type name of the component reporting the event       |
+| `:process_uuid`                 | The UUID of the root process                             |
+| `:process_options`              | Options hash of the root process                         |
+| `:uuid`                         | The UUID of the respective task, job or sub process      |
+| `:options`                      | Options hash of the component                            |
+| `:state`                        | State of the component                                   |
+| `:percentage_completed`         | The percentage of completed tasks                        |
+| `:percentage_failed`            | The percentage of failed tasks                           |
+| `:percentage_cancelled`         | The percentage of cancelled tasks                        |
 
 ## Notes
 
-The persistence logic is decoupled from the implementation, so it is possible to implement another backing store if required.
+The persistence logic is decoupled from the implementation, so it is possible to implement
+another backing store if required.
 
 ## Contributing
 
@@ -698,12 +745,19 @@ The persistence logic is decoupled from the implementation, so it is possible to
 5. Create new Pull Request
 
 ## License
+
 MIT Copyright (c) 2014 Chris Stefano
 
 Portions of code are from the Sidekiq project, Copyright (c) Contributed Systems LLC.
 
 ## Inspiration
 
-Inspired by the [sidekiq](https://github.com/mperham/sidekiq) and [workflow](https://github.com/geekq/workflow) gems.
+Inspired by the [sidekiq](https://github.com/mperham/sidekiq) and
+[workflow](https://github.com/geekq/workflow) gems.
 
-For other workflow solutions, checkout [Stonepath](https://github.com/bokmann/stonepath), the now deprecated [ruote](https://github.com/jmettraux/ruote) gem and [workflow](https://github.com/geekq/workflow). Alternatively, for a robust enterprise ready solution checkout the [AWS Flow Framework for Ruby](http://docs.aws.amazon.com/amazonswf/latest/awsrbflowguide/welcome.html).
+For other workflow solutions, checkout [Stonepath](https://github.com/bokmann/stonepath),
+the now deprecated [ruote](https://github.com/jmettraux/ruote) gem and
+[workflow](https://github.com/geekq/workflow).
+
+Alternatively, for a robust enterprise ready solution checkout the
+[AWS Flow Framework for Ruby](http://docs.aws.amazon.com/amazonswf/latest/awsrbflowguide/welcome.html).
