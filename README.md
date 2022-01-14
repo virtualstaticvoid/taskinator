@@ -539,7 +539,11 @@ In reality, each task is executed by a worker process, possibly on another host,
 
 ### Monitoring
 
-To monitor the state of the processes, use the `Taskinator::Api::Processes` class. This is still a work in progress.
+NOTE: This aspect of the library is still a work in progress.
+
+#### Processes
+
+To monitor the state of the processes, use the `Taskinator::Api::Processes` class.
 
 ```ruby
 processes = Taskinator::Api::Processes.new
@@ -548,6 +552,49 @@ processes.each do |process|
   puts [:process, process.uuid, process.current_state]
 end
 ```
+
+#### Debugging
+
+To aid debugging specific processes and tasks, where the process or task identifier is
+known, it is possible to retrieve the specific task or process using `Taskinator::Api`.
+
+To retrieve a specific process, given the process identifier:
+
+```ruby
+process_id = "SUPPLY-PROCESS-IDENTIFIER"
+process = Taskinator::Api.find_process(process_id)
+
+puts process.inspect
+puts process.current_state
+puts process.tasks
+# etc...
+```
+
+The type of process may be one of the following:
+
+* `Taskinator::Process::Sequential`
+* `Taskinator::Process::Concurrent`
+
+Then, to retrieve a specific task, given the task identifier:
+
+```ruby
+task_id = "SUPPLY-TASK-IDENTIFIER"
+task = Taskinator::Api.find_task(task_id)
+
+puts task.inspect
+puts task.class
+puts task.args                # for Step and Job types
+puts task.sub_process.tasks   # for SubProcess type
+# etc...
+```
+
+Depending on the type of task, different attributes will be available for inspection.
+
+The types include:
+
+* `Taskinator::Task::Step`
+* `Taskinator::Task::Job`
+* `Taskinator::Task::SubProcess`
 
 ## Configuration
 
