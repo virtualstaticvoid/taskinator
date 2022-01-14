@@ -24,9 +24,9 @@ jobs:
         ruby-version: ${{ matrix.ruby-version }}
         bundler-cache: true
     - name: Build Gem
-      run: rake build
+      run: bundle exec rake build
     - name: Run tests
-      run: rake spec
+      run: bundle exec rake spec
 
   publish:
     if: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v') }}
