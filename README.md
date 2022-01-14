@@ -1,7 +1,7 @@
 # Taskinator
 
 [![Gem Version](https://badge.fury.io/rb/taskinator.svg)](http://badge.fury.io/rb/taskinator)
-[![Build Status](https://secure.travis-ci.org/virtualstaticvoid/taskinator.png?branch=master)](http://travis-ci.org/virtualstaticvoid/taskinator)
+[![Build Status](https://img.shields.io/github/workflow/status/virtualstaticvoid/taskinator/Taskinator?style=flat-square)](https://github.com/virtualstaticvoid/taskinator/actions)
 [![Code Climate](https://codeclimate.com/github/virtualstaticvoid/taskinator.png)](https://codeclimate.com/github/virtualstaticvoid/taskinator)
 [![Coverage Status](https://coveralls.io/repos/virtualstaticvoid/taskinator/badge.png)](https://coveralls.io/r/virtualstaticvoid/taskinator)
 
@@ -22,8 +22,8 @@ Redis key/values.
 
 ## Requirements
 
-The latest MRI (2.1, 2.0) version. Other versions/VMs are untested but might work fine.
-MRI 1.9 is not supported.
+The latest MRI 2.x or 3.x version. Other versions/VMs are untested, but might work fine.
+MRI 1.x is not supported.
 
 Redis 2.4 or greater is required.
 
