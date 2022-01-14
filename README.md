@@ -3,7 +3,6 @@
 [![Gem Version](https://badge.fury.io/rb/taskinator.svg)](http://badge.fury.io/rb/taskinator)
 [![Build Status](https://img.shields.io/github/workflow/status/virtualstaticvoid/taskinator/Taskinator?style=flat-square)](https://github.com/virtualstaticvoid/taskinator/actions)
 [![Code Climate](https://codeclimate.com/github/virtualstaticvoid/taskinator.png)](https://codeclimate.com/github/virtualstaticvoid/taskinator)
-[![Coverage Status](https://coveralls.io/repos/virtualstaticvoid/taskinator/badge.png)](https://coveralls.io/r/virtualstaticvoid/taskinator)
 
 A simple orchestration library for running complex processes or workflows in Ruby.
 Processes are defined using a simple DSL, where the sequences and tasks are defined.
