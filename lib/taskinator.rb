@@ -98,7 +98,7 @@ module Taskinator
 
     # the queue adapter to use
     # supported adapters include
-    # :delayed_job, :redis and :sidekiq
+    # :active_job, :delayed_job, :redis and :sidekiq
     # NOTE: ensure that the respective gem is included
     attr_reader :queue_adapter
 
@@ -118,7 +118,7 @@ module Taskinator
 
     def queue
       @queue ||= begin
-        adapter = self.queue_adapter || :resque
+        adapter = self.queue_adapter || :resque  # TODO: change default to :active_job
         config = queue_config || {}
         Taskinator::Queues.create_adapter(adapter, config)
       end

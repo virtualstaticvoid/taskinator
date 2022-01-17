@@ -48,6 +48,7 @@ module Taskinator
   end
 end
 
+require 'taskinator/queues/active_job' if defined?(ApplicationJob)
 require 'taskinator/queues/delayed_job' if defined?(Delayed)
 require 'taskinator/queues/resque' if defined?(Resque)
 require 'taskinator/queues/sidekiq' if defined?(Sidekiq)

@@ -4,6 +4,7 @@ source 'https://rubygems.org'
 gemspec
 
 # queues
+gem 'activejob'       , '>= 5.0.0'
 gem 'sidekiq'         , '>= 3.5.0'
 gem 'rspec-sidekiq'   , '>= 2.1.0'
 
@@ -16,7 +17,10 @@ gem 'resque_spec'     , '>= 0.16.0'
 gem 'bundler'         , '>= 1.6.0'
 gem 'rake'            , '>= 10.3.0'
 gem 'activesupport'   , '~> 5.2.0'
+
 gem 'rspec'
+gem 'rspec-rails'     , '>= 2.0'
+
 gem 'coveralls'       , '>= 0.8.22'
 gem 'pry'             , '>= 0.9.0'
 gem 'pry-byebug'      , '>= 1.3.0'

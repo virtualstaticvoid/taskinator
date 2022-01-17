@@ -27,6 +27,20 @@ require 'resque'
 require 'resque_spec'
 ResqueSpec.disable_ext = false
 
+require 'active_job'
+
+ActiveJob::Base.queue_adapter = :test
+
+class ApplicationJob < ActiveJob::Base
+  queue_as :not_used
+end
+
+# minimum rails gems for rspec/rails
+require 'action_view'
+require 'action_dispatch'
+require 'action_controller'
+require 'rspec/rails'
+
 require 'taskinator'
 
 Taskinator.configure do |config|

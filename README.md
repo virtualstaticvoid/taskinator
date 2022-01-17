@@ -12,6 +12,7 @@ and the overall process can be monitored for completion or failure.
 Processes and tasks are executed by background workers and you can use any one of the
 following gems:
 
+* [active_job](https://github.com/rails/rails/tree/main/activejob)
 * [resque](https://github.com/resque/resque)
 * [sidekiq](https://github.com/mperham/sidekiq)
 * [delayed_job](https://github.com/collectiveidea/delayed_job)
@@ -38,7 +39,7 @@ Add this line to your application's Gemfile:
 
 And then execute:
 
-    $ bundle
+    $ bundle install
 
 Or install it yourself as:
 
@@ -52,6 +53,7 @@ Start by creating a "process" module and extending `Taskinator::Definition`.
 
 ```ruby
 require 'taskinator'
+
 module MyProcess
   extend Taskinator::Definition
 
@@ -147,15 +149,16 @@ module MyProcess
 end
 ```
 
-It is likely that you already have worker classes for one of the queueing libraries,
-such as resque or delayed_job, and wish to reuse them for executing them in the sequence
-defined by the process definition.
+#### Reusing ActiveJob jobs
 
-Define a `job` step, providing the class of the worker, and then taskinator will execute
-that worker as part of the process definition.
+It is likely that you already have one or more [jobs](https://guides.rubyonrails.org/active_job_basics.html)
+and want to reuse them within the process definition.
 
-The `job` step will be queued and executed on same queue as configured by `delayed_job`, or
-that of the worker for `resque` and `sidekiq`.
+Define a `job` step, providing the class of the Active Job to run and then taskinator will
+invoke that job as part of the process.
+
+The `job` step will be queued and executed on same queue as
+[configured by the job](https://guides.rubyonrails.org/active_job_basics.html#queues).
 
 ```ruby
 # E.g. A resque worker
@@ -178,6 +181,8 @@ module MyProcess
   end
 end
 ```
+
+#### Data Driven Process Definitions
 
 You can also define data driven tasks using the `for_each` method, which takes an iterator method
 name as an argument.
@@ -205,6 +210,8 @@ module MyProcess
   end
 end
 ```
+
+#### Branching
 
 It is possible to branch the process logic based on the options hash passed in when creating
 a process. The `options?` method takes the options key as an argument and calls the supplied
@@ -242,6 +249,8 @@ process2 = MyProcess.create_process
 process2.tasks.count #=> 1
 ```
 
+#### Transformations
+
 In addition, it is possible to transform the arguments used by a task or job, by including
 a `transform` step in the definition.
 
@@ -270,6 +279,8 @@ module MyProcess
 end
 ```
 
+#### Subprocesses
+
 Processes can be composed of other processes too:
 
 ```ruby
@@ -290,6 +301,8 @@ module MyProcess
   end
 end
 ```
+
+#### Complex Process Definitions
 
 Any combination or nesting of `task`, `sequential`, `concurrent` and `for_each` steps are
 possible. E.g.
