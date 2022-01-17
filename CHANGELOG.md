@@ -1,3 +1,7 @@
+v0.4.4 - 17 Jan 2022
+---
+Add support for `ActiveJob`.
+
 v0.4.3 - 14 Jan 2022
 ---
 Add `#find_process` and `#find_task` methods to `Taskinator::Api`.
