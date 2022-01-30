@@ -45,6 +45,27 @@ Or install it yourself as:
 
     $ gem install taskinator
 
+If you are using Taskinator within a Rails application, then add an initializer, such as
+`config/initializers/taskinator.rb`, with the following configuration content:
+
+```ruby
+Taskinator.configure do |config|
+
+  # configure the queue adapter to use
+  # can be :active_job, :delayed_job, :redis or :sidekiq
+  config.queue_adapter = :redis
+
+  # configure redis
+  config.redis = {
+   :url => 'redis://redis.example.com:7372/12',
+   :namespace => 'mynamespace'
+  }
+
+end
+```
+
+See the configuration section below for more configuration details.
+
 ## Usage
 
 ### Definition
@@ -668,7 +689,7 @@ end
 Or, alternatively, via an `ENV` variable
 
 Set the `REDIS_PROVIDER` environment variable to the Redis server url.
-E.g. On Heroku, with RedisGreen: set REDIS_PROVIDER=REDISGREEN_URL and Taskinator will use the
+E.g. On Heroku, with RedisGreen: set `REDIS_PROVIDER=REDISGREEN_URL` and Taskinator will use the
 value of the `REDISGREEN_URL` environment variable when connecting to Redis.
 
 You may also use the generic `REDIS_URL` which may be set to your own private Redis server.
