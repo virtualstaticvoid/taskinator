@@ -44,6 +44,7 @@ And then execute:
 Or install it yourself as:
 
     $ gem install taskinator
+   
 
 If you are using Taskinator within a Rails application, then add an initializer, such as
 `config/initializers/taskinator.rb`, with the following configuration content:
@@ -709,6 +710,13 @@ Taskinator.configure do |config|
     :process_queue => :default,
     :task_queue => :default
   }
+end
+```
+
+Set your queue adapter in config/initializer/taskinator.rb
+```ruby
+Taskinator.configure do |config|
+    config.queue_adapter = :sidekiq # :resque, :active_job
 end
 ```
 
