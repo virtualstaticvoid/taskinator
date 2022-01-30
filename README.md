@@ -44,12 +44,12 @@ And then execute:
 Or install it yourself as:
 
     $ gem install taskinator
-   
 
 If you are using Taskinator within a Rails application, then add an initializer, such as
 `config/initializers/taskinator.rb`, with the following configuration content:
 
 ```ruby
+# config/initializers/taskinator.rb
 Taskinator.configure do |config|
 
   # configure the queue adapter to use
@@ -58,8 +58,8 @@ Taskinator.configure do |config|
 
   # configure redis
   config.redis = {
-   :url => 'redis://redis.example.com:7372/12',
-   :namespace => 'mynamespace'
+    :url => 'redis://redis.example.com:7372/12',
+    :namespace => 'mynamespace'
   }
 
 end
@@ -680,10 +680,13 @@ _NOTE:_ The configuration hash _must_ have symbolized keys.
 
 ```ruby
 Taskinator.configure do |config|
- config.redis = {
-   :url => 'redis://redis.example.com:7372/12',
-   :namespace => 'mynamespace'
- }
+
+  # redis configuration
+  config.redis = {
+    :url => 'redis://redis.example.com:7372/12',
+    :namespace => 'mynamespace'
+  }
+
 end
 ```
 
@@ -701,22 +704,37 @@ wiki page for more information.
 
 ### Queues
 
+To configure the queue adapter to use, set `config.queue_adapter` to one of the following values:
+
+* `:active_job`
+* `:delayed_job`
+* `:redis`
+* `:sidekiq`
+
+As follows:
+
+```ruby
+Taskinator.configure do |config|
+
+  # configure the queue adapter to use
+  # can be :active_job, :delayed_job, :redis or :sidekiq
+  config.queue_adapter = :redis
+
+end
+```
+
 By default the queue names for process and task workers is `default`, however, you can specify
 the queue names as follows:
 
 ```ruby
 Taskinator.configure do |config|
+
+  # queue configuration
   config.queue_config = {
     :process_queue => :default,
     :task_queue => :default
   }
-end
-```
 
-Set your queue adapter in config/initializer/taskinator.rb
-```ruby
-Taskinator.configure do |config|
-    config.queue_adapter = :sidekiq # :resque, :active_job
 end
 ```
 
@@ -727,7 +745,10 @@ as `ActiveSupport::Notifications`.
 
 ```ruby
 Taskinator.configure do |config|
+
+  # configure instrumenter to use
   config.instrumenter = ActiveSupport::Notifications
+
 end
 ```
 
@@ -735,7 +756,10 @@ Alternatively, you can use the built-in instrumenter for logging to the console 
 
 ```ruby
 Taskinator.configure do |config|
+
+  # configure instrumenter to use
   config.instrumenter = Taskinator::ConsoleInstrumenter.new
+
 end
 ```
 
