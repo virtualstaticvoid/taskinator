@@ -15,10 +15,6 @@ module Taskinator
           @queue = config[:definition_queue]
         end
 
-        ProcessWorker.class_eval do
-          @queue = config[:process_queue]
-        end
-
         TaskWorker.class_eval do
           @queue = config[:task_queue]
         end
@@ -30,11 +26,6 @@ module Taskinator
         Resque.enqueue_to(queue, CreateProcessWorker, definition.name, uuid, Taskinator::Persistence.serialize(args))
       end
 
-      def enqueue_process(process)
-        queue = process.queue || Resque.queue_from_class(ProcessWorker)
-        Resque.enqueue_to(queue, ProcessWorker, process.uuid)
-      end
-
       def enqueue_task(task)
         queue = task.queue || Resque.queue_from_class(TaskWorker)
         Resque.enqueue_to(queue, TaskWorker, task.uuid)
@@ -43,12 +34,6 @@ module Taskinator
       class CreateProcessWorker
         def self.perform(definition_name, uuid, args)
           Taskinator::CreateProcessWorker.new(definition_name, uuid, args).perform
-        end
-      end
-
-      class ProcessWorker
-        def self.perform(process_uuid)
-          Taskinator::ProcessWorker.new(process_uuid).perform
         end
       end
 

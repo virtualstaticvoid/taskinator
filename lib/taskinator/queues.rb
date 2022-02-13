@@ -33,11 +33,6 @@ module Taskinator
         adapter.enqueue_create_process(definition, uuid, args)
       end
 
-      def enqueue_process(process)
-        Taskinator.logger.info("Enqueuing process #{process}")
-        adapter.enqueue_process(process)
-      end
-
       def enqueue_task(task)
         Taskinator.logger.info("Enqueuing task #{task}")
         adapter.enqueue_task(task)

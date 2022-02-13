@@ -30,24 +30,6 @@ describe Taskinator::Queues::DelayedJobAdapter, :delayed_job do
     end
   end
 
-  describe "ProcessWorker" do
-    it "enqueues processes" do
-      expect {
-        subject.enqueue_process(double('process', :uuid => uuid, :queue => nil))
-      }.to change(Delayed::Job.queue, :size).by(1)
-    end
-
-    it "enqueues process to specified queue" do
-      subject.enqueue_process(double('process', :uuid => uuid, :queue => :other))
-      expect(Delayed::Job.contains?(adapter::ProcessWorker, uuid, :other)).to be
-    end
-
-    it "calls process worker" do
-      expect_any_instance_of(Taskinator::ProcessWorker).to receive(:perform)
-      adapter::ProcessWorker.new(uuid).perform
-    end
-  end
-
   describe "TaskWorker" do
     it "enqueues tasks" do
       expect {
