@@ -274,16 +274,15 @@ module Taskinator
       end
 
       def visit_tasks(tasks)
-        tasks.each do |task|
-          RedisSerializationVisitor.new(@conn, task, @base_visitor).visit
-          @conn.rpush "#{@key}:tasks", task.uuid
-          unless task.is_a?(Task::SubProcess)
-            incr_task_count unless self == @base_visitor
-            @base_visitor.incr_task_count
-          end
-        end
-        @conn.set("#{@key}.count", tasks.count)
-        @conn.set("#{@key}.pending", tasks.count)
+        visit_tasks_set(tasks, 'tasks')
+      end
+
+      def visit_on_completed_tasks(tasks)
+        visit_tasks_set(tasks, 'on_completed_tasks')
+      end
+
+      def visit_on_failed_tasks(tasks)
+        visit_tasks_set(tasks, 'on_failed_tasks')
       end
 
       def visit_attribute(attribute)
@@ -333,6 +332,22 @@ module Taskinator
       def incr_task_count
         @task_count += 1
       end
+
+      private
+
+      def visit_tasks_set(tasks, set)
+        tasks.each do |task|
+          RedisSerializationVisitor.new(@conn, task, @base_visitor).visit
+          @conn.rpush "#{@key}:#{set}", task.uuid
+          unless task.is_a?(Task::SubProcess)
+            incr_task_count unless self == @base_visitor
+            @base_visitor.incr_task_count
+          end
+        end
+        @conn.set("#{@key}:#{set}.count", tasks.count)
+        @conn.set("#{@key}:#{set}.pending", tasks.count)
+      end
+
     end
 
     class XmlSerializationVisitor < Taskinator::Visitor::Base
@@ -385,17 +400,15 @@ module Taskinator
       end
 
       def visit_tasks(tasks)
-        builder.tag!('tasks', :count => tasks.count) do |xml|
-          tasks.each do |task|
-            xml.tag!('task', :key => task.key) do |xml2|
-              XmlSerializationVisitor.new(xml2, task, @base_visitor).visit
-              unless task.is_a?(Task::SubProcess)
-                incr_task_count unless self == @base_visitor
-                @base_visitor.incr_task_count
-              end
-            end
-          end
-        end
+        visit_tasks_set(tasks, 'tasks')
+      end
+
+      def visit_on_completed_tasks(tasks)
+        visit_tasks_set(tasks, 'on_completed_tasks')
+      end
+
+      def visit_on_failed_tasks(tasks)
+        visit_tasks_set(tasks, 'on_failed_tasks')
       end
 
       def visit_attribute(attribute)
@@ -445,6 +458,23 @@ module Taskinator
       def incr_task_count
         @task_count += 1
       end
+
+      private
+
+      def visit_tasks_set(tasks, set)
+        builder.tag!(set, :count => tasks.count) do |xml|
+          tasks.each do |task|
+            xml.tag!('task', :key => task.key) do |xml2|
+              XmlSerializationVisitor.new(xml2, task, @base_visitor).visit
+              unless task.is_a?(Task::SubProcess)
+                incr_task_count unless self == @base_visitor
+                @base_visitor.incr_task_count
+              end
+            end
+          end
+        end
+      end
+
     end
 
     class RedisDeserializationVisitor < Taskinator::Visitor::Base
@@ -500,11 +530,15 @@ module Taskinator
       end
 
       def visit_tasks(tasks)
-        # tasks are a linked list, so just get the first one
-        Taskinator.redis do |conn|
-          uuid = conn.lindex("#{@key}:tasks", 0)
-          tasks.attach(lazy_instance_for(Task, uuid), conn.get("#{@key}.count").to_i) if uuid
-        end
+        visit_tasks_set(tasks, 'tasks')
+      end
+
+      def visit_on_completed_tasks(tasks)
+        visit_tasks_set(tasks, 'on_completed_tasks')
+      end
+
+      def visit_on_failed_tasks(tasks)
+        visit_tasks_set(tasks, 'on_failed_tasks')
       end
 
       def visit_process_reference(attribute)
@@ -564,6 +598,14 @@ module Taskinator
 
       private
 
+      def visit_tasks_set(tasks, set)
+        # tasks are a linked list, so just get the first one
+        Taskinator.redis do |conn|
+          uuid = conn.lindex("#{@key}:#{set}", 0)
+          tasks.attach(lazy_instance_for(Task, uuid), conn.get("#{@key}:#{set}.count").to_i) if uuid
+        end
+      end
+
       #
       # creates a proxy for the instance which
       # will only fetch the instance when used
@@ -604,9 +646,23 @@ module Taskinator
       end
 
       def visit_tasks(tasks)
-        @conn.expire "#{@key}:tasks", expire_in
-        @conn.expire "#{@key}.count", expire_in
-        @conn.expire "#{@key}.pending", expire_in
+        visit_tasks_set(tasks, 'tasks')
+      end
+
+      def visit_on_completed_tasks(tasks)
+        visit_tasks_set(tasks, 'on_completed_tasks')
+      end
+
+      def visit_on_failed_tasks(tasks)
+        visit_tasks_set(tasks, 'on_failed_tasks')
+      end
+
+      private
+
+      def visit_tasks_set(tasks, set)
+        @conn.expire "#{@key}:#{set}", expire_in
+        @conn.expire "#{@key}:#{set}.count", expire_in
+        @conn.expire "#{@key}:#{set}.pending", expire_in
         tasks.each do |task|
           RedisCleanupVisitor.new(@conn, task, expire_in).visit
         end

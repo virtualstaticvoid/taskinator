@@ -11,6 +11,8 @@ describe TestFlow, :redis => true do
     expect(processB.options).to eq(processA.options)
 
     expect(processB.tasks.count).to eq(processA.tasks.count)
+    expect(processB.on_completed_tasks.count).to eq(processA.on_completed_tasks.count)
+    expect(processB.on_failed_tasks.count).to eq(processA.on_failed_tasks.count)
 
     tasks = processA.tasks.zip(processB.tasks)
 
@@ -19,5 +21,12 @@ describe TestFlow, :redis => true do
       expect(taskA.uuid).to eq(taskB.uuid)
       expect(taskA.options).to eq(taskB.options)
     end
+  end
+
+  it "should include on_completed and on_failure tasks" do
+    processA = TestFlow.create_process(:arg1, :arg2)
+
+    expect(processA.on_completed_tasks.count).to eq(2)
+    expect(processA.on_failed_tasks.count).to eq(2)
   end
 end

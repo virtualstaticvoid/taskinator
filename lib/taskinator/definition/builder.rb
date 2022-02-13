@@ -97,16 +97,76 @@ module Taskinator
         nil
       end
 
+      # defines a task which executes the given @method when the process completes
+      def on_completed(method, options={})
+        raise ArgumentError, 'method' if method.nil?
+        raise NoMethodError, method unless @executor.respond_to?(method)
+
+        define_on_completed(@process, method, @args, options)
+        nil
+      end
+
+      # defines a task which executes the given @job when the process completes
+      def on_completed_job(job, options={})
+        raise ArgumentError, 'job' if job.nil?
+        raise ArgumentError, 'job' unless job.methods.include?(:perform) || job.instance_methods.include?(:perform)
+
+        define_on_completed_job_task(@process, job, @args, options)
+        nil
+      end
+
+      # defines a task which executes the given @method when the process fails
+      def on_failed(method, options={})
+        raise ArgumentError, 'method' if method.nil?
+        raise NoMethodError, method unless @executor.respond_to?(method)
+
+        define_on_failed(@process, method, @args, options)
+        nil
+      end
+
+      # defines a task which executes the given @job when the process fails
+      def on_failed_job(job, options={})
+        raise ArgumentError, 'job' if job.nil?
+        raise ArgumentError, 'job' unless job.methods.include?(:perform) || job.instance_methods.include?(:perform)
+
+        define_on_failed_job_task(@process, job, @args, options)
+        nil
+      end
+
     private
 
       def define_step_task(process, method, args, options={})
-        define_task(process) {
+        add_task(process) {
           Task.define_step_task(process, method, args, combine_options(options))
         }
       end
 
       def define_job_task(process, job, args, options={})
-        define_task(process) {
+        add_task(process) {
+          Task.define_job_task(process, job, args, combine_options(options))
+        }
+      end
+
+      def define_on_completed(process, method, args, options={})
+        add_on_completed(process) {
+          Task.define_step_task(process, method, args, combine_options(options))
+        }
+      end
+
+      def define_on_completed_job_task(process, job, args, options={})
+        add_on_completed(process) {
+          Task.define_job_task(process, job, args, combine_options(options))
+        }
+      end
+
+      def define_on_failed(process, method, args, options={})
+        add_on_failed(process) {
+          Task.define_step_task(process, method, args, combine_options(options))
+        }
+      end
+
+      def define_on_failed_job_task(process, job, args, options={})
+        add_on_failed(process) {
           Task.define_job_task(process, job, args, combine_options(options))
         }
       end
@@ -115,8 +175,18 @@ module Taskinator
         Task.define_sub_process_task(process, sub_process, combine_options(options))
       end
 
-      def define_task(process)
+      def add_task(process)
         process.tasks << task = yield
+        task
+      end
+
+      def add_on_completed(process)
+        process.on_completed_tasks << task = yield
+        task
+      end
+
+      def add_on_failed(process)
+        process.on_failed_tasks << task = yield
         task
       end
 

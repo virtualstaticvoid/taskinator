@@ -51,19 +51,15 @@ module Taskinator
       end
 
       def visit_tasks(tasks)
-        tasks.each do |task|
-          t = task.__getobj__
+        visit_tasks_set(tasks, 'tasks')
+      end
 
-          attribs = {
-            :type => t.class.name,
-            :current_state => t.current_state
-          }
+      def visit_on_completed_tasks(tasks)
+        visit_tasks_set(tasks, 'on_completed_tasks')
+      end
 
-          builder.tag!('task', attribs) do
-            XmlVisitor.new(builder, t).visit
-            write_error(t.error)
-          end
-        end
+      def visit_on_failed_tasks(tasks)
+        visit_tasks_set(tasks, 'on_failed_tasks')
       end
 
       def visit_attribute(attribute)
@@ -104,6 +100,25 @@ module Taskinator
 
       def task_count
       end
+
+      private
+
+      def visit_tasks_set(tasks, set)
+        tasks.each do |task|
+          t = task.__getobj__
+
+          attribs = {
+            :type => t.class.name,
+            :current_state => t.current_state
+          }
+
+          builder.tag!(set, attribs) do
+            XmlVisitor.new(builder, t).visit
+            write_error(t.error)
+          end
+        end
+      end
+
     end
   end
 end

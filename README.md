@@ -171,39 +171,6 @@ module MyProcess
 end
 ```
 
-#### Reusing ActiveJob jobs
-
-It is likely that you already have one or more [jobs](https://guides.rubyonrails.org/active_job_basics.html)
-and want to reuse them within the process definition.
-
-Define a `job` step, providing the class of the Active Job to run and then taskinator will
-invoke that job as part of the process.
-
-The `job` step will be queued and executed on same queue as
-[configured by the job](https://guides.rubyonrails.org/active_job_basics.html#queues).
-
-```ruby
-# E.g. A resque worker
-class DoSomeWork
-  queue :high_priority
-
-  def self.perform(arg1, arg2)
-    # code to do the work
-  end
-end
-
-module MyProcess
-  extend Taskinator::Definition
-
-  # when creating the process, supply the same arguments
-  # that the DoSomeWork worker expects
-
-  define_process do
-    job DoSomeWork
-  end
-end
-```
-
 #### Data Driven Process Definitions
 
 You can also define data driven tasks using the `for_each` method, which takes an iterator method
@@ -271,7 +238,7 @@ process2 = MyProcess.create_process
 process2.tasks.count #=> 1
 ```
 
-#### Transformations
+#### Argument Transformations
 
 In addition, it is possible to transform the arguments used by a task or job, by including
 a `transform` step in the definition.
@@ -321,6 +288,46 @@ module MyProcess
     sub_process MySubProcessA
     sub_process MySubProcessB
   end
+end
+```
+
+#### On Completion and Failure Tasks
+
+You may want a task to run asynchrously once a process has completed or when it has failed.
+
+Specify the tasks with their corresponding implementation methods using the `on_completed`
+or `on_failed` methods.
+
+These tasks provide a way to execute logic independently of the process upon completion or failure.
+
+For example, using `on_failed` to send an email to an operator, or `on_completed` to
+set off another business process.
+
+```ruby
+module MyProcess
+  extend Taskinator::Definition
+
+  # defines a process
+  define_process do
+
+    # tasks, sub-process, etc.
+
+    # define task to execute on completion
+    on_completed :on_completion
+
+    # define task to execute on failure
+    on_failed :on_failure
+
+  end
+
+  def on_completion
+    # ...
+  end
+
+  def on_failure
+    # ...
+  end
+
 end
 ```
 
@@ -396,19 +403,76 @@ MyProcess.create_process(1, 2, 3, :send_notification => true)
 
 ```
 
+#### Reusing `ActiveJob` jobs
+
+It is likely that you already have one or more [jobs](https://guides.rubyonrails.org/active_job_basics.html)
+and want to reuse them within the process definition.
+
+Define a `job` step, providing the class of the ActiveJob to run and then taskinator will
+invoke that job as part of the process.
+
+The `job` step will be queued and executed on same queue as
+[configured by the job](https://guides.rubyonrails.org/active_job_basics.html#queues).
+
+```ruby
+# E.g. A resque worker
+class DoSomeWork
+  queue :high_priority
+
+  def self.perform(arg1, arg2)
+    # code to do the work
+  end
+end
+
+module MyProcess
+  extend Taskinator::Definition
+
+  # when creating the process, supply the same arguments
+  # that the DoSomeWork worker expects
+
+  define_process do
+    job DoSomeWork
+  end
+end
+```
+
+Jobs can be provided to `on_completed_job` and `on_failed_job` for handling process completion
+or failures.
+
+```ruby
+module MyProcess
+  extend Taskinator::Definition
+
+  define_process do
+    # ...
+
+    # define Job to execute on completion
+    on_completed_job HandleCompletionJob
+
+    # define Job to execute on failure
+    on_failed_job HandleFailureJob
+  end
+end
+```
+
 ### Execution
 
-A process is executed by calling the generated `create_process` method on your "process" module.
+A process is created by calling the generated `create_process` method on your
+"process definition" module.
 
 ```ruby
 process = MyProcess.create_process
+```
+
+And then enqueued for execution by calling the `enqueue!` method of the process.
+
+```ruby
 process.enqueue!
 ```
 
-Or, to start immediately, call the `start!` method.
+Or, started immediately by calling the `start!` method of the process.
 
 ```ruby
-process = MyProcess.create_process
 process.start!
 ```
 
@@ -445,6 +509,8 @@ module MySimpleProcess
     for_each :additional_step do
       task :work_step_3
     end
+
+    on_failed :on_failure
   end
 
   # creation
@@ -466,6 +532,12 @@ module MySimpleProcess
   end
 
   def work_step_3(k, v)
+    # ...
+  end
+
+  # failure
+
+  def on_failure
     # ...
   end
 
@@ -604,6 +676,12 @@ process.execute
 # Calling 'work_step_3' on 'MySimpleProcess' with [:c, 3]
 
 ```
+
+Once all tasks of the process have completed, any tasks defined with the `on_completed`
+directive are enqueued for execution.
+
+If any of the tasks of the process fail, any tasks defined with the `on_failed`
+directive are enqueued for execution.
 
 In reality, each task is executed by a worker process, possibly on another host, so the
 execution process isn't as simple, but this example should help you to understand

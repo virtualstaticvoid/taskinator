@@ -7,6 +7,12 @@ module Taskinator
       def visit_tasks(tasks)
       end
 
+      def visit_on_completed_tasks(tasks)
+      end
+
+      def visit_on_failed_tasks(tasks)
+      end
+
       def visit_attribute(attribute)
       end
 

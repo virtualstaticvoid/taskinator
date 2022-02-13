@@ -54,6 +54,14 @@ module Taskinator
       @tasks ||= Tasks.new
     end
 
+    def on_completed_tasks
+      @on_completed_tasks ||= Tasks.new
+    end
+
+    def on_failed_tasks
+      @on_failed_tasks ||= Tasks.new
+    end
+
     def no_tasks_defined?
       tasks.empty?
     end
@@ -63,6 +71,8 @@ module Taskinator
       visitor.visit_task_reference(:parent)
       visitor.visit_type(:definition)
       visitor.visit_tasks(tasks)
+      visitor.visit_on_completed_tasks(on_completed_tasks)
+      visitor.visit_on_failed_tasks(on_failed_tasks)
       visitor.visit_args(:options)
       visitor.visit_attribute(:scope)
       visitor.visit_attribute(:queue)
@@ -131,6 +141,9 @@ module Taskinator
           end
         end
       end
+
+      # enqueue completion tasks independently
+      on_completed_tasks.each(&:enqueue!)
     end
 
     def tasks_completed?
@@ -155,6 +168,9 @@ module Taskinator
           parent.fail!(error) unless parent.nil?
         end
       end
+
+      # enqueue failure tasks independently
+      on_failed_tasks.each(&:enqueue!)
     end
 
     def task_failed(task, error)

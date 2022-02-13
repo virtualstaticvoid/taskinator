@@ -12,6 +12,10 @@ describe Taskinator::Process do
       end.new(definition)
     end
 
+    let(:task) do
+      Class.new(Taskinator::Task).new(subject)
+    end
+
     describe "#initialize" do
       it { expect(subject.uuid).to_not be_nil }
       it { expect(subject.definition).to_not be_nil }
@@ -33,6 +37,14 @@ describe Taskinator::Process do
 
     describe "#tasks" do
       it { expect(subject.tasks).to be_a(Taskinator::Tasks) }
+    end
+
+    describe "#on_completed_tasks" do
+      it { expect(subject.on_completed_tasks).to be_a(Taskinator::Tasks) }
+    end
+
+    describe "#on_failed_tasks" do
+      it { expect(subject.on_failed_tasks).to be_a(Taskinator::Tasks) }
     end
 
     describe "#to_s" do
@@ -141,6 +153,13 @@ describe Taskinator::Process do
           subject.complete!
           expect(subject.current_state).to eq(:completed)
         }
+
+        it "enqueues on_completed_tasks" do
+          expect(task).to receive(:enqueue!)
+          subject.on_completed_tasks << task
+
+          subject.complete!
+        end
       end
 
       describe "#fail!" do
@@ -156,6 +175,13 @@ describe Taskinator::Process do
           subject.fail!(StandardError.new)
           expect(subject.current_state).to eq(:failed)
         }
+
+        it "enqueues on_failed_tasks" do
+          expect(task).to receive(:enqueue!)
+          subject.on_failed_tasks << task
+
+          subject.fail!(StandardError.new)
+        end
       end
     end
 
@@ -191,7 +217,9 @@ describe Taskinator::Process do
         expect(visitor).to receive(:visit_attribute).with(:uuid)
         expect(visitor).to receive(:visit_args).with(:options)
         expect(visitor).to receive(:visit_task_reference).with(:parent)
-        expect(visitor).to receive(:visit_tasks)
+        expect(visitor).to receive(:visit_tasks).with(subject.tasks)
+        expect(visitor).to receive(:visit_on_completed_tasks).with(subject.on_completed_tasks)
+        expect(visitor).to receive(:visit_on_failed_tasks).with(subject.on_failed_tasks)
         expect(visitor).to receive(:visit_attribute).with(:scope)
         expect(visitor).to receive(:visit_attribute).with(:queue)
         expect(visitor).to receive(:visit_attribute_time).with(:created_at)
@@ -207,6 +235,16 @@ describe Taskinator::Process do
       }
     end
 
+    describe "#no_tasks_defined?" do
+      it {
+        expect(subject.no_tasks_defined?).to be
+      }
+
+      it {
+        subject.tasks << task
+        expect(subject.no_tasks_defined?).to_not be
+      }
+    end
   end
 
   describe Taskinator::Process::Sequential do
@@ -392,7 +430,9 @@ describe Taskinator::Process do
         expect(visitor).to receive(:visit_attribute).with(:uuid)
         expect(visitor).to receive(:visit_args).with(:options)
         expect(visitor).to receive(:visit_task_reference).with(:parent)
-        expect(visitor).to receive(:visit_tasks)
+        expect(visitor).to receive(:visit_tasks).with(subject.tasks)
+        expect(visitor).to receive(:visit_on_completed_tasks).with(subject.on_completed_tasks)
+        expect(visitor).to receive(:visit_on_failed_tasks).with(subject.on_failed_tasks)
         expect(visitor).to receive(:visit_attribute).with(:scope)
         expect(visitor).to receive(:visit_attribute).with(:queue)
         expect(visitor).to receive(:visit_attribute_time).with(:created_at)
@@ -677,7 +717,9 @@ describe Taskinator::Process do
         expect(visitor).to receive(:visit_attribute_enum).with(:complete_on, Taskinator::CompleteOn)
         expect(visitor).to receive(:visit_args).with(:options)
         expect(visitor).to receive(:visit_task_reference).with(:parent)
-        expect(visitor).to receive(:visit_tasks)
+        expect(visitor).to receive(:visit_tasks).with(subject.tasks)
+        expect(visitor).to receive(:visit_on_completed_tasks).with(subject.on_completed_tasks)
+        expect(visitor).to receive(:visit_on_failed_tasks).with(subject.on_failed_tasks)
         expect(visitor).to receive(:visit_attribute).with(:scope)
         expect(visitor).to receive(:visit_attribute).with(:queue)
         expect(visitor).to receive(:visit_attribute_time).with(:created_at)

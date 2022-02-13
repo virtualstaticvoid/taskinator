@@ -241,6 +241,108 @@ describe Taskinator::Definition::Builder do
     end
   end
 
+  describe "#on_completed" do
+    it "creates a task" do
+      expect(Taskinator::Task).to receive(:define_step_task).with(process, :task_method, args, builder_options)
+      subject.on_completed(:task_method)
+    end
+
+    it "fails if task method is nil" do
+      expect {
+        subject.on_completed(nil)
+      }.to raise_error(ArgumentError)
+    end
+
+    it "fails if task method is not defined" do
+      expect {
+        subject.on_completed(:undefined)
+      }.to raise_error(NoMethodError)
+    end
+
+    it "includes options" do
+      expect(Taskinator::Task).to receive(:define_step_task).with(process, :task_method, args, builder_options.merge(options))
+      subject.on_completed(:task_method, options)
+    end
+  end
+
+  describe "#on_completed_job" do
+    it "creates a job" do
+      job = double('job', :perform => true)
+      expect(Taskinator::Task).to receive(:define_job_task).with(process, job, args, builder_options)
+      subject.on_completed_job(job)
+    end
+
+    it "fails if job module is nil" do
+      expect {
+        subject.on_completed_job(nil)
+      }.to raise_error(ArgumentError)
+    end
+
+    # ok, fuzzy logic to determine what is ia job here!
+    it "fails if job module is not a job" do
+      expect {
+        subject.on_completed_job(double('job', :methods => [], :instance_methods => []))
+      }.to raise_error(ArgumentError)
+    end
+
+    it "includes options" do
+      job = double('job', :perform => true)
+      expect(Taskinator::Task).to receive(:define_job_task).with(process, job, args, builder_options.merge(options))
+      subject.on_completed_job(job, options)
+    end
+  end
+
+  describe "#on_failed" do
+    it "creates a task" do
+      expect(Taskinator::Task).to receive(:define_step_task).with(process, :task_method, args, builder_options)
+      subject.on_failed(:task_method)
+    end
+
+    it "fails if task method is nil" do
+      expect {
+        subject.on_failed(nil)
+      }.to raise_error(ArgumentError)
+    end
+
+    it "fails if task method is not defined" do
+      expect {
+        subject.on_failed(:undefined)
+      }.to raise_error(NoMethodError)
+    end
+
+    it "includes options" do
+      expect(Taskinator::Task).to receive(:define_step_task).with(process, :task_method, args, builder_options.merge(options))
+      subject.on_failed(:task_method, options)
+    end
+  end
+
+  describe "#on_failed_job" do
+    it "creates a job" do
+      job = double('job', :perform => true)
+      expect(Taskinator::Task).to receive(:define_job_task).with(process, job, args, builder_options)
+      subject.on_failed_job(job)
+    end
+
+    it "fails if job module is nil" do
+      expect {
+        subject.on_failed_job(nil)
+      }.to raise_error(ArgumentError)
+    end
+
+    # ok, fuzzy logic to determine what is ia job here!
+    it "fails if job module is not a job" do
+      expect {
+        subject.on_failed_job(double('job', :methods => [], :instance_methods => []))
+      }.to raise_error(ArgumentError)
+    end
+
+    it "includes options" do
+      job = double('job', :perform => true)
+      expect(Taskinator::Task).to receive(:define_job_task).with(process, job, args, builder_options.merge(options))
+      subject.on_failed_job(job, options)
+    end
+  end
+
   describe "#sub_process" do
     let(:sub_definition) do
       Module.new do
