@@ -53,9 +53,9 @@ module Taskinator
 
       def save
         Taskinator.redis do |conn|
-          conn.pipelined do
-            visitor = RedisSerializationVisitor.new(conn, self).visit
-            conn.hmset(
+          conn.pipelined do |pipeline|
+            visitor = RedisSerializationVisitor.new(pipeline, self).visit
+            pipeline.hmset(
               Taskinator::Process.key_for(uuid),
               :tasks_count,      visitor.task_count,
               :tasks_failed,     0,
@@ -109,15 +109,15 @@ module Taskinator
         @updated_at = Time.now.utc
         Taskinator.redis do |conn|
           process_key = self.process_key
-          conn.multi do
-            conn.hmset(
+          conn.multi do |transaction|
+            transaction.hmset(
               self.key,
               :state, new_state,
               :updated_at, @updated_at
             )
 
             # also update the "root" process
-            conn.hset(
+            transaction.hset(
               process_key,
               :updated_at, @updated_at
             )
@@ -178,9 +178,9 @@ module Taskinator
         define_method "incr_#{status}" do
           Taskinator.redis do |conn|
             process_key = self.process_key
-            conn.multi do
-              conn.hincrby process_key, "tasks_#{status}", 1
-              conn.hset process_key, :updated_at, Time.now.utc
+            conn.multi do |transaction|
+              transaction.hincrby process_key, "tasks_#{status}", 1
+              transaction.hset process_key, :updated_at, Time.now.utc
             end
           end
         end
@@ -467,9 +467,9 @@ module Taskinator
 
         # pre-load all the attributes to reduce redis hits
         Taskinator.redis do |conn|
-          keys, values = conn.multi do
-            conn.hkeys(@key)
-            conn.hvals(@key)
+          keys, values = conn.multi do |transaction|
+            transaction.hkeys(@key)
+            transaction.hvals(@key)
           end
           @attribute_values = Hash[keys.collect(&:to_sym).zip(values)]
         end
