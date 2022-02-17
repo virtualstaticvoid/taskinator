@@ -17,8 +17,8 @@ describe Taskinator::Api, :redis => true do
         allow_any_instance_of(Process).to receive(:fetch) {}
 
         Taskinator.redis do |conn|
-          conn.multi do
-            3.times {|i| conn.sadd(Taskinator::Persistence.processes_list_key, i) }
+          conn.multi do |transaction|
+            3.times {|i| transaction.sadd(Taskinator::Persistence.processes_list_key, i) }
           end
         end
 
@@ -34,8 +34,8 @@ describe Taskinator::Api, :redis => true do
 
       it "yields the number of processes" do
         Taskinator.redis do |conn|
-          conn.multi do
-            3.times {|i| conn.sadd(Taskinator::Persistence.processes_list_key, i) }
+          conn.multi do |transaction|
+            3.times {|i| transaction.sadd(Taskinator::Persistence.processes_list_key, i) }
           end
         end
 
