@@ -58,6 +58,7 @@ module Taskinator
       return OpenStruct.new(
         {
           :type                   => self.class.name,
+          :definition             => self.definition.name,
           :process_uuid           => process_uuid,
           :process_options        => process_options.dup,
           :uuid                   => uuid,
