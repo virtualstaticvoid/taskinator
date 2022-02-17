@@ -98,10 +98,14 @@ describe TestFlows do
         let(:definition) { TestFlows::EmptySequentialProcessTest }
         subject { definition.create_process }
 
+        it "contains 3 tasks" do
+          expect(subject.tasks.length).to eq(3)
+        end
+
         it "invokes each task" do
-          # this doesn't work...
-          # expect_any_instance_of(Taskinator::Executor).to receive(:do_task_x).exactly(3).times
-          # subject.start!
+          expect_any_instance_of(definition).to receive(:task_0)
+          expect_any_instance_of(definition).to receive(:task_1)
+          expect_any_instance_of(definition).to receive(:task_2)
 
           expect {
             subject.enqueue!
@@ -113,10 +117,14 @@ describe TestFlows do
         let(:definition) { TestFlows::EmptyConcurrentProcessTest }
         subject { definition.create_process }
 
+        it "contains 3 tasks" do
+          expect(subject.tasks.length).to eq(3)
+        end
+
         it "invokes each task" do
-          # this doesn't work...
-          # expect_any_instance_of(Taskinator::Executor).to receive(:do_task_x).exactly(3).times
-          # subject.start!
+          expect_any_instance_of(definition).to receive(:task_0)
+          expect_any_instance_of(definition).to receive(:task_1)
+          expect_any_instance_of(definition).to receive(:task_2)
 
           expect {
             subject.enqueue!
@@ -173,11 +181,11 @@ describe TestFlows do
     end
 
     describe "job" do
-
+      pending
     end
 
     describe "subprocess" do
-
+      pending
     end
   end
 
