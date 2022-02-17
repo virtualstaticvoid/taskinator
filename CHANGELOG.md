@@ -1,3 +1,15 @@
+v0.4.7 - 17 Feb 2022
+---
+Use newer format for `pipelined` and `multi` requests in Redis.
+
+v0.4.6 - 12 Feb 2022
+---
+Upgrade actionpack for [information vulnerability fix](https://github.com/virtualstaticvoid/taskinator/security/dependabot/3).
+
+v0.4.5 - 30 Jan 2022
+---
+Upgrade sidekiq dependency for [CVE-2022-23837](https://github.com/advisories/GHSA-jrfj-98qg-qjgv).
+
 v0.4.4 - 17 Jan 2022
 ---
 Add support for `ActiveJob`.
