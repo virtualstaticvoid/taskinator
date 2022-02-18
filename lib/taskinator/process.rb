@@ -222,12 +222,15 @@ module Taskinator
 
     class Concurrent < Process
       attr_reader :complete_on
+
+      # <b>DEPRECATED:</b> concurrency_method will be removed in a future version.
       attr_reader :concurrency_method
 
       def initialize(definition, complete_on=CompleteOn::Default, options={})
         super(definition, options)
         @complete_on = complete_on
         @concurrency_method = options.delete(:concurrency_method) || :thread
+        warn("[DEPRECATED]: concurrency_method will be removed in a future version.") if @concurrency_method == :fork
       end
 
       def enqueue
@@ -246,6 +249,7 @@ module Taskinator
           complete! # weren't any tasks to start with
         else
           if concurrency_method == :fork
+            warn("[DEPRECATED]: concurrency_method will be removed in a future version.")
             tasks.each do |task|
               fork do
                 task.start!
