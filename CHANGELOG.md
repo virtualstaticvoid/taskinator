@@ -1,3 +1,9 @@
+v0.5.0 - 18 Feb 2022
+---
+Removed unused `ProcessWorker` class and related queue methods.
+Refactored `TestQueueAdapter` to correctly implement queue adapter for use in specs.
+Added deprecation for `Taskinator::Process::Concurrent#concurrency_method` option.
+
 v0.4.7 - 17 Feb 2022
 ---
 Use newer format for `pipelined` and `multi` requests in Redis.
