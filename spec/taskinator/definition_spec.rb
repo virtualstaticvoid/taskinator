@@ -156,7 +156,7 @@ describe Taskinator::Definition do
       # if an error is raised, then the context was incorrect
       expect {
         subject.create_process
-      }.to_not raise_error(StandardError)
+      }.not_to raise_error
     end
 
     context "is instrumented" do

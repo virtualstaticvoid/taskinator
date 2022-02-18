@@ -33,25 +33,6 @@ describe Taskinator::Queues::SidekiqAdapter, :sidekiq do
     end
   end
 
-  describe "ProcessWorker" do
-    it "enqueues processes" do
-      worker = adapter::ProcessWorker
-      process = double('process', :uuid => uuid, :queue => nil)
-      subject.enqueue_process(process)
-      expect(worker).to have_enqueued_sidekiq_job(process.uuid)
-    end
-
-    it "enqueues process to specified queue" do
-      subject.enqueue_process(double('process', :uuid => uuid, :queue => :other))
-      expect(adapter::ProcessWorker).to be_processed_in_x(:other)
-    end
-
-    it "calls process worker" do
-      expect_any_instance_of(Taskinator::ProcessWorker).to receive(:perform)
-      adapter::ProcessWorker.new.perform(uuid)
-    end
-  end
-
   describe "TaskWorker" do
     it "enqueues tasks" do
       worker = adapter::TaskWorker

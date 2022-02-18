@@ -18,12 +18,6 @@ module Taskinator
           .perform_later(definition.name, uuid, Taskinator::Persistence.serialize(args))
       end
 
-      def enqueue_process(process)
-        queue = process.queue || @config[:process_queue]
-        ProcessWorker.set(:queue => queue)
-          .perform_later(process.uuid)
-      end
-
       def enqueue_task(task)
         queue = task.queue || @config[:task_queue]
         TaskWorker.set(:queue => queue)
@@ -33,12 +27,6 @@ module Taskinator
       class CreateProcessWorker < ApplicationJob
         def perform(definition_name, uuid, args)
           Taskinator::CreateProcessWorker.new(definition_name, uuid, args).perform
-        end
-      end
-
-      class ProcessWorker < ApplicationJob
-        def perform(process_uuid)
-          Taskinator::ProcessWorker.new(process_uuid).perform
         end
       end
 

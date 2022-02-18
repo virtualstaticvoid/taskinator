@@ -35,27 +35,6 @@ describe Taskinator::Queues::ActiveJobAdapter, :active_job do
     end
   end
 
-  describe "ProcessWorker" do
-    it "enqueues processes" do
-      worker = adapter::ProcessWorker
-      subject.enqueue_process(double('process', :uuid => uuid, :queue => nil))
-
-      expect(worker).to have_been_enqueued.with(uuid)
-    end
-
-    it "enqueues process to specified queue" do
-      worker = adapter::ProcessWorker
-      subject.enqueue_process(double('process', :uuid => uuid, :queue => :other))
-
-      expect(worker).to have_been_enqueued.with(uuid).on_queue(:other)
-    end
-
-    it "calls process worker" do
-      expect_any_instance_of(Taskinator::ProcessWorker).to receive(:perform)
-      adapter::ProcessWorker.new.perform(uuid)
-    end
-  end
-
   describe "TaskWorker" do
     it "enqueues tasks" do
       worker = adapter::TaskWorker

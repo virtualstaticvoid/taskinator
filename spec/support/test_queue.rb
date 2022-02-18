@@ -2,38 +2,42 @@ module Taskinator
   module Queues
 
     def self.create_test_queue_adapter(config={})
-      TestQueueAdapter.new
+      TestQueueAdapter.new(config)
     end
 
     def self.create_test_queue_worker_adapter(config={})
-      QueueWorkerAdapter.new
+      TestQueueWorkerAdapter.new(config)
     end
 
+    #
+    # this is a no-op adapter, it tracks enqueued processes and tasks
+    #
     class TestQueueAdapter
 
-      attr_reader :creates
-      attr_reader :tasks
-
-      def initialize
+      def initialize(config={})
         clear
       end
 
-      def clear
-        @creates = []
-        @tasks = []
-        @jobs = []
-      end
-
       def enqueue_create_process(definition, uuid, args)
-        @creates << [definition, uuid, args]
+        @processes << [definition, uuid, args]
       end
 
       def enqueue_task(task)
         @tasks << task
       end
 
+      # helpers
+
+      attr_reader :processes
+      attr_reader :tasks
+
+      def clear
+        @processes = []
+        @tasks = []
+      end
+
       def empty?
-        @creates.empty? && @tasks.empty? && @jobs.empty?
+        @processes.empty? && @tasks.empty?
       end
 
     end
@@ -41,7 +45,7 @@ module Taskinator
     #
     # this is a "synchronous" implementation for use in testing
     #
-    class QueueWorkerAdapter < TestQueueAdapter
+    class TestQueueWorkerAdapter < TestQueueAdapter
 
       def enqueue_create_process(definition, uuid, args)
         super
@@ -56,6 +60,8 @@ module Taskinator
           Taskinator::TaskWorker.new(task.uuid).perform
         end
       end
+
+      private
 
       def invoke(&block)
         block.call
