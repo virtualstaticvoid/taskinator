@@ -53,8 +53,8 @@ If you are using Taskinator within a Rails application, then add an initializer,
 Taskinator.configure do |config|
 
   # configure the queue adapter to use
-  # can be :active_job, :delayed_job, :redis or :sidekiq
-  config.queue_adapter = :redis
+  # can be :active_job, :delayed_job, :resque or :sidekiq
+  config.queue_adapter = :resque
 
   # configure redis
   config.redis = {
@@ -708,7 +708,7 @@ To configure the queue adapter to use, set `config.queue_adapter` to one of the 
 
 * `:active_job`
 * `:delayed_job`
-* `:redis`
+* `:resque`
 * `:sidekiq`
 
 As follows:
@@ -717,8 +717,8 @@ As follows:
 Taskinator.configure do |config|
 
   # configure the queue adapter to use
-  # can be :active_job, :delayed_job, :redis or :sidekiq
-  config.queue_adapter = :redis
+  # can be :active_job, :delayed_job, :resque or :sidekiq
+  config.queue_adapter = :resque
 
 end
 ```
