@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe Taskinator::Definition::Builder do
+describe Taskinator::Builder do
 
   let(:definition) do
     Module.new do
@@ -26,7 +26,7 @@ describe Taskinator::Definition::Builder do
     Proc.new {|*args| the_block.call }
   }
 
-  subject { Taskinator::Definition::Builder.new(process, definition, *[*args, builder_options]) }
+  subject { Taskinator::Builder.new(process, definition, *[*args, builder_options]) }
 
   it "assign attributes" do
     expect(subject.process).to eq(process)
