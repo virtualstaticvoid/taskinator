@@ -171,39 +171,6 @@ module MyProcess
 end
 ```
 
-#### Reusing ActiveJob jobs
-
-It is likely that you already have one or more [jobs](https://guides.rubyonrails.org/active_job_basics.html)
-and want to reuse them within the process definition.
-
-Define a `job` step, providing the class of the Active Job to run and then taskinator will
-invoke that job as part of the process.
-
-The `job` step will be queued and executed on same queue as
-[configured by the job](https://guides.rubyonrails.org/active_job_basics.html#queues).
-
-```ruby
-# E.g. A resque worker
-class DoSomeWork
-  queue :high_priority
-
-  def self.perform(arg1, arg2)
-    # code to do the work
-  end
-end
-
-module MyProcess
-  extend Taskinator::Definition
-
-  # when creating the process, supply the same arguments
-  # that the DoSomeWork worker expects
-
-  define_process do
-    job DoSomeWork
-  end
-end
-```
-
 #### Data Driven Process Definitions
 
 You can also define data driven tasks using the `for_each` method, which takes an iterator method
@@ -271,7 +238,7 @@ process2 = MyProcess.create_process
 process2.tasks.count #=> 1
 ```
 
-#### Transformations
+#### Argument Transformations
 
 In addition, it is possible to transform the arguments used by a task or job, by including
 a `transform` step in the definition.
@@ -396,16 +363,54 @@ MyProcess.create_process(1, 2, 3, :send_notification => true)
 
 ```
 
+#### Reusing ActiveJob jobs
+
+It is likely that you already have one or more [jobs](https://guides.rubyonrails.org/active_job_basics.html)
+and want to reuse them within the process definition.
+
+Define a `job` step, providing the class of the Active Job to run and then taskinator will
+invoke that job as part of the process.
+
+The `job` step will be queued and executed on same queue as
+[configured by the job](https://guides.rubyonrails.org/active_job_basics.html#queues).
+
+```ruby
+# E.g. A resque worker
+class DoSomeWork
+  queue :high_priority
+
+  def self.perform(arg1, arg2)
+    # code to do the work
+  end
+end
+
+module MyProcess
+  extend Taskinator::Definition
+
+  # when creating the process, supply the same arguments
+  # that the DoSomeWork worker expects
+
+  define_process do
+    job DoSomeWork
+  end
+end
+```
+
 ### Execution
 
-A process is executed by calling the generated `create_process` method on your "process" module.
+A process is created by calling the generated `create_process` method on your "process" module.
 
 ```ruby
 process = MyProcess.create_process
+```
+
+And then enqueued for execution by calling the `enqueue!` method of the process.
+
+```ruby
 process.enqueue!
 ```
 
-Or, to start immediately, call the `start!` method.
+Or, started immediately by calling the `start!` method of the process.
 
 ```ruby
 process = MyProcess.create_process
