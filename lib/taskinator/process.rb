@@ -133,6 +133,9 @@ module Taskinator
       end
     end
 
+    # TODO: add retry method - to pick up from a failed task
+    #  e.g. like retrying a failed job in Resque Web
+
     def tasks_completed?
       # TODO: optimize this
       tasks.all?(&:completed?)
