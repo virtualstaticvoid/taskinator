@@ -137,6 +137,7 @@ module Taskinator
     # subclasses must implement the following methods
     #--------------------------------------------------
 
+    # :nocov:
     def enqueue
       raise NotImplementedError
     end
@@ -144,6 +145,7 @@ module Taskinator
     def start
       raise NotImplementedError
     end
+    # :nocov:
 
     #--------------------------------------------------
     # and optionally, provide methods:
@@ -226,7 +228,6 @@ module Taskinator
 
       def start
         # NNB: if other job types are required, may need to implement how they get invoked here!
-        # FIXME: possible implement using ActiveJob instead, so it doesn't matter how the worker is implemented
 
         if job.respond_to?(:perform)
           # resque

@@ -93,6 +93,16 @@ describe Taskinator::Task do
         }
       end
 
+      describe "#cancel!" do
+        it { expect(subject).to respond_to(:cancel!) }
+        it {
+          expect(subject).to receive(:cancel)
+          subject.start!
+          subject.cancel!
+          expect(subject.current_state).to eq(:cancelled)
+        }
+      end
+
       describe "#fail!" do
         it { expect(subject).to respond_to(:fail!) }
         it {
@@ -346,6 +356,12 @@ describe Taskinator::Task do
       end
     end
 
+    module TestJobError
+      def self.perform
+        raise ArgumentError
+      end
+    end
+
     subject { Taskinator::Task.define_job_task(process, TestJob, [1, {:a => 1, :b => 2}]) }
 
     it_should_behave_like "a task", Taskinator::Task::Job
@@ -405,6 +421,14 @@ describe Taskinator::Task do
         expect(TestJobModuleNoArgs).to receive(:perform).and_call_original
         task.start!
       }
+
+      it "handles failure" do
+        task = Taskinator::Task.define_job_task(process, TestJobError, nil)
+
+        expect {
+          task.start!
+        }.to raise_error(ArgumentError)
+      end
 
       it "is instrumented" do
         allow(process).to receive(:task_completed).with(subject)
