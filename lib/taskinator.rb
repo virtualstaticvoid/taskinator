@@ -6,8 +6,6 @@ require 'delegate'
 
 require 'taskinator/version'
 
-require 'taskinator/log_stats'
-
 require 'taskinator/complete_on'
 require 'taskinator/redis_connection'
 require 'taskinator/logger'
@@ -19,7 +17,6 @@ require 'taskinator/workflow'
 require 'taskinator/visitor'
 require 'taskinator/persistence'
 require 'taskinator/instrumentation'
-require 'taskinator/xml_visitor'
 
 require 'taskinator/task'
 require 'taskinator/tasks'
@@ -87,14 +84,6 @@ module Taskinator
       Taskinator::Logging.logger = log
     end
 
-    def statsd_client
-      Taskinator::LogStats.client
-    end
-
-    def statsd_client=(client)
-      Taskinator::LogStats.client = client
-    end
-
     # the queue adapter to use
     # supported adapters include
     # :active_job, :delayed_job, :redis and :sidekiq
@@ -135,14 +124,12 @@ module Taskinator
   end
 
   class NoOpInstrumenter
-    # :nocov:
     def instrument(event, payload={})
       yield(payload) if block_given?
     end
   end
 
   class ConsoleInstrumenter
-    # :nocov:
     def instrument(event, payload={})
       puts [event.inspect, payload.to_yaml]
       yield(payload) if block_given?

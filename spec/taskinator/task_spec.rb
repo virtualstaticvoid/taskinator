@@ -93,6 +93,16 @@ describe Taskinator::Task do
         }
       end
 
+      describe "#cancel!" do
+        it { expect(subject).to respond_to(:cancel!) }
+        it {
+          expect(subject).to receive(:cancel)
+          subject.start!
+          subject.cancel!
+          expect(subject.current_state).to eq(:cancelled)
+        }
+      end
+
       describe "#fail!" do
         it { expect(subject).to respond_to(:fail!) }
         it {
@@ -144,6 +154,7 @@ describe Taskinator::Task do
         visitor = double('visitor')
         expect(visitor).to receive(:visit_attribute).with(:uuid)
         expect(visitor).to receive(:visit_process_reference).with(:process)
+        expect(visitor).to receive(:visit_type).with(:definition)
         expect(visitor).to receive(:visit_task_reference).with(:next)
         expect(visitor).to receive(:visit_args).with(:options)
         expect(visitor).to receive(:visit_attribute).with(:queue)
@@ -314,6 +325,7 @@ describe Taskinator::Task do
 
     describe "#inspect" do
       it { expect(subject.inspect).to_not be_nil }
+      it { expect(subject.inspect).to include(definition.name) }
     end
   end
 
@@ -341,6 +353,12 @@ describe Taskinator::Task do
 
     module TestJobModuleNoArgs
       def self.perform
+      end
+    end
+
+    module TestJobError
+      def self.perform
+        raise ArgumentError
       end
     end
 
@@ -403,6 +421,14 @@ describe Taskinator::Task do
         expect(TestJobModuleNoArgs).to receive(:perform).and_call_original
         task.start!
       }
+
+      it "handles failure" do
+        task = Taskinator::Task.define_job_task(process, TestJobError, nil)
+
+        expect {
+          task.start!
+        }.to raise_error(ArgumentError)
+      end
 
       it "is instrumented" do
         allow(process).to receive(:task_completed).with(subject)
@@ -473,6 +499,7 @@ describe Taskinator::Task do
 
     describe "#inspect" do
       it { expect(subject.inspect).to_not be_nil }
+      it { expect(subject.inspect).to include(definition.name) }
     end
   end
 
@@ -582,6 +609,7 @@ describe Taskinator::Task do
         visitor = double('visitor')
         expect(visitor).to receive(:visit_attribute).with(:uuid)
         expect(visitor).to receive(:visit_process_reference).with(:process)
+        expect(visitor).to receive(:visit_type).with(:definition)
         expect(visitor).to receive(:visit_task_reference).with(:next)
         expect(visitor).to receive(:visit_args).with(:options)
         expect(visitor).to receive(:visit_process).with(:sub_process)
@@ -595,6 +623,7 @@ describe Taskinator::Task do
 
     describe "#inspect" do
       it { expect(subject.inspect).to_not be_nil }
+      it { expect(subject.inspect).to include(definition.name) }
     end
   end
 

@@ -1,3 +1,5 @@
+require 'builder'
+
 module Taskinator
   module Persistence
 

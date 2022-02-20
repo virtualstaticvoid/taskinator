@@ -86,6 +86,22 @@ describe Taskinator do
         end
       end
     end
-
   end
+
+  [
+    Taskinator::NoOpInstrumenter,
+    Taskinator::ConsoleInstrumenter
+  ].each do |instrumenter|
+    describe instrumenter do
+      it "yields to given block" do
+        instance = instrumenter.new
+
+        block = SpecSupport::Block.new
+        expect(block).to receive(:call)
+
+        instance.instrument(:foo, :bar => :baz, &block)
+      end
+    end
+  end
+
 end

@@ -1,3 +1,11 @@
+v?.?.? - ?? ??? ????
+---
+Include process definition in processes, tasks and payloads to aid debugging.
+Increased test coverage for process and task specs.
+Removed `statsd` instrumentation.
+Removed unused `Taskinator::Visitor::XmlVisitor` implementation.
+Various refactorings and clean ups.
+
 v0.5.0 - 18 Feb 2022
 ---
 Removed unused `ProcessWorker` class and related queue methods.

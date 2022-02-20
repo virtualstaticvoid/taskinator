@@ -21,6 +21,7 @@ module Taskinator
     end
 
     attr_reader :process
+    attr_reader :definition
     attr_reader :uuid
     attr_reader :options
     attr_reader :queue
@@ -35,6 +36,7 @@ module Taskinator
 
       @uuid = "#{process.uuid}:task:#{Taskinator.generate_uuid}"
       @process = process
+      @definition = process.definition
       @options = options
       @queue = options.delete(:queue)
       @created_at = Time.now.utc
@@ -45,6 +47,7 @@ module Taskinator
     def accept(visitor)
       visitor.visit_attribute(:uuid)
       visitor.visit_process_reference(:process)
+      visitor.visit_type(:definition)
       visitor.visit_task_reference(:next)
       visitor.visit_args(:options)
       visitor.visit_attribute(:queue)
@@ -134,6 +137,7 @@ module Taskinator
     # subclasses must implement the following methods
     #--------------------------------------------------
 
+    # :nocov:
     def enqueue
       raise NotImplementedError
     end
@@ -141,6 +145,7 @@ module Taskinator
     def start
       raise NotImplementedError
     end
+    # :nocov:
 
     #--------------------------------------------------
     # and optionally, provide methods:
@@ -155,13 +160,11 @@ module Taskinator
     # a task which invokes the specified method on the definition
     # the args must be intrinsic types, since they are serialized to YAML
     class Step < Task
-      attr_reader :definition
       attr_reader :method
       attr_reader :args
 
       def initialize(process, method, args, options={})
         super(process, options)
-        @definition = process.definition  # for convenience
 
         raise ArgumentError, 'method' if method.nil?
         raise NoMethodError, method unless executor.respond_to?(method)
@@ -188,17 +191,16 @@ module Taskinator
 
       def accept(visitor)
         super
-        visitor.visit_type(:definition)
         visitor.visit_attribute(:method)
         visitor.visit_args(:args)
       end
 
       def executor
-        @executor ||= Taskinator::Executor.new(@definition, self)
+        @executor ||= Taskinator::Executor.new(definition, self)
       end
 
       def inspect
-        %(#<#{self.class.name}:0x#{self.__id__.to_s(16)} uuid="#{uuid}", method=:#{method}, args=#{args}, current_state=:#{current_state}>)
+        %(#<#{self.class.name}:0x#{self.__id__.to_s(16)} uuid="#{uuid}", definition=:#{definition}, method=:#{method}, args=#{args}, current_state=:#{current_state}>)
       end
     end
 
@@ -207,13 +209,11 @@ module Taskinator
     # a task which invokes the specified background job
     # the args must be intrinsic types, since they are serialized to YAML
     class Job < Task
-      attr_reader :definition
       attr_reader :job
       attr_reader :args
 
       def initialize(process, job, args, options={})
         super(process, options)
-        @definition = process.definition  # for convenience
 
         raise ArgumentError, 'job' if job.nil?
         raise ArgumentError, 'job' unless job.methods.include?(:perform) || job.instance_methods.include?(:perform)
@@ -228,7 +228,6 @@ module Taskinator
 
       def start
         # NNB: if other job types are required, may need to implement how they get invoked here!
-        # FIXME: possible implement using ActiveJob instead, so it doesn't matter how the worker is implemented
 
         if job.respond_to?(:perform)
           # resque
@@ -250,13 +249,12 @@ module Taskinator
 
       def accept(visitor)
         super
-        visitor.visit_type(:definition)
         visitor.visit_type(:job)
         visitor.visit_args(:args)
       end
 
       def inspect
-        %(#<#{self.class.name}:0x#{self.__id__.to_s(16)} uuid="#{uuid}", job=#{job}, args=#{args}, current_state=:#{current_state}>)
+        %(#<#{self.class.name}:0x#{self.__id__.to_s(16)} uuid="#{uuid}", definition=:#{definition}, job=#{job}, args=#{args}, current_state=:#{current_state}>)
       end
     end
 
@@ -302,7 +300,7 @@ module Taskinator
       end
 
       def inspect
-        %(#<#{self.class.name}:0x#{self.__id__.to_s(16)} uuid="#{uuid}", sub_process=#{sub_process.inspect}, current_state=:#{current_state}>)
+        %(#<#{self.class.name}:0x#{self.__id__.to_s(16)} uuid="#{uuid}", definition=:#{definition}, sub_process=#{sub_process.inspect}, current_state=:#{current_state}>)
       end
     end
   end

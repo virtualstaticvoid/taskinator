@@ -1,3 +1,5 @@
+require 'taskinator/builder'
+
 module Taskinator
   module Definition
 
@@ -120,5 +122,3 @@ module Taskinator
 
   end
 end
-
-require 'taskinator/definition/builder'

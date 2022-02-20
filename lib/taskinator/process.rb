@@ -133,6 +133,9 @@ module Taskinator
       end
     end
 
+    # TODO: add retry method - to pick up from a failed task
+    #  e.g. like retrying a failed job in Resque Web
+
     def tasks_completed?
       # TODO: optimize this
       tasks.all?(&:completed?)
@@ -166,6 +169,7 @@ module Taskinator
     # subclasses must implement the following methods
     #--------------------------------------------------
 
+    # :nocov:
     def enqueue
       raise NotImplementedError
     end
@@ -177,6 +181,7 @@ module Taskinator
     def task_completed(task)
       raise NotImplementedError
     end
+    # :nocov:
 
     #--------------------------------------------------
 
@@ -202,7 +207,6 @@ module Taskinator
         # deincrement the count of pending sequential tasks
         pending = deincr_pending_tasks
 
-        Taskinator.statsd_client.count("taskinator.#{definition.name.underscore.parameterize}.pending", pending)
         Taskinator.logger.info("Completed task for process '#{uuid}'. Pending is #{pending}.")
 
         next_task = task.next
@@ -237,7 +241,6 @@ module Taskinator
         if tasks.empty?
           complete! # weren't any tasks to start with
         else
-          Taskinator.statsd_client.count("taskinator.#{definition.name.underscore.parameterize}.pending", tasks.count)
           Taskinator.logger.info("Enqueuing #{tasks.count} tasks for process '#{uuid}'.")
           tasks.each(&:enqueue!)
         end
@@ -249,6 +252,7 @@ module Taskinator
           complete! # weren't any tasks to start with
         else
           if concurrency_method == :fork
+            # :nocov:
             warn("[DEPRECATED]: concurrency_method will be removed in a future version.")
             tasks.each do |task|
               fork do
@@ -256,6 +260,7 @@ module Taskinator
               end
             end
             Process.waitall
+            # :nocov:
           else
             threads = tasks.map do |task|
               Thread.new do
@@ -271,7 +276,6 @@ module Taskinator
         # deincrement the count of pending concurrent tasks
         pending = deincr_pending_tasks
 
-        Taskinator.statsd_client.count("taskinator.#{definition.name.underscore.parameterize}.pending", pending)
         Taskinator.logger.info("Completed task for process '#{uuid}'. Pending is #{pending}.")
 
         # when complete on first, then don't bother with subsequent tasks completing

@@ -2,8 +2,6 @@ require 'spec_helper'
 
 describe Taskinator::Instrumentation, :redis => true do
 
-  let(:definition) { TestDefinition }
-
   subject do
     klass = Class.new do
       include Taskinator::Persistence
@@ -15,10 +13,12 @@ describe Taskinator::Instrumentation, :redis => true do
 
       attr_reader :uuid
       attr_reader :options
+      attr_reader :definition
 
       def initialize
         @uuid = Taskinator.generate_uuid
         @options = { :bar => :baz }
+        @definition = TestDefinition
       end
     end
 
@@ -75,6 +75,7 @@ describe Taskinator::Instrumentation, :redis => true do
       expect(subject.completed_payload(:baz => :qux)).to eq(
         OpenStruct.new({
           :type                   => subject.class.name,
+          :definition             => subject.definition.name,
           :process_uuid           => subject.uuid,
           :process_options        => {:foo => :bar},
           :uuid                   => subject.uuid,

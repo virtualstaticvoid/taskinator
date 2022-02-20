@@ -106,6 +106,37 @@ describe Taskinator::Definition do
       expect(subject.create_process).to be_a(Taskinator::Process)
     end
 
+    it "handles error" do
+      subject.define_process do
+        raise ArgumentError
+      end
+
+      expect {
+        subject.create_process
+      }.to raise_error(ArgumentError)
+    end
+
+    it "checks defined arguments provided" do
+      subject.define_process :arg1, :arg2 do
+      end
+
+      expect {
+        subject.create_process
+      }.to raise_error(ArgumentError)
+
+      expect {
+        subject.create_process :foo
+      }.to raise_error(ArgumentError)
+
+      expect {
+        subject.create_process :foo, :bar
+      }.not_to raise_error
+
+      expect {
+        subject.create_process :foo, :bar, :baz
+      }.not_to raise_error
+    end
+
     it "defaults the scope to :shared" do
       block = SpecSupport::Block.new
       allow(block).to receive(:to_proc) {

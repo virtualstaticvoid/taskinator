@@ -207,11 +207,14 @@ describe Taskinator::Persistence, :redis => true do
     }
 
     describe "#save" do
-      pending __FILE__
+      pending
     end
 
     describe "#to_xml" do
-      pending __FILE__
+      it {
+        process = TestFlows::Task.create_process(1)
+        expect(process.to_xml).to match(/xml/)
+      }
     end
 
     describe "#key" do
