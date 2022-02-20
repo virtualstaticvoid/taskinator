@@ -80,14 +80,16 @@ module Taskinator
       nil
     end
 
+    # TODO: add mailer
+    # TODO: add complete!
+    # TODO: add fail!
+
     # defines a sub process task, for the given @definition
     # the definition specified must have input compatible arguments
     # to the current definition
     def sub_process(definition, options={})
       raise ArgumentError, 'definition' if definition.nil?
       raise ArgumentError, "#{definition.name} does not extend the #{Definition.name} module" unless definition.kind_of?(Definition)
-
-      # TODO: decide whether the sub process to dynamically receive arguments
 
       sub_process = definition.create_sub_process(*@args, combine_options(options))
       task = define_sub_process_task(@process, sub_process, options)
