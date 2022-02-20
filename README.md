@@ -637,6 +637,7 @@ process_id = "SUPPLY-PROCESS-IDENTIFIER"
 process = Taskinator::Api.find_process(process_id)
 
 puts process.inspect
+puts process.definition
 puts process.current_state
 puts process.tasks
 # etc...
@@ -655,6 +656,7 @@ task = Taskinator::Api.find_task(task_id)
 
 puts task.inspect
 puts task.class
+puts task.definition
 puts task.args                # for Step and Job types
 puts task.sub_process.tasks   # for SubProcess type
 # etc...
@@ -787,6 +789,7 @@ For all events, the data included contains the following information:
 | Key                             | Value                                                    |
 |---------------------------------|----------------------------------------------------------|
 | `:type`                         | The type name of the component reporting the event       |
+| `:definition`                   | The type name of the process definition                  |
 | `:process_uuid`                 | The UUID of the root process                             |
 | `:process_options`              | Options hash of the root process                         |
 | `:uuid`                         | The UUID of the respective task, job or sub process      |
