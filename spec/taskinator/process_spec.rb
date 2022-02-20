@@ -35,6 +35,14 @@ describe Taskinator::Process do
       it { expect(subject.tasks).to be_a(Taskinator::Tasks) }
     end
 
+    describe "#no_tasks_defined?" do
+      it { expect(subject.no_tasks_defined?).to be }
+      it {
+        subject.tasks << :mock
+        expect(subject.no_tasks_defined?).to_not be
+      }
+    end
+
     describe "#to_s" do
       it { expect(subject.to_s).to match(/#{subject.uuid}/) }
     end

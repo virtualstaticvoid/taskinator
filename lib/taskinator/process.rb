@@ -169,6 +169,7 @@ module Taskinator
     # subclasses must implement the following methods
     #--------------------------------------------------
 
+    # :nocov:
     def enqueue
       raise NotImplementedError
     end
@@ -180,6 +181,7 @@ module Taskinator
     def task_completed(task)
       raise NotImplementedError
     end
+    # :nocov:
 
     #--------------------------------------------------
 
@@ -250,6 +252,7 @@ module Taskinator
           complete! # weren't any tasks to start with
         else
           if concurrency_method == :fork
+            # :nocov:
             warn("[DEPRECATED]: concurrency_method will be removed in a future version.")
             tasks.each do |task|
               fork do
@@ -257,6 +260,7 @@ module Taskinator
               end
             end
             Process.waitall
+            # :nocov:
           else
             threads = tasks.map do |task|
               Thread.new do
