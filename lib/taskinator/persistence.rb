@@ -274,16 +274,19 @@ module Taskinator
       end
 
       def visit_tasks(tasks)
-        tasks.each do |task|
-          RedisSerializationVisitor.new(@conn, task, @base_visitor).visit
-          @conn.rpush "#{@key}:tasks", task.uuid
-          unless task.is_a?(Task::SubProcess)
-            incr_task_count unless self == @base_visitor
-            @base_visitor.incr_task_count
-          end
-        end
-        @conn.set("#{@key}.count", tasks.count)
-        @conn.set("#{@key}.pending", tasks.count)
+        _visit_tasks(tasks)
+      end
+
+      def visit_before_started_tasks(tasks)
+        _visit_tasks(tasks, ':before_started')
+      end
+
+      def visit_after_completed_tasks(tasks)
+        _visit_tasks(tasks, ':after_completed')
+      end
+
+      def visit_after_failed_tasks(tasks)
+        _visit_tasks(tasks, ':after_failed')
       end
 
       def visit_attribute(attribute)
@@ -333,6 +336,21 @@ module Taskinator
 
       def incr_task_count
         @task_count += 1
+      end
+
+      private
+
+      def _visit_tasks(tasks, list='')
+        tasks.each do |task|
+          RedisSerializationVisitor.new(@conn, task, @base_visitor).visit
+          @conn.rpush "#{@key}#{list}:tasks", task.uuid
+          unless task.is_a?(Task::SubProcess)
+            incr_task_count unless self == @base_visitor
+            @base_visitor.incr_task_count
+          end
+        end
+        @conn.set("#{@key}#{list}.count", tasks.count)
+        @conn.set("#{@key}#{list}.pending", tasks.count)
       end
     end
 
@@ -386,17 +404,19 @@ module Taskinator
       end
 
       def visit_tasks(tasks)
-        builder.tag!('tasks', :count => tasks.count) do |xml|
-          tasks.each do |task|
-            xml.tag!('task', :key => task.key) do |xml2|
-              XmlSerializationVisitor.new(xml2, task, @base_visitor).visit
-              unless task.is_a?(Task::SubProcess)
-                incr_task_count unless self == @base_visitor
-                @base_visitor.incr_task_count
-              end
-            end
-          end
-        end
+        _visit_tasks(tasks)
+      end
+
+      def visit_before_started_tasks(tasks)
+        _visit_tasks(tasks, 'before_started')
+      end
+
+      def visit_after_completed_tasks(tasks)
+        _visit_tasks(tasks, 'after_completed')
+      end
+
+      def visit_after_failed_tasks(tasks)
+        _visit_tasks(tasks, 'after_failed')
       end
 
       def visit_attribute(attribute)
@@ -445,6 +465,22 @@ module Taskinator
 
       def incr_task_count
         @task_count += 1
+      end
+
+      private
+
+      def _visit_tasks(tasks, list='tasks')
+        builder.tag!(list, :count => tasks.count) do |xml|
+          tasks.each do |task|
+            xml.tag!('task', :key => task.key) do |xml2|
+              XmlSerializationVisitor.new(xml2, task, @base_visitor).visit
+              unless task.is_a?(Task::SubProcess)
+                incr_task_count unless self == @base_visitor
+                @base_visitor.incr_task_count
+              end
+            end
+          end
+        end
       end
     end
 
@@ -541,11 +577,19 @@ module Taskinator
       end
 
       def visit_tasks(tasks)
-        # tasks are a linked list, so just get the first one
-        Taskinator.redis do |conn|
-          uuid = conn.lindex("#{@key}:tasks", 0)
-          tasks.attach(lazy_instance_for(Task, uuid), conn.get("#{@key}.count").to_i) if uuid
-        end
+        _visit_tasks(tasks)
+      end
+
+      def visit_before_started_tasks(tasks)
+        _visit_tasks(tasks, ':before_started')
+      end
+
+      def visit_after_completed_tasks(tasks)
+        _visit_tasks(tasks, ':after_completed')
+      end
+
+      def visit_after_failed_tasks(tasks)
+        _visit_tasks(tasks, ':after_failed')
       end
 
       def visit_process_reference(attribute)
@@ -607,6 +651,14 @@ module Taskinator
 
       private
 
+      def _visit_tasks(tasks, list='')
+        # tasks are a linked list, so just get the first one
+        Taskinator.redis do |conn|
+          uuid = conn.lindex("#{@key}#{list}:tasks", 0)
+          tasks.attach(lazy_instance_for(Task, uuid), conn.get("#{@key}#{list}.count").to_i) if uuid
+        end
+      end
+
       #
       # creates a proxy for the instance which
       # will only fetch the instance when used
@@ -649,14 +701,31 @@ module Taskinator
       end
 
       def visit_tasks(tasks)
-        @conn.expire "#{@key}:tasks", expire_in
-        @conn.expire "#{@key}.count", expire_in
-        @conn.expire "#{@key}.pending", expire_in
+        _visit_tasks(tasks)
+      end
+
+      def visit_before_started_tasks(tasks)
+        _visit_tasks(tasks, ':before_started')
+      end
+
+      def visit_after_completed_tasks(tasks)
+        _visit_tasks(tasks, ':after_completed')
+      end
+
+      def visit_after_failed_tasks(tasks)
+        _visit_tasks(tasks, ':after_failed')
+      end
+
+      private
+
+      def _visit_tasks(tasks, list='')
+        @conn.expire "#{@key}#{list}:tasks", expire_in
+        @conn.expire "#{@key}#{list}.count", expire_in
+        @conn.expire "#{@key}#{list}.pending", expire_in
         tasks.each do |task|
           RedisCleanupVisitor.new(@conn, task, expire_in).visit
         end
       end
-
     end
 
     # lazily loads the object specified by the type and uuid

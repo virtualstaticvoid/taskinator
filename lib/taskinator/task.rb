@@ -15,6 +15,10 @@ module Taskinator
         Job.new(process, job, args, options)
       end
 
+      def define_hook_task(process, method, args, options={})
+        Hook.new(process, method, args, options)
+      end
+
       def define_sub_process_task(process, sub_process, options={})
         SubProcess.new(process, sub_process, options)
       end
@@ -100,7 +104,7 @@ module Taskinator
         instrument('taskinator.task.completed', completed_payload) do
           complete if respond_to?(:complete)
           # notify the process that this task has completed
-          process.task_completed(self)
+          process.task_completed(self) if notify_process?
         end
       end
     end
@@ -124,12 +128,16 @@ module Taskinator
         instrument('taskinator.task.failed', failed_payload(error)) do
           fail(error) if respond_to?(:fail)
           # notify the process that this task has failed
-          process.task_failed(self, error)
+          process.task_failed(self, error) if notify_process?
         end
       end
     end
 
     def incr_count?
+      true
+    end
+
+    def notify_process?
       true
     end
 
@@ -197,6 +205,65 @@ module Taskinator
 
       def executor
         @executor ||= Taskinator::Executor.new(definition, self)
+      end
+
+      def inspect
+        %(#<#{self.class.name}:0x#{self.__id__.to_s(16)} uuid="#{uuid}", definition=:#{definition}, method=:#{method}, args=#{args}, current_state=:#{current_state}>)
+      end
+    end
+
+    #--------------------------------------------------
+
+    # a task which invokes the specified method on the definition
+    # the task is executed independently of the process, so there isn't any further
+    # processing once it completes (or fails)
+    # the args must be intrinsic types, since they are serialized to YAML
+    class Hook < Task
+      attr_reader :method
+      attr_reader :args
+
+      def initialize(process, method, args, options={})
+        super(process, options)
+
+        raise ArgumentError, 'method' if method.nil?
+        raise NoMethodError, method unless executor.respond_to?(method)
+
+        @method = method
+        @args = args
+      end
+
+      def enqueue
+        Taskinator.queue.enqueue_task(self)
+      end
+
+      def start
+        executor.send(method, *args)
+        # ASSUMPTION: when the method returns, the task is considered to be complete
+        complete!
+
+      rescue => e
+        Taskinator.logger.error(e)
+        Taskinator.logger.debug(e.backtrace)
+        fail!(e)
+        raise e
+      end
+
+      def accept(visitor)
+        super
+        visitor.visit_attribute(:method)
+        visitor.visit_args(:args)
+      end
+
+      def executor
+        @executor ||= Taskinator::Executor.new(definition, self)
+      end
+
+      def incr_count?
+        false
+      end
+
+      def notify_process?
+        false
       end
 
       def inspect

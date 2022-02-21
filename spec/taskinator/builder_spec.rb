@@ -360,6 +360,96 @@ describe Taskinator::Builder do
     end
   end
 
+  describe "#before_started" do
+    it "creates a task" do
+      expect(Taskinator::Task).to receive(:define_hook_task).with(process, :task_method, args, builder_options)
+      subject.before_started(:task_method)
+    end
+
+    it "fails if task method is nil" do
+      expect {
+        subject.before_started(nil)
+      }.to raise_error(ArgumentError)
+    end
+
+    it "fails if task method is not defined" do
+      expect {
+        subject.before_started(:undefined)
+      }.to raise_error(NoMethodError)
+    end
+
+    it "includes options" do
+      expect(Taskinator::Task).to receive(:define_hook_task).with(process, :task_method, args, builder_options.merge(options))
+      subject.before_started(:task_method, options)
+    end
+
+    it "adds task to process" do
+      expect {
+        subject.before_started(:task_method)
+      }.to change { process.before_started_tasks.count }.by(1)
+    end
+  end
+
+  describe "#after_completed" do
+    it "creates a task" do
+      expect(Taskinator::Task).to receive(:define_hook_task).with(process, :task_method, args, builder_options)
+      subject.after_completed(:task_method)
+    end
+
+    it "fails if task method is nil" do
+      expect {
+        subject.after_completed(nil)
+      }.to raise_error(ArgumentError)
+    end
+
+    it "fails if task method is not defined" do
+      expect {
+        subject.after_completed(:undefined)
+      }.to raise_error(NoMethodError)
+    end
+
+    it "includes options" do
+      expect(Taskinator::Task).to receive(:define_hook_task).with(process, :task_method, args, builder_options.merge(options))
+      subject.after_completed(:task_method, options)
+    end
+
+    it "adds task to process" do
+      expect {
+        subject.after_completed(:task_method)
+      }.to change { process.after_completed_tasks.count }.by(1)
+    end
+  end
+
+  describe "#after_failed" do
+    it "creates a task" do
+      expect(Taskinator::Task).to receive(:define_hook_task).with(process, :task_method, args, builder_options)
+      subject.after_failed(:task_method)
+    end
+
+    it "fails if task method is nil" do
+      expect {
+        subject.after_failed(nil)
+      }.to raise_error(ArgumentError)
+    end
+
+    it "fails if method is not defined" do
+      expect {
+        subject.after_failed(:undefined)
+      }.to raise_error(NoMethodError)
+    end
+
+    it "includes options" do
+      expect(Taskinator::Task).to receive(:define_hook_task).with(process, :task_method, args, builder_options.merge(options))
+      subject.after_failed(:task_method, options)
+    end
+
+    it "adds task to process" do
+      expect {
+        subject.after_failed(:task_method)
+      }.to change { process.after_failed_tasks.count }.by(1)
+    end
+  end
+
   describe "#sub_process" do
     let(:sub_definition) do
       Module.new do

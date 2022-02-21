@@ -113,7 +113,7 @@ end
 process = MyProcess.create_process Date.today, :option_1 => true
 ```
 
-_NOTE:_ The current implementation performs a naive check on the count of arguments.
+_NOTE:_ The current implementation performs a naïve check on the count of arguments.
 
 Next, specify the tasks with their corresponding implementation methods, that make up the
 process, using the `task` method and providing the `method` to execute for the task.
@@ -288,6 +288,44 @@ module MyProcess
     sub_process MySubProcessA
     sub_process MySubProcessB
   end
+end
+```
+
+#### Before Process Started and After Process Completion or Failure
+
+You may want to run further tasks asynchrously before or after a process has completed
+or failed. These tasks provide a way to execute logic independently of the process.
+
+Specify these tasks using the `before_started`, `after_completed` or `after_failed` methods.
+
+For example, using `after_completed` to set off another business process or `after_failed` to 
+send an email to an operator.
+
+```ruby
+module MyProcess
+  extend Taskinator::Definition
+
+  # defines a process
+  define_process do
+
+    # tasks, sub-process, etc.
+
+    # define task to execute on completion
+    after_completed :further_process
+
+    # define task to execute on failure
+    after_failed :email_operations
+
+  end
+
+  def further_process
+    # ...
+  end
+
+  def email_operations
+    # ...
+  end
+
 end
 ```
 

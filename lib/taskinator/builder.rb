@@ -83,9 +83,32 @@ module Taskinator
       nil
     end
 
-    # TODO: add mailer
-    # TODO: add complete!
-    # TODO: add fail!
+    # defines a task which executes the given @method before the process has started
+    def before_started(method, options={})
+      raise ArgumentError, 'method' if method.nil?
+      raise NoMethodError, method unless @executor.respond_to?(method)
+
+      define_before_started_task(@process, method, @args, options)
+      nil
+    end
+
+    # defines a task which executes the given @method after the process has completed
+    def after_completed(method, options={})
+      raise ArgumentError, 'method' if method.nil?
+      raise NoMethodError, method unless @executor.respond_to?(method)
+
+      define_after_completed_task(@process, method, @args, options)
+      nil
+    end
+
+    # defines a task which executes the given @method after the process has failed
+    def after_failed(method, options={})
+      raise ArgumentError, 'method' if method.nil?
+      raise NoMethodError, method unless @executor.respond_to?(method)
+
+      define_after_failed_task(@process, method, @args, options)
+      nil
+    end
 
     # defines a sub process task, for the given @definition
     # the definition specified must have input compatible arguments
@@ -104,13 +127,31 @@ module Taskinator
   private
 
     def define_step_task(process, method, args, options={})
-      define_task(process) {
+      add_task(process.tasks) {
         Task.define_step_task(process, method, args, combine_options(options))
       }
     end
 
+    def define_before_started_task(process, method, args, options={})
+      add_task(process.before_started_tasks) {
+        Task.define_hook_task(process, method, args, combine_options(options))
+      }
+    end
+
+    def define_after_completed_task(process, method, args, options={})
+      add_task(process.after_completed_tasks) {
+        Task.define_hook_task(process, method, args, combine_options(options))
+      }
+    end
+
+    def define_after_failed_task(process, method, args, options={})
+      add_task(process.after_failed_tasks) {
+        Task.define_hook_task(process, method, args, combine_options(options))
+      }
+    end
+
     def define_job_task(process, job, args, options={})
-      define_task(process) {
+      add_task(process.tasks) {
         Task.define_job_task(process, job, args, combine_options(options))
       }
     end
@@ -119,8 +160,8 @@ module Taskinator
       Task.define_sub_process_task(process, sub_process, combine_options(options))
     end
 
-    def define_task(process)
-      process.tasks << task = yield
+    def add_task(list)
+      list << task = yield
       task
     end
 

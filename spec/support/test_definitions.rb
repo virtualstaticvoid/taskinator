@@ -42,6 +42,20 @@ module TestDefinitions
 
   end
 
+  module TaskBeforeStarted
+    extend Taskinator::Definition
+    include Support
+
+    define_process :task_count do
+      before_started :task1, :queue => :foo
+
+      for_each :iterator do
+        task :task2, :queue => :foo
+      end
+    end
+
+  end
+
   module TaskAfterCompleted
     extend Taskinator::Definition
     include Support
