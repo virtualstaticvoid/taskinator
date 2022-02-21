@@ -55,6 +55,18 @@ module Taskinator
       @tasks ||= Tasks.new
     end
 
+    def before_started_tasks
+      @before_started_tasks ||= Tasks.new
+    end
+
+    def after_completed_tasks
+      @after_completed_tasks ||= Tasks.new
+    end
+
+    def after_failed_tasks
+      @after_failed_tasks ||= Tasks.new
+    end
+
     def no_tasks_defined?
       tasks.empty?
     end
@@ -64,6 +76,9 @@ module Taskinator
       visitor.visit_task_reference(:parent)
       visitor.visit_type(:definition)
       visitor.visit_tasks(tasks)
+      visitor.visit_before_started_tasks(before_started_tasks)
+      visitor.visit_after_completed_tasks(after_completed_tasks)
+      visitor.visit_after_failed_tasks(after_failed_tasks)
       visitor.visit_args(:options)
       visitor.visit_attribute(:scope)
       visitor.visit_attribute(:queue)
@@ -91,6 +106,9 @@ module Taskinator
 
     def start!
       return if paused? || cancelled?
+
+      # enqueue before started tasks independently
+      before_started_tasks.each(&:enqueue!)
 
       transition(:processing) do
         instrument('taskinator.process.processing', processing_payload) do
@@ -132,6 +150,9 @@ module Taskinator
           end
         end
       end
+
+      # enqueue completion tasks independently
+      after_completed_tasks.each(&:enqueue!)
     end
 
     # TODO: add retry method - to pick up from a failed task
@@ -159,6 +180,9 @@ module Taskinator
           parent.fail!(error) unless parent.nil?
         end
       end
+
+      # enqueue completion tasks independently
+      after_failed_tasks.each(&:enqueue!)
     end
 
     def task_failed(task, error)
