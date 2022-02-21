@@ -33,7 +33,7 @@ require 'taskinator/api'
 module Taskinator
 
   NAME = "Taskinator"
-  LICENSE = 'See LICENSE.txt for licensing details.'
+  LICENSE = 'See LICENSE for licensing details.'
 
   DEFAULTS = {
     # none for now...
