@@ -3,6 +3,7 @@ require 'yaml'
 require 'securerandom'
 require 'benchmark'
 require 'delegate'
+require 'builder'
 
 require 'taskinator/version'
 
@@ -10,6 +11,7 @@ require 'taskinator/complete_on'
 require 'taskinator/redis_connection'
 require 'taskinator/logger'
 
+require 'taskinator/builder'
 require 'taskinator/definition'
 
 require 'taskinator/workflow'
