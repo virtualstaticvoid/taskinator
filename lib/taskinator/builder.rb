@@ -83,6 +83,16 @@ module Taskinator
       nil
     end
 
+    # defines a mailer task which executes @method for the given @mailer
+    def mailer(mailer, method, options={})
+      raise ArgumentError, 'mailer' if method.nil?
+      raise ArgumentError, 'method' if method.nil?
+      raise NoMethodError, method unless mailer.respond_to?(method)
+
+      define_mailer_task(@process, mailer, method, @args, options)
+      nil
+    end
+
     # defines a task which executes the given @method before the process has started
     def before_started(method, options={})
       raise ArgumentError, 'method' if method.nil?
@@ -153,6 +163,12 @@ module Taskinator
     def define_job_task(process, job, args, options={})
       add_task(process.tasks) {
         Task.define_job_task(process, job, args, combine_options(options))
+      }
+    end
+
+    def define_mailer_task(process, mailer, method, args, options={})
+      define_task(process) {
+        Task.define_mailer_task(process, mailer, method, args, combine_options(options))
       }
     end
 

@@ -19,6 +19,10 @@ module Taskinator
         SubProcess.new(process, sub_process, options)
       end
 
+      def define_mailer_task(process, mailer, method, args, options={})
+        Mailer.new(process, mailer, method, args, options)
+      end
+
       def define_hook_task(process, method, args, options={})
         Hook.new(process, method, args, options)
       end
@@ -279,6 +283,54 @@ module Taskinator
 
     #--------------------------------------------------
 
+    # a task which invokes the specified mailer method and delivers the resultant message
+    # the args must be intrinsic types, since they are serialized to YAML
+    class Mailer < Task
+      attr_reader :mailer
+      attr_reader :method
+      attr_reader :args
+
+      def initialize(process, mailer, method, args, options={})
+        super(process, options)
+
+        raise ArgumentError, 'mailer' if mailer.nil?
+        raise ArgumentError, 'method' if method.nil?
+        raise NoMethodError, method unless mailer.respond_to?(method)
+
+        @mailer = mailer
+        @method = method
+        @args = args
+      end
+
+      def enqueue
+        Taskinator.queue.enqueue_task(self)
+      end
+
+      def start
+        mailer.send(method, *args).deliver_now
+        # ASSUMPTION: when the method returns, the message is considered delivered
+        complete!
+
+      rescue => e
+        Taskinator.logger.error(e)
+        Taskinator.logger.debug(e.backtrace)
+        fail!(e)
+        raise e
+      end
+
+      def accept(visitor)
+        super
+        visitor.visit_type(:mailer)
+        visitor.visit_attribute(:method)
+        visitor.visit_args(:args)
+      end
+
+      def inspect
+        %(#<#{self.class.name}:0x#{self.__id__.to_s(16)} uuid="#{uuid}", definition=:#{definition}, mailer=:#{mailer}, method=:#{method}, args=#{args}, current_state=:#{current_state}>)
+      end
+    end
+
+    #--------------------------------------------------
     # a task which delegates to another process
     class SubProcess < Task
       attr_reader :sub_process

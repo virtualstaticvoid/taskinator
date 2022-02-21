@@ -450,6 +450,36 @@ describe Taskinator::Builder do
     end
   end
 
+  describe "#mailer" do
+    it "creates a mailer" do
+      expect(Taskinator::Task).to receive(:define_mailer_task).with(process, TestMailer, :welcome, args, builder_options)
+      subject.mailer(TestMailer, :welcome)
+    end
+
+    it "fails if mailer is nil" do
+      expect {
+        subject.mailer(nil, nil)
+      }.to raise_error(ArgumentError)
+    end
+
+    it "fails if mailer method is nil" do
+      expect {
+        subject.mailer(TestMailer, nil)
+      }.to raise_error(ArgumentError)
+    end
+
+    it "fails if mailer method is not defined" do
+      expect {
+        subject.mailer(TestMailer, :undefined)
+      }.to raise_error(NoMethodError)
+    end
+
+    it "includes options" do
+      expect(Taskinator::Task).to receive(:define_mailer_task).with(process, TestMailer, :welcome, args, builder_options.merge(options))
+      subject.mailer(TestMailer, :welcome, options)
+    end
+  end
+
   describe "#sub_process" do
     let(:sub_definition) do
       Module.new do
