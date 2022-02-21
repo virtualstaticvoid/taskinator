@@ -319,6 +319,12 @@ describe Taskinator::Builder do
       expect(Taskinator::Task).to receive(:define_step_task).with(process, :task_method, args, builder_options.merge(options))
       subject.task(:task_method, options)
     end
+
+    it "adds task to process" do
+      expect {
+        subject.task(:task_method)
+      }.to change { process.tasks.count }.by(1)
+    end
   end
 
   describe "#job" do
@@ -345,6 +351,12 @@ describe Taskinator::Builder do
       job = double('job', :perform => true)
       expect(Taskinator::Task).to receive(:define_job_task).with(process, job, args, builder_options.merge(options))
       subject.job(job, options)
+    end
+
+    it "adds job to process" do
+      expect {
+        subject.task(:task_method)
+      }.to change { process.tasks.count }.by(1)
     end
   end
 
@@ -379,16 +391,16 @@ describe Taskinator::Builder do
       block = Proc.new {|p|
         p.task :task_method
       }
-      expect(process.tasks).to be_empty
-      subject.sequential(options, &block)
-      expect(process.tasks).to_not be_empty
+      expect {
+        subject.sequential(options, &block)
+      }.to change { process.tasks.count }.by(1)
     end
 
     it "ignores sub-processes without tasks" do
       allow(block).to receive(:call)
-      expect(process.tasks).to be_empty
-      subject.sequential(options, &define_block)
-      expect(process.tasks).to be_empty
+      expect {
+        subject.sequential(options, &define_block)
+      }.to_not change { process.tasks.count }
     end
   end
 

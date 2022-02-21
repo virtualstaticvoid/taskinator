@@ -1,4 +1,4 @@
-module TestFlows
+module TestDefinitions
 
   module Worker
     def self.perform(*args)
@@ -14,17 +14,19 @@ module TestFlows
       end
     end
 
-    def do_task(*args)
-      Taskinator.logger.info(">>> Executing task do_task [#{uuid}]...")
-    end
-
-    # just create lots of these, so it's easy to see which task
+    # generate task methods so it's easy to see which task
     # corresponds with each method when debugging specs
     20.times do |i|
-      define_method "task_#{i}" do |*args|
+      define_method "task#{i}" do |*args|
         Taskinator.logger.info(">>> Executing task #{__method__} [#{uuid}]...")
       end
     end
+
+  end
+
+  module Definition
+    extend Taskinator::Definition
+    include Support
 
   end
 
@@ -34,8 +36,36 @@ module TestFlows
 
     define_process :task_count do
       for_each :iterator do
-        task :do_task, :queue => :foo
+        task :task1, :queue => :foo
       end
+    end
+
+  end
+
+  module TaskAfterCompleted
+    extend Taskinator::Definition
+    include Support
+
+    define_process :task_count do
+      for_each :iterator do
+        task :task1, :queue => :foo
+      end
+
+      after_completed :task2, :queue => :foo
+    end
+
+  end
+
+  module TaskAfterFailed
+    extend Taskinator::Definition
+    include Support
+
+    define_process :task_count do
+      for_each :iterator do
+        task :task1, :queue => :foo
+      end
+
+      after_failed :task2, :queue => :foo
     end
 
   end
@@ -69,7 +99,7 @@ module TestFlows
     define_process :task_count do
       sequential do
         for_each :iterator do
-          task :do_task
+          task :task1
         end
       end
     end
@@ -83,7 +113,7 @@ module TestFlows
     define_process :task_count do
       concurrent do
         for_each :iterator do
-          task :do_task
+          task :task1
         end
       end
     end
@@ -96,17 +126,17 @@ module TestFlows
 
     define_process do
 
-      task :task_0
+      task :task0
 
       sequential do
         # NB: empty!
       end
 
       sequential do
-        task :task_1
+        task :task1
       end
 
-      task :task_2
+      task :task2
 
     end
   end
@@ -117,17 +147,17 @@ module TestFlows
 
     define_process do
 
-      task :task_0
+      task :task0
 
       concurrent do
         # NB: empty!
       end
 
       concurrent do
-        task :task_1
+        task :task1
       end
 
-      task :task_2
+      task :task2
 
     end
   end
@@ -137,36 +167,36 @@ module TestFlows
     include Support
 
     define_process :task_count do
-      task :task_1
+      task :task1
 
       concurrent do
-        task :task_2
-        task :task_3
+        task :task2
+        task :task3
 
         sequential do
-          task :task_4
-          task :task_5
+          task :task4
+          task :task5
 
           concurrent do
-            task :task_6
-            task :task_7
+            task :task6
+            task :task7
 
             sequential do
-              task :task_8
-              task :task_9
+              task :task8
+              task :task9
 
             end
 
-            task :task_10
+            task :task10
           end
 
-          task :task_11
+          task :task11
         end
 
-        task :task_12
+        task :task12
       end
 
-      task :task_13
+      task :task13
     end
   end
 

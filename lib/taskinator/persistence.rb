@@ -365,7 +365,7 @@ module Taskinator
 
         @instance.accept(self)
 
-        @attributes << [:task_count, @task_count]
+        @attributes << [:task_count, task_count]
 
         @attributes.each do |(name, value)|
           builder.tag!('attribute', name => value)
