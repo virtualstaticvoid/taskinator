@@ -15,6 +15,9 @@ module Taskinator
     end
 
     def option?(key, &block)
+      # instead of LocalJumpError
+      raise ArgumentError, 'block' unless block_given?
+
       yield if builder_options[key]
     end
 
@@ -24,7 +27,7 @@ module Taskinator
 
       sub_process = Process.define_sequential_process_for(@definition, options)
       task = define_sub_process_task(@process, sub_process, options)
-      Builder.new(sub_process, @definition, *@args).instance_eval(&block)
+      Builder.new(sub_process, @definition, *@args, @builder_options).instance_eval(&block)
       @process.tasks << task if sub_process.tasks.any?
       nil
     end
@@ -35,7 +38,7 @@ module Taskinator
 
       sub_process = Process.define_concurrent_process_for(@definition, complete_on, options)
       task = define_sub_process_task(@process, sub_process, options)
-      Builder.new(sub_process, @definition, *@args).instance_eval(&block)
+      Builder.new(sub_process, @definition, *@args, @builder_options).instance_eval(&block)
       @process.tasks << task if sub_process.tasks.any?
       nil
     end
@@ -54,7 +57,7 @@ module Taskinator
       #
       method_args = options.any? ? [*@args, options] : @args
       @executor.send(method, *method_args) do |*args|
-        Builder.new(@process, @definition, *args).instance_eval(&block)
+        Builder.new(@process, @definition, *args, @builder_options).instance_eval(&block)
       end
       nil
     end
