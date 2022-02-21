@@ -6,7 +6,10 @@ describe Taskinator::Builder do
     Module.new do
       extend Taskinator::Definition
 
-      def iterator_method(*); end
+      def iterator_method(*args)
+        yield *args
+      end
+
       def task_method(*); end
     end
   end
@@ -49,6 +52,110 @@ describe Taskinator::Builder do
     it "does not invoke supplied block for an unspecified option" do
       expect(block).to_not receive(:call)
       subject.option?(:unspecified, &define_block)
+    end
+
+    describe "scopes" do
+      it "base" do
+        expect(block).to receive(:call)
+        blk = define_block
+
+        definition.define_process :a, :b do
+          option?(:option1, &blk)
+        end
+
+        definition.create_process(*args, builder_options)
+      end
+
+      it "sequential" do
+        expect(block).to receive(:call)
+        blk = define_block
+
+        definition.define_process :a, :b do
+          sequential do
+            option?(:option1, &blk)
+          end
+        end
+
+        definition.create_process(*args, builder_options)
+      end
+
+      it "concurrent" do
+        expect(block).to receive(:call)
+        blk = define_block
+
+        definition.define_process :a, :b do
+          concurrent do
+            option?(:option1, &blk)
+          end
+        end
+
+        definition.create_process(*args, builder_options)
+      end
+
+      it "for_each" do
+        expect(block).to receive(:call)
+        blk = define_block
+
+        definition.define_process :a, :b do
+          for_each :iterator_method do
+            option?(:option1, &blk)
+          end
+        end
+
+        definition.create_process(*args, builder_options)
+      end
+
+      it "nested" do
+        expect(block).to receive(:call)
+        blk = define_block
+
+        definition.define_process :a, :b do
+          concurrent do
+            sequential do
+              for_each :iterator_method do
+                option?(:option1, &blk)
+              end
+            end
+          end
+        end
+
+        definition.create_process(*args, builder_options)
+      end
+
+      it "sub-process" do
+        expect(block).to receive(:call).exactly(4).times
+        blk = define_block
+
+        sub_definition = Module.new do
+          extend Taskinator::Definition
+
+          define_process do
+            option?(:option1, &blk) #1
+
+            sequential do
+              option?(:option1, &blk) #2
+            end
+
+            concurrent do
+              option?(:option1, &blk) #3
+            end
+
+            for_each :iterator_method do
+              option?(:option1, &blk) #4
+            end
+          end
+
+          def iterator_method(*args)
+            yield *args
+          end
+        end
+
+        definition.define_process :a, :b do
+          sub_process sub_definition
+        end
+
+        definition.create_process(*args, builder_options)
+      end
     end
   end
 
