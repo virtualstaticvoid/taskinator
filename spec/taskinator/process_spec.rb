@@ -2,7 +2,7 @@ require 'spec_helper'
 
 describe Taskinator::Process do
 
-  let(:definition) { TestDefinition }
+  let(:definition) { TestDefinitions::Definition }
 
   describe "Base" do
 
@@ -199,7 +199,7 @@ describe Taskinator::Process do
         expect(visitor).to receive(:visit_attribute).with(:uuid)
         expect(visitor).to receive(:visit_args).with(:options)
         expect(visitor).to receive(:visit_task_reference).with(:parent)
-        expect(visitor).to receive(:visit_tasks)
+        expect(visitor).to receive(:visit_tasks).with(subject.tasks)
         expect(visitor).to receive(:visit_attribute).with(:scope)
         expect(visitor).to receive(:visit_attribute).with(:queue)
         expect(visitor).to receive(:visit_attribute_time).with(:created_at)
@@ -208,13 +208,6 @@ describe Taskinator::Process do
         subject.accept(visitor)
       }
     end
-
-    describe "#tasks_count" do
-      it {
-        expect(subject.tasks_count).to eq(0)
-      }
-    end
-
   end
 
   describe Taskinator::Process::Sequential do
@@ -400,7 +393,7 @@ describe Taskinator::Process do
         expect(visitor).to receive(:visit_attribute).with(:uuid)
         expect(visitor).to receive(:visit_args).with(:options)
         expect(visitor).to receive(:visit_task_reference).with(:parent)
-        expect(visitor).to receive(:visit_tasks)
+        expect(visitor).to receive(:visit_tasks).with(subject.tasks)
         expect(visitor).to receive(:visit_attribute).with(:scope)
         expect(visitor).to receive(:visit_attribute).with(:queue)
         expect(visitor).to receive(:visit_attribute_time).with(:created_at)
@@ -685,7 +678,7 @@ describe Taskinator::Process do
         expect(visitor).to receive(:visit_attribute_enum).with(:complete_on, Taskinator::CompleteOn)
         expect(visitor).to receive(:visit_args).with(:options)
         expect(visitor).to receive(:visit_task_reference).with(:parent)
-        expect(visitor).to receive(:visit_tasks)
+        expect(visitor).to receive(:visit_tasks).with(subject.tasks)
         expect(visitor).to receive(:visit_attribute).with(:scope)
         expect(visitor).to receive(:visit_attribute).with(:queue)
         expect(visitor).to receive(:visit_attribute_time).with(:created_at)

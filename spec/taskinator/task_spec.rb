@@ -2,7 +2,7 @@ require 'spec_helper'
 
 describe Taskinator::Task do
 
-  let(:definition) { TestDefinition }
+  let(:definition) { TestDefinitions::Definition }
 
   let(:process) do
     Class.new(Taskinator::Process) do
@@ -164,25 +164,17 @@ describe Taskinator::Task do
         subject.accept(visitor)
       }
     end
-
-    describe "#tasks_count" do
-      it {
-        process_uuid = SecureRandom.hex
-        allow(subject).to receive(:process_uuid) { process_uuid }
-        expect(subject.tasks_count).to eq(0)
-      }
-    end
   end
 
   describe Taskinator::Task::Step do
 
-    subject { Taskinator::Task.define_step_task(process, :do_task, {:a => 1, :b => 2}) }
+    subject { Taskinator::Task.define_step_task(process, :task1, {:a => 1, :b => 2}) }
 
     it_should_behave_like "a task", Taskinator::Task::Step
 
     describe ".define_step_task" do
       it "sets the queue to use" do
-        task = Taskinator::Task.define_step_task(process, :do_task, {:a => 1, :b => 2}, :queue => :foo)
+        task = Taskinator::Task.define_step_task(process, :task1, {:a => 1, :b => 2}, :queue => :foo)
         expect(task.queue).to eq(:foo)
       end
     end
