@@ -363,12 +363,12 @@ MyProcess.create_process(1, 2, 3, :send_notification => true)
 
 ```
 
-#### Reusing ActiveJob jobs
+#### Reusing `ActiveJob` jobs
 
 It is likely that you already have one or more [jobs](https://guides.rubyonrails.org/active_job_basics.html)
 and want to reuse them within the process definition.
 
-Define a `job` step, providing the class of the Active Job to run and then taskinator will
+Define a `job` step, providing the class of the `ActiveJob` to run and then taskinator will
 invoke that job as part of the process.
 
 The `job` step will be queued and executed on same queue as
@@ -425,7 +425,7 @@ _This may be something that gets refactored down the line_.
 To best understand how arguments are handled, you need to break it down into 3 phases. Namely:
 
   * Definition,
-  * Creation and
+  * Creation, and
   * Execution
 
 Firstly, a process definition is declarative in that the `define_process` and a mix of
