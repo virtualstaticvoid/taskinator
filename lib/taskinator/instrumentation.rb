@@ -69,7 +69,7 @@ module Taskinator
           :percentage_processing  => (count > 0) ? (processing.to_i / count) * 100.0 : 0.0,
           :percentage_completed   => (count > 0) ? (completed.to_i  / count) * 100.0 : 0.0,
         }.merge(additional)
-      ).freeze
+      )
 
     end
 
