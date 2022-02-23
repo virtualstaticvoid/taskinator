@@ -50,7 +50,7 @@ module Taskinator
     end
 
     def generate_uuid
-      SecureRandom.uuid
+      SecureRandom.hex(10)
     end
 
     ##
