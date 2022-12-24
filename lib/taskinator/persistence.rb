@@ -450,7 +450,7 @@ module Taskinator
     end
 
     class RedisDeserializationVisitor < Taskinator::Visitor::Base
-
+      class UninitializedConstant; end
       #
       # assumption here is that all attributes have a backing instance variable
       # which has the same name as the attribute
@@ -550,7 +550,7 @@ module Taskinator
       def visit_type(attribute)
         value = @attribute_values[attribute]
         if value
-          type = Kernel.const_get(value)
+          type = Kernel.const_get(value) rescue UninitializedConstant
           @instance.instance_variable_set("@#{attribute}", type)
         end
       end
