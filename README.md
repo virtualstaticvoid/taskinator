@@ -630,6 +630,11 @@ processes.each do |process|
 end
 ```
 
+#### Web UI
+
+You can also install a web interface for your Rails application. 
+Check https://github.com/bguban/taskinator_ui for details.
+
 #### Debugging
 
 To aid debugging specific processes and tasks, where the process or task identifier is
