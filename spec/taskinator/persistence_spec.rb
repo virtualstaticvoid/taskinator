@@ -62,8 +62,10 @@ describe Taskinator::Persistence, :redis => true do
         it {
           process.tasks << task
           process.save
-          expect(TestTask.fetch(task.uuid)).to eq(task)
-          expect(TestTask.fetch(task.uuid).process).to eq(process)
+
+          instance = TestTask.fetch(task.uuid)
+          expect(instance).to eq(task)
+          expect(instance.process).to eq(process)
         }
       end
     end
