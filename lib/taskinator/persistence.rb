@@ -449,8 +449,48 @@ module Taskinator
       end
     end
 
+    class UnknownTypeError < StandardError
+    end
+
+    module UnknownType
+
+      @unknown_types = {}
+
+      def self.new(type)
+        Taskinator.logger.error("Unknown type '#{type}' while deserializing.")
+        @unknown_types[type] ||= Module.new do
+          extend UnknownType
+          @type = type
+
+          # for unknown definitions
+          def method_missing(_, *_)
+            raise UnknownTypeError.new(to_s)
+          end
+        end
+      end
+
+      attr_reader :type
+
+      def to_s
+        "Unknown type '#{type}'."
+      end
+
+      def allocate
+        self
+      end
+
+      def accept(*_)
+        # nothing doing
+      end
+
+      # for unknown job types
+      def perform(*_)
+        raise UnknownTypeError.new(to_s)
+      end
+    end
+
     class RedisDeserializationVisitor < Taskinator::Visitor::Base
-      class UnknownDefinitionOrJob; end
+
       #
       # assumption here is that all attributes have a backing instance variable
       # which has the same name as the attribute
@@ -482,7 +522,7 @@ module Taskinator
         return unless @attribute_values.key?(:type)
 
         type = @attribute_values[:type]
-        klass = Kernel.const_get(type)
+        klass = Kernel.const_get(type) rescue UnknownType.new(type)
 
         #
         # NOTE:
@@ -541,16 +581,18 @@ module Taskinator
       def visit_attribute_enum(attribute, type)
         visit_attribute(attribute) do |value|
           const_value = type.constants.select {|c| type.const_get(c) == value.to_i }.first
-          const_value ?
-            type.const_get(const_value) :
-            (defined?(type::Default) ? type::Default : nil)
+          if const_value
+            type.const_get(const_value)
+          else
+            defined?(type::Default) ? type::Default : nil
+          end
         end
       end
 
       def visit_type(attribute)
         value = @attribute_values[attribute]
         if value
-          type = Kernel.const_get(value) rescue UnknownDefinitionOrJob
+          type = Kernel.const_get(value) rescue UnknownType.new(value)
           @instance.instance_variable_set("@#{attribute}", type)
         end
       end
@@ -578,6 +620,8 @@ module Taskinator
         type = Taskinator.redis do |conn|
           conn.hget(base.key_for(uuid), :type)
         end
+        # these types are always from taskinator
+        # so no need to rescue for unknown types!
         klass = Kernel.const_get(type)
         LazyLoader.new(klass, uuid, @instance_cache)
       end
