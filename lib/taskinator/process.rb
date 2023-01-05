@@ -48,6 +48,7 @@ module Taskinator
       @parent = value
       # update the uuid to be "scoped" within the parent task
       @uuid = "#{@parent.uuid}:subprocess"
+      @key = nil # NB: invalidate memoized key
     end
 
     def tasks
@@ -279,7 +280,7 @@ module Taskinator
         Taskinator.logger.info("Completed task for process '#{uuid}'. Pending is #{pending}.")
 
         # when complete on first, then don't bother with subsequent tasks completing
-        if (complete_on == CompleteOn::First)
+        if complete_on == CompleteOn::First
           complete! unless completed?
         else
           complete! if pending < 1
@@ -287,7 +288,7 @@ module Taskinator
       end
 
       def tasks_completed?
-        if (complete_on == CompleteOn::First)
+        if complete_on == CompleteOn::First
           tasks.any?(&:completed?)
         else
           super # all
