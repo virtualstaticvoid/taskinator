@@ -123,7 +123,7 @@ module Taskinator
         instrument('taskinator.process.completed', completed_payload) do
           complete if respond_to?(:complete)
           # notify the parent task (if there is one) that this process has completed
-          # note: parent may be a proxy, so explicity check for nil?
+          # note: parent may be a proxy, so explicitly check for nil?
           unless parent.nil?
             parent.complete!
           else
@@ -154,7 +154,7 @@ module Taskinator
         instrument('taskinator.process.failed', failed_payload(error)) do
           fail(error) if respond_to?(:fail)
           # notify the parent task (if there is one) that this process has failed
-          # note: parent may be a proxy, so explicity check for nil?
+          # note: parent may be a proxy, so explicitly check for nil?
           parent.fail!(error) unless parent.nil?
         end
       end
@@ -204,7 +204,7 @@ module Taskinator
       end
 
       def task_completed(task)
-        # deincrement the count of pending sequential tasks
+        # decrement the count of pending sequential tasks
         pending = deincr_pending_tasks
 
         Taskinator.logger.info("Completed task for process '#{uuid}'. Pending is #{pending}.")
@@ -273,7 +273,7 @@ module Taskinator
       end
 
       def task_completed(task)
-        # deincrement the count of pending concurrent tasks
+        # decrement the count of pending concurrent tasks
         pending = deincr_pending_tasks
 
         Taskinator.logger.info("Completed task for process '#{uuid}'. Pending is #{pending}.")

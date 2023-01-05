@@ -50,7 +50,7 @@ Added support for having `perform` method as a class method.
 
 v0.3.16 - 17 Feb 2021
 ---
-Bug fix to deincrement pending counts for sequential tasks.
+Bug fix to decrement pending counts for sequential tasks.
 Bug fix to allow concurrent tasks to be retried (via Resque) and to complete processes.
 
 v0.3.15 - 22 Nov 2018
