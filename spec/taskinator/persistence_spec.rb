@@ -46,6 +46,15 @@ describe Taskinator::Persistence, :redis => true do
         expect(subject.fetch('uuid', cache)).to eq(item)
       end
 
+      it "yields UnknownType" do
+        Taskinator.redis do |conn|
+          conn.hmset(*[subject.key_for("foo"), [:type, 'UnknownFoo']])
+        end
+        instance = subject.fetch("foo")
+        expect(instance).to be_a(Taskinator::Persistence::UnknownType)
+        expect(instance.type).to eq("UnknownFoo")
+      end
+
       describe "for processes" do
         let(:process) { TestProcess.new(definition) }
 
@@ -53,6 +62,19 @@ describe Taskinator::Persistence, :redis => true do
           process.save
           expect(TestProcess.fetch(process.uuid)).to eq(process)
         }
+
+        describe "unknown definition" do
+          it "yields UnknownType" do
+            Taskinator.redis do |conn|
+              conn.hmset(*[process.key, [:type, TestProcess.name], [:uuid, process.uuid], [:definition, 'UnknownFoo']])
+            end
+
+            instance = TestProcess.fetch(process.uuid)
+            expect(instance.uuid).to eq(process.uuid)
+            expect(instance.definition).to be_a(Taskinator::Persistence::UnknownType)
+            expect(instance.definition.type).to eq("UnknownFoo")
+          end
+        end
       end
 
       describe "for tasks" do
@@ -67,6 +89,40 @@ describe Taskinator::Persistence, :redis => true do
           expect(instance).to eq(task)
           expect(instance.process).to eq(process)
         }
+
+        describe "unknown job" do
+          let(:task) { TestJobTask.new(process, TestJob, []) }
+
+          it "yields UnknownType" do
+            Taskinator.redis do |conn|
+              conn.hmset(*[task.key, [:type, task.class.name], [:uuid, task.uuid], [:job, 'UnknownBar']])
+            end
+
+            instance = TestJobTask.fetch(task.uuid)
+            expect(instance.uuid).to eq(task.uuid)
+            expect(instance.job).to be_a(Taskinator::Persistence::UnknownType)
+            expect(instance.job.type).to eq("UnknownBar")
+          end
+        end
+
+        describe "unknown subprocess" do
+          let(:sub_process) { TestProcess.new(definition) }
+          let(:task) { TestSubProcessTask.new(process, sub_process) }
+
+          it "yields UnknownType" do
+            Taskinator.redis do |conn|
+              conn.multi do |transaction|
+                transaction.hmset(*[task.key, [:type, task.class.name], [:uuid, task.uuid], [:sub_process, sub_process.uuid]])
+                transaction.hmset(*[sub_process.key, [:type, sub_process.class.name], [:uuid, sub_process.uuid], [:definition, 'UnknownBaz']])
+              end
+            end
+
+            instance = TestSubProcessTask.fetch(task.uuid)
+            expect(instance.uuid).to eq(task.uuid)
+            expect(instance.sub_process.definition).to be_a(Taskinator::Persistence::UnknownType)
+            expect(instance.sub_process.definition.type).to eq("UnknownBaz")
+          end
+        end
       end
     end
   end
