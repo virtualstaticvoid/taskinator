@@ -25,5 +25,10 @@ module Taskinator
       task.options if task
     end
 
+    # helpers
+    def logger
+      Taskinator.logger
+    end
+
   end
 end

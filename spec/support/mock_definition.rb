@@ -14,7 +14,7 @@ module MockDefinition
       definition.queue = queue
 
       # create a constant, so that the mock definition isn't anonymous
-      Object.const_set("Mock#{SecureRandom.hex}Definition", definition)
+      Object.const_set("Mock#{SecureRandom.hex(4)}Definition", definition)
 
     end
   end

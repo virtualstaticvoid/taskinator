@@ -1,6 +1,16 @@
 v?.?.? - ?? ??? ????
 ---
 
+v0.6.0 - 15 Jan 2023
+---
+
+* Add `before_started`, `after_completed` and `after_failed` functionality.
+* Add `logger` helper method, available within task methods.
+* Use `SecureRandom.hex(10)` instead of `uuid` for shorter process and tasks IDs.
+* Bug fix for options on `sequential`, `concurrent`, `for_each` and `sub_process` methods.
+* Bug fix instrumentation payload.
+* Documentation updates.
+
 v0.5.1 - 06 Jan 2023
 ---
 * Include process definition in processes, tasks and payloads to aid debugging.

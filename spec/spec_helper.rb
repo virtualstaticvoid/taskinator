@@ -74,7 +74,7 @@ RSpec.configure do |config|
   end
 
   config.before(:each, :redis => true) do
-    Taskinator.redis = { :namespace => "taskinator:test:#{SecureRandom.uuid}" }
+    Taskinator.redis = { :namespace => "taskinator:test:#{SecureRandom.hex(4)}" }
   end
 
   config.before(:each, :sidekiq => true) do

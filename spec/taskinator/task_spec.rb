@@ -2,7 +2,7 @@ require 'spec_helper'
 
 describe Taskinator::Task do
 
-  let(:definition) { TestDefinition }
+  let(:definition) { TestDefinitions::Definition }
 
   let(:process) do
     Class.new(Taskinator::Process) do
@@ -164,25 +164,17 @@ describe Taskinator::Task do
         subject.accept(visitor)
       }
     end
-
-    describe "#tasks_count" do
-      it {
-        process_uuid = SecureRandom.hex
-        allow(subject).to receive(:process_uuid) { process_uuid }
-        expect(subject.tasks_count).to eq(0)
-      }
-    end
   end
 
   describe Taskinator::Task::Step do
 
-    subject { Taskinator::Task.define_step_task(process, :do_task, {:a => 1, :b => 2}) }
+    subject { Taskinator::Task.define_step_task(process, :task1, {:a => 1, :b => 2}) }
 
     it_should_behave_like "a task", Taskinator::Task::Step
 
     describe ".define_step_task" do
       it "sets the queue to use" do
-        task = Taskinator::Task.define_step_task(process, :do_task, {:a => 1, :b => 2}, :queue => :foo)
+        task = Taskinator::Task.define_step_task(process, :task1, {:a => 1, :b => 2}, :queue => :foo)
         expect(task.queue).to eq(:foo)
       end
     end
@@ -290,7 +282,7 @@ describe Taskinator::Task do
       end
     end
 
-    describe "#complete" do
+    describe "#complete!" do
       it "notifies parent process" do
         expect(process).to receive(:task_completed).with(subject)
 
@@ -308,6 +300,206 @@ describe Taskinator::Task do
 
         TestInstrumenter.subscribe(instrumentation_block, /taskinator.task/) do
           subject.complete!
+        end
+      end
+    end
+
+    describe "#fail!" do
+      it "notifies parent process" do
+        err = StandardError.new
+        expect(process).to receive(:task_failed).with(subject, err)
+
+        subject.fail!(err)
+      end
+
+      it "is instrumented" do
+        err = StandardError.new
+        allow(process).to receive(:task_failed).with(subject, err)
+
+        instrumentation_block = SpecSupport::Block.new
+
+        expect(instrumentation_block).to receive(:call) do |*args|
+          expect(args.first).to eq('taskinator.task.failed')
+        end
+
+        TestInstrumenter.subscribe(instrumentation_block, /taskinator.task/) do
+          subject.fail!(err)
+        end
+      end
+    end
+
+    describe "#accept" do
+      it {
+        expect(subject).to receive(:accept)
+        subject.save
+      }
+
+      it {
+        visitor = double('visitor')
+        expect(visitor).to receive(:visit_type).with(:definition)
+        expect(visitor).to receive(:visit_attribute).with(:uuid)
+        expect(visitor).to receive(:visit_process_reference).with(:process)
+        expect(visitor).to receive(:visit_task_reference).with(:next)
+        expect(visitor).to receive(:visit_args).with(:options)
+        expect(visitor).to receive(:visit_attribute).with(:method)
+        expect(visitor).to receive(:visit_args).with(:args)
+        expect(visitor).to receive(:visit_attribute).with(:queue)
+        expect(visitor).to receive(:visit_attribute_time).with(:created_at)
+        expect(visitor).to receive(:visit_attribute_time).with(:updated_at)
+
+        subject.accept(visitor)
+      }
+    end
+
+    describe "#inspect" do
+      it { expect(subject.inspect).to_not be_nil }
+      it { expect(subject.inspect).to include(definition.name) }
+    end
+  end
+
+  describe Taskinator::Task::Hook do
+
+    subject { Taskinator::Task.define_hook_task(process, :task1, {:a => 1, :b => 2}) }
+
+    it_should_behave_like "a task", Taskinator::Task::Hook
+
+    describe ".define_hook_task" do
+      it "sets the queue to use" do
+        task = Taskinator::Task.define_hook_task(process, :task1, {:a => 1, :b => 2}, :queue => :foo)
+        expect(task.queue).to eq(:foo)
+      end
+    end
+
+    describe "#executor" do
+      it { expect(subject.executor).to_not be_nil }
+      it { expect(subject.executor).to be_a(definition) }
+
+      it "handles failure" do
+        error = StandardError.new
+        allow(subject.executor).to receive(subject.method).with(*subject.args).and_raise(error)
+        expect(subject).to receive(:fail!).with(error)
+        expect {
+          subject.start!
+        }.to raise_error(error)
+      end
+    end
+
+    describe "#enqueue!" do
+      it {
+        expect {
+          subject.enqueue!
+        }.to change { Taskinator.queue.tasks.length }.by(1)
+      }
+
+      it "is instrumented" do
+        allow(subject.executor).to receive(subject.method).with(*subject.args)
+
+        instrumentation_block = SpecSupport::Block.new
+
+        expect(instrumentation_block).to receive(:call) do |*args|
+          expect(args.first).to eq('taskinator.task.enqueued')
+        end
+
+        TestInstrumenter.subscribe(instrumentation_block, /taskinator.task/) do
+          subject.enqueue!
+        end
+      end
+    end
+
+    describe "#start!" do
+      before do
+        allow(process).to receive(:task_completed).with(subject)
+      end
+
+      it "invokes executor" do
+        expect(subject.executor).to receive(subject.method).with(*subject.args)
+        subject.start!
+      end
+
+      it "provides execution context" do
+        executor = Taskinator::Executor.new(definition, subject)
+
+        method = subject.method
+
+        executor.singleton_class.class_eval do
+          define_method method do |*args|
+            # this method executes in the scope of the executor
+            # store the context in an instance variable
+            @exec_context = self
+          end
+        end
+
+        # replace the internal executor instance for the task
+        # with this one, so we can hook into the methods
+        subject.instance_eval { @executor = executor }
+
+        # task start will invoke the method on the executor
+        subject.start!
+
+        # extract the instance variable
+        exec_context = executor.instance_eval { @exec_context }
+
+        expect(exec_context).to eq(executor)
+        expect(exec_context.uuid).to eq(subject.uuid)
+        expect(exec_context.options).to eq(subject.options)
+      end
+
+      it "is instrumented" do
+        instrumentation_block = SpecSupport::Block.new
+
+        expect(instrumentation_block).to receive(:call) do |*args|
+          expect(args.first).to eq('taskinator.task.processing')
+        end
+
+        expect(instrumentation_block).to receive(:call) do |*args|
+          expect(args.first).to eq('taskinator.task.completed')
+        end
+
+        TestInstrumenter.subscribe(instrumentation_block) do
+          subject.start!
+        end
+      end
+    end
+
+    describe "#complete!" do
+      it "does not notify parent process" do
+        expect(process).to_not receive(:task_completed).with(subject)
+
+        subject.complete!
+      end
+
+      it "is instrumented" do
+        allow(process).to receive(:task_completed).with(subject)
+
+        instrumentation_block = SpecSupport::Block.new
+
+        expect(instrumentation_block).to receive(:call) do |*args|
+          expect(args.first).to eq('taskinator.task.completed')
+        end
+
+        TestInstrumenter.subscribe(instrumentation_block, /taskinator.task/) do
+          subject.complete!
+        end
+      end
+    end
+
+    describe "#fail!" do
+      it "does not notify parent process" do
+        err = StandardError.new
+        expect(process).to_not receive(:task_failed).with(subject, err)
+
+        subject.fail!(err)
+      end
+
+      it "is instrumented" do
+        instrumentation_block = SpecSupport::Block.new
+
+        expect(instrumentation_block).to receive(:call) do |*args|
+          expect(args.first).to eq('taskinator.task.failed')
+        end
+
+        TestInstrumenter.subscribe(instrumentation_block, /taskinator.task/) do
+          subject.fail!(StandardError.new)
         end
       end
     end
