@@ -1,10 +1,16 @@
 v?.?.? - ?? ??? ????
 ---
+
+v0.5.1 - 06 Jan 2023
+---
 Include process definition in processes, tasks and payloads to aid debugging.
 Increased test coverage for process and task specs.
 Removed `statsd` instrumentation.
 Removed unused `Taskinator::Visitor::XmlVisitor` implementation.
 Various refactorings and clean ups.
+Bug fixes for process class when used as a sub-process
+Add handling for unknown types when deserializing old processes
+Raises `UnknownTypeError` when trying to invoke processes or Jobs of unknown types
 
 v0.5.0 - 18 Feb 2022
 ---
@@ -50,7 +56,7 @@ Added support for having `perform` method as a class method.
 
 v0.3.16 - 17 Feb 2021
 ---
-Bug fix to deincrement pending counts for sequential tasks.
+Bug fix to decrement pending counts for sequential tasks.
 Bug fix to allow concurrent tasks to be retried (via Resque) and to complete processes.
 
 v0.3.15 - 22 Nov 2018
