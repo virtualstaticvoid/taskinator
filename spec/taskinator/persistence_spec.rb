@@ -46,6 +46,15 @@ describe Taskinator::Persistence, :redis => true do
         expect(subject.fetch('uuid', cache)).to eq(item)
       end
 
+      it "yields UnknownType" do
+        Taskinator.redis do |conn|
+          conn.hmset(*[subject.key_for("foo"), [:type, 'UnknownFoo']])
+        end
+        instance = subject.fetch("foo")
+        expect(instance).to be_a(Taskinator::Persistence::UnknownType)
+        expect(instance.type).to eq("UnknownFoo")
+      end
+
       describe "for processes" do
         let(:process) { TestProcess.new(definition) }
 
@@ -53,6 +62,19 @@ describe Taskinator::Persistence, :redis => true do
           process.save
           expect(TestProcess.fetch(process.uuid)).to eq(process)
         }
+
+        describe "unknown definition" do
+          it "yields UnknownType" do
+            Taskinator.redis do |conn|
+              conn.hmset(*[process.key, [:type, TestProcess.name], [:uuid, process.uuid], [:definition, 'UnknownFoo']])
+            end
+
+            instance = TestProcess.fetch(process.uuid)
+            expect(instance.uuid).to eq(process.uuid)
+            expect(instance.definition).to be_a(Taskinator::Persistence::UnknownType)
+            expect(instance.definition.type).to eq("UnknownFoo")
+          end
+        end
       end
 
       describe "for tasks" do
@@ -62,9 +84,45 @@ describe Taskinator::Persistence, :redis => true do
         it {
           process.tasks << task
           process.save
-          expect(TestTask.fetch(task.uuid)).to eq(task)
-          expect(TestTask.fetch(task.uuid).process).to eq(process)
+
+          instance = TestTask.fetch(task.uuid)
+          expect(instance).to eq(task)
+          expect(instance.process).to eq(process)
         }
+
+        describe "unknown job" do
+          let(:task) { TestJobTask.new(process, TestJob, []) }
+
+          it "yields UnknownType" do
+            Taskinator.redis do |conn|
+              conn.hmset(*[task.key, [:type, task.class.name], [:uuid, task.uuid], [:job, 'UnknownBar']])
+            end
+
+            instance = TestJobTask.fetch(task.uuid)
+            expect(instance.uuid).to eq(task.uuid)
+            expect(instance.job).to be_a(Taskinator::Persistence::UnknownType)
+            expect(instance.job.type).to eq("UnknownBar")
+          end
+        end
+
+        describe "unknown subprocess" do
+          let(:sub_process) { TestProcess.new(definition) }
+          let(:task) { TestSubProcessTask.new(process, sub_process) }
+
+          it "yields UnknownType" do
+            Taskinator.redis do |conn|
+              conn.multi do |transaction|
+                transaction.hmset(*[task.key, [:type, task.class.name], [:uuid, task.uuid], [:sub_process, sub_process.uuid]])
+                transaction.hmset(*[sub_process.key, [:type, sub_process.class.name], [:uuid, sub_process.uuid], [:definition, 'UnknownBaz']])
+              end
+            end
+
+            instance = TestSubProcessTask.fetch(task.uuid)
+            expect(instance.uuid).to eq(task.uuid)
+            expect(instance.sub_process.definition).to be_a(Taskinator::Persistence::UnknownType)
+            expect(instance.sub_process.definition.type).to eq("UnknownBaz")
+          end
+        end
       end
     end
   end
@@ -184,6 +242,72 @@ describe Taskinator::Persistence, :redis => true do
           expect_any_instance_of(MockModel).to receive(:find)
           subject.deserialize("---\n!ruby/object:MockModel\n  model_id: 1\n  model_type: TypeX\n")
         }
+      end
+    end
+  end
+
+  describe "unknown type helpers" do
+    subject { Taskinator::Persistence::UnknownType }
+
+    describe "#new" do
+      it "instantiates new module instance" do
+        instance = subject.new("foo")
+        expect(instance).to_not be_nil
+        expect(instance).to be_a(::Module)
+      end
+
+      it "yields same instance for same type" do
+        instance1 = subject.new("foo")
+        instance2 = subject.new("foo")
+        expect(instance1).to eq(instance2)
+      end
+    end
+
+    describe ".type" do
+      it {
+        instance = subject.new("foo")
+        expect(instance.type).to eq("foo")
+      }
+    end
+
+    describe ".to_s" do
+      it {
+        instance = subject.new("foo")
+        expect(instance.to_s).to eq("Unknown type 'foo'.")
+      }
+    end
+
+    describe ".allocate" do
+      it "emulates Object#allocate" do
+        instance = subject.new("foo")
+        expect(instance.allocate).to eq(instance)
+      end
+    end
+
+    describe ".accept" do
+      it {
+        instance = subject.new("foo")
+        expect(instance).to respond_to(:accept)
+      }
+    end
+
+    describe ".perform" do
+      it "raises UnknownTypeError" do
+        instance = subject.new("foo")
+        expect {
+          instance.perform(:foo, 1, false)
+        }.to raise_error(Taskinator::Persistence::UnknownTypeError)
+      end
+    end
+
+    describe "via executor" do
+      it "raises UnknownTypeError" do
+        instance = subject.new("foo")
+        executor = Taskinator::Executor.new(instance)
+
+        expect {
+          executor.foo
+        }.to raise_error(Taskinator::Persistence::UnknownTypeError)
       end
     end
   end
@@ -429,6 +553,5 @@ describe Taskinator::Persistence, :redis => true do
       end
 
     end
-
   end
 end

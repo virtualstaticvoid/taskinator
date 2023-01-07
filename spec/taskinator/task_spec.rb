@@ -261,6 +261,18 @@ describe Taskinator::Task do
         expect(exec_context.options).to eq(subject.options)
       end
 
+      it "throws an exception for unknown definition type" do
+        executor = Taskinator::Executor.new(Taskinator::Persistence::UnknownType.new("Foo"), subject)
+
+        # replace the internal executor instance for the task
+        # with this one, so we can hook into the methods
+        subject.instance_eval { @executor = executor }
+
+        expect {
+          subject.start!
+        }.to raise_error(Taskinator::Persistence::UnknownTypeError)
+      end
+
       it "is instrumented" do
         instrumentation_block = SpecSupport::Block.new
 
@@ -331,37 +343,6 @@ describe Taskinator::Task do
 
   describe Taskinator::Task::Job do
 
-    module TestJob
-      def self.perform(*args)
-      end
-    end
-
-    class TestJobClass
-      def perform(*args)
-      end
-    end
-
-    module TestJobModule
-      def self.perform(*args)
-      end
-    end
-
-    class TestJobClassNoArgs
-      def perform
-      end
-    end
-
-    module TestJobModuleNoArgs
-      def self.perform
-      end
-    end
-
-    module TestJobError
-      def self.perform
-        raise ArgumentError
-      end
-    end
-
     subject { Taskinator::Task.define_job_task(process, TestJob, [1, {:a => 1, :b => 2}]) }
 
     it_should_behave_like "a task", Taskinator::Task::Job
@@ -421,6 +402,14 @@ describe Taskinator::Task do
         expect(TestJobModuleNoArgs).to receive(:perform).and_call_original
         task.start!
       }
+
+      it "throws an exception when unknown job type" do
+        task = Taskinator::Task.define_job_task(process, Taskinator::Persistence::UnknownType.new("Foo"), nil)
+
+        expect {
+          task.start!
+        }.to raise_error(Taskinator::Persistence::UnknownTypeError)
+      end
 
       it "handles failure" do
         task = Taskinator::Task.define_job_task(process, TestJobError, nil)

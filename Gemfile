@@ -5,7 +5,7 @@ gemspec
 
 # queues
 gem 'activejob'       , '>= 5.0.0'
-gem 'sidekiq'         , '>= 3.5.0'
+gem 'sidekiq'         , '>= 3.5.0', '< 7.0.0'
 gem 'rspec-sidekiq'   , '>= 2.1.0'
 
 gem 'delayed_job'     , '~> 4.1.0'

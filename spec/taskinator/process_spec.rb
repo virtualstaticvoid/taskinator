@@ -296,7 +296,7 @@ describe Taskinator::Process do
         subject.task_completed(task1)
       end
 
-      it "deincrements the pending task count" do
+      it "decrements the pending task count" do
         tasks.each {|t| subject.tasks << t }
         task1 = tasks[0]
         task2 = tasks[1]
@@ -375,7 +375,7 @@ describe Taskinator::Process do
         subject.task_failed(tasks.first, error)
       end
 
-      it "doesn't deincement pending task count" do
+      it "doesn't decrement pending task count" do
         tasks.each {|t| subject.tasks << t }
 
         expect(subject).to_not receive(:deincr_pending_tasks)
@@ -523,7 +523,7 @@ describe Taskinator::Process do
         end
       end
 
-      it "deincrements the pending task count" do
+      it "decrements the pending task count" do
         tasks.each {|t| subject.tasks << t }
         task1 = tasks[0]
         task2 = tasks[1]
