@@ -308,7 +308,10 @@ module MyProcess
   # defines a process
   define_process do
 
-    # tasks, sub-process, etc.
+    # define task to execute on before
+    before_started :slack_notification
+
+    # usual tasks, sub-process, etc.
 
     # define task to execute on completion
     after_completed :further_process
@@ -316,6 +319,10 @@ module MyProcess
     # define task to execute on failure
     after_failed :email_operations
 
+  end
+
+  def slack_notification
+    # ...
   end
 
   def further_process
