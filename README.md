@@ -1,7 +1,7 @@
 # Taskinator
 
 [![Gem Version](https://badge.fury.io/rb/taskinator.svg)](http://badge.fury.io/rb/taskinator)
-[![Build Status](https://github.com/virtualstaticvoid/taskinator/actions/workflows/taskinator.yml/badge.svg)](https://github.com/virtualstaticvoid/taskinator/actions/workflows/taskinator.yml)
+[![Build Status](https://github.com/virtualstaticvoid/taskinator/actions/workflows/build.yml/badge.svg)](https://github.com/virtualstaticvoid/taskinator/actions/workflows/build.yml)
 [![Code Climate](https://codeclimate.com/github/virtualstaticvoid/taskinator.png)](https://codeclimate.com/github/virtualstaticvoid/taskinator)
 
 A simple orchestration library for running complex processes or workflows in Ruby.

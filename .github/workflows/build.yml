@@ -1,10 +1,8 @@
-name: Taskinator
+name: Build
 
 on:
   push:
     branches: [ master ]
-    tags:
-      - '*'
 
   pull_request:
     branches: [ master ]
@@ -28,16 +26,3 @@ jobs:
       run: bundle exec rake build
     - name: Run tests
       run: bundle exec rake spec
-
-  publish:
-    if: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v*') }}
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v3
-    - name: Release Gem
-      uses: virtualstaticvoid/publish-rubygems-action@v3
-      env:
-        RUBYGEMS_API_KEY: ${{secrets.RUBYGEMS_API_KEY}}
-        GIT_NAME: Chris Stefano
-        GIT_EMAIL: virtualstaticvoid@gmail.com
