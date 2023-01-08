@@ -554,4 +554,5 @@ describe Taskinator::Persistence, :redis => true do
 
     end
   end
+
 end

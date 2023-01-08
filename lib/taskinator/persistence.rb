@@ -222,7 +222,6 @@ module Taskinator
 
         end
       end
-
     end
 
     class RedisSerializationVisitor < Taskinator::Visitor::Base
@@ -750,7 +749,6 @@ module Taskinator
         # and memoize for subsequent calls
         @instance ||= @type.fetch(@uuid, @instance_cache)
       end
-
     end
 
     class << self
