@@ -21,7 +21,6 @@ module Taskinator
       enqueued
       processing
       paused
-      resumed
       completed
       cancelled
       failed
