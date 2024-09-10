@@ -115,13 +115,13 @@ module Taskinator
             transaction.hmset(
               self.key,
               :state, new_state,
-              :updated_at, @updated_at
+              :updated_at, @updated_at.iso8601(3)
             )
 
             # also update the "root" process
             transaction.hset(
               process_key,
-              :updated_at, @updated_at
+              :updated_at, @updated_at.iso8601(3)
             )
           end
         end
@@ -138,7 +138,7 @@ module Taskinator
             :error_type, error.class.name,
             :error_message, error.message,
             :error_backtrace, JSON.generate(error.backtrace || []),
-            :updated_at, Time.now.utc
+            :updated_at, Time.now.utc.iso8601(3)
           )
         end
       end
@@ -182,7 +182,7 @@ module Taskinator
             process_key = self.process_key
             conn.multi do |transaction|
               transaction.hincrby process_key, "tasks_#{status}", 1
-              transaction.hset process_key, :updated_at, Time.now.utc
+              transaction.hset process_key, :updated_at, Time.now.utc.iso8601(3)
             end
           end
         end
@@ -294,7 +294,8 @@ module Taskinator
       end
 
       def visit_attribute_time(attribute)
-        visit_attribute(attribute)
+        value = @instance.send(attribute)
+        @hmset += [attribute, value.iso8601(3)] if value
       end
 
       def visit_attribute_enum(attribute, type)
