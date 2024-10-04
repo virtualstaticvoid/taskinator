@@ -83,6 +83,9 @@ module Taskinator
 
       transition(:processing) do
         instrument('taskinator.task.processing', processing_payload) do
+          # notify the process that this task has started
+          process.task_started(self) if notify_process?
+
           start
         end
       end
@@ -99,10 +102,12 @@ module Taskinator
     end
 
     def complete!
+      self.incr_completed if incr_count?
+
       transition(:completed) do
-        self.incr_completed if incr_count?
         instrument('taskinator.task.completed', completed_payload) do
           complete if respond_to?(:complete)
+
           # notify the process that this task has completed
           process.task_completed(self) if notify_process?
         end
@@ -110,10 +115,14 @@ module Taskinator
     end
 
     def cancel!
+      self.incr_cancelled if incr_count?
+
       transition(:cancelled) do
-        self.incr_cancelled if incr_count?
         instrument('taskinator.task.cancelled', cancelled_payload) do
           cancel if respond_to?(:cancel)
+
+          # notify the process that this task has cancelled
+          process.task_cancelled(self) if notify_process?
         end
       end
     end
@@ -123,10 +132,12 @@ module Taskinator
     end
 
     def fail!(error)
+      self.incr_failed if incr_count?
+
       transition(:failed) do
-        self.incr_failed if incr_count?
         instrument('taskinator.task.failed', failed_payload(error)) do
           fail(error) if respond_to?(:fail)
+
           # notify the process that this task has failed
           process.task_failed(self, error) if notify_process?
         end

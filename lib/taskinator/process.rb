@@ -51,6 +51,10 @@ module Taskinator
       @key = nil # NB: invalidate memoized key
     end
 
+    def sub_process?
+      defined?(@parent)
+    end
+
     def tasks
       @tasks ||= Tasks.new
     end
@@ -155,9 +159,6 @@ module Taskinator
       after_completed_tasks.each(&:enqueue!)
     end
 
-    # TODO: add retry method - to pick up from a failed task
-    #  e.g. like retrying a failed job in Resque Web
-
     def tasks_completed?
       # TODO: optimize this
       tasks.all?(&:completed?)
@@ -185,8 +186,25 @@ module Taskinator
       after_failed_tasks.each(&:enqueue!)
     end
 
+    #--------------------------------------------------
+
+    # TODO: add retry method - to pick up from a failed task
+    #  e.g. like retrying a failed job in Resque Web
+
+    def task_started(task)
+      return if processing? || sub_process?
+
+      transition(:processing) do
+        # enqueue before started tasks independently
+        before_started_tasks.each(&:enqueue!)
+      end
+    end
+
+    def task_cancelled(task)
+      cancel!
+    end
+
     def task_failed(task, error)
-      # for now, fail this process
       fail!(error)
     end
 
@@ -271,7 +289,6 @@ module Taskinator
         end
       end
 
-      # this method only called in-process (usually from the console)
       def start
         if tasks.empty?
           complete! # weren't any tasks to start with

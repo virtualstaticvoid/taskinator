@@ -26,8 +26,14 @@ module Taskinator
     end
 
     # helpers
+
     def logger
       Taskinator.logger
+    end
+
+    def error
+      # task.process.error
+      raise NoMethodError
     end
 
   end

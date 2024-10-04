@@ -31,6 +31,10 @@ module Taskinator
         process_args << { :uuid => uuid }
       end
 
+      # generate the process for the given definition and arguments
+      # and enqueue the processes tasks
+      # -> sequential processes - enqueues the first task
+      # -> concurrent processes - enqueues all the tasks
       @definition._create_process_(false, *process_args).enqueue!
 
     end

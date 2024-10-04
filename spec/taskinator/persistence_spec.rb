@@ -501,6 +501,9 @@ describe Taskinator::Persistence, :redis => true do
         TestDefinitions::EmptySequentialProcessTest,
         TestDefinitions::EmptyConcurrentProcessTest,
         TestDefinitions::NestedTask,
+        TestDefinitions::TaskBeforeStarted,
+        TestDefinitions::TaskAfterCompleted,
+        TestDefinitions::TaskAfterFailed,
       ].each do |definition|
 
         describe "#{definition.name} expire immediately" do

@@ -92,6 +92,52 @@ describe TestDefinitions do
       Taskinator.queue_adapter = :test_queue_worker
     end
 
+    context "before_started" do
+      let(:definition) { TestDefinitions::TaskBeforeStarted }
+      subject { definition.create_process }
+
+      it "invokes before_started task" do
+        expect(subject.before_started_tasks.count).to eq(1)
+        expect_any_instance_of(definition).to receive(:task_before_started)
+
+        expect {
+          subject.enqueue!
+        }.to change { Taskinator.queue.tasks.length }.by(2)
+      end
+    end
+
+    context "after_completed" do
+      let(:definition) { TestDefinitions::TaskAfterCompleted }
+      subject { definition.create_process }
+
+      it "invokes after_completed task" do
+        expect(subject.after_completed_tasks.count).to eq(1)
+        expect_any_instance_of(definition).to receive(:task_after_completed)
+
+        expect {
+          subject.enqueue!
+        }.to change { Taskinator.queue.tasks.length }.by(2)
+      end
+    end
+
+    context "after_failed" do
+      let(:definition) { TestDefinitions::TaskAfterFailed }
+      subject { definition.create_process }
+
+      it "invokes after_failed task" do
+        expect(subject.after_failed_tasks.count).to eq(1)
+        expect_any_instance_of(definition).to receive(:task_after_failed)
+
+        expect {
+          begin
+            subject.enqueue!
+          rescue TestDefinitions::TestTaskFailed
+            # ignore error
+          end
+        }.to change { Taskinator.queue.tasks.length }.by(2)
+      end
+    end
+
     context "empty subprocesses" do
 
       context "sequential" do
@@ -133,6 +179,54 @@ describe TestDefinitions do
       end
 
     end
+
+    context "subprocesses" do
+
+      context "before_started" do
+        let(:definition) { TestDefinitions::TaskBeforeStartedSubProcess }
+        subject { definition.create_process }
+
+        it "invokes before_started task" do
+          expect_any_instance_of(definition).to receive(:task_before_started)
+
+          expect {
+            subject.enqueue!
+          }.to change { Taskinator.queue.tasks.length }.by(1)
+        end
+      end
+
+      context "after_completed" do
+        let(:definition) { TestDefinitions::TaskAfterCompletedSubProcess }
+        subject { definition.create_process }
+
+        it "invokes after_completed task" do
+          expect_any_instance_of(definition).to receive(:task_after_completed)
+
+          expect {
+            subject.enqueue!
+          }.to change { Taskinator.queue.tasks.length }.by(2)
+        end
+      end
+
+      context "after_failed" do
+        let(:definition) { TestDefinitions::TaskAfterFailedSubProcess }
+        subject { definition.create_process }
+
+        it "invokes after_failed task" do
+          expect_any_instance_of(definition).to receive(:task_after_failed)
+
+          expect {
+            begin
+              subject.enqueue!
+            rescue TestDefinitions::TestTaskFailed
+              # ignore error
+            end
+          }.to change { Taskinator.queue.tasks.length }.by(2)
+        end
+      end
+
+    end
+
   end
 
   describe "statuses" do

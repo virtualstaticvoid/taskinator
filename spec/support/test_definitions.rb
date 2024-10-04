@@ -6,6 +6,9 @@ module TestDefinitions
     end
   end
 
+  class TestTaskFailed < StandardError
+  end
+
   module Support
 
     def iterator(task_count, *args)
@@ -20,6 +23,22 @@ module TestDefinitions
       define_method "task#{i}" do |*args|
         Taskinator.logger.info(">>> Executing task #{__method__} [#{uuid}]...")
       end
+    end
+
+    def task_fail(*args)
+      raise TestTaskFailed
+    end
+
+    def task_before_started(*args)
+      Taskinator.logger.info(">>> Executing before started task #{__method__} [#{uuid}]...")
+    end
+
+    def task_after_completed(*args)
+      Taskinator.logger.info(">>> Executing after completed task #{__method__} [#{uuid}]...")
+    end
+
+    def task_after_failed(*args)
+      Taskinator.logger.info(">>> Executing after failed task #{__method__} [#{uuid}]...")
     end
 
   end
@@ -46,12 +65,19 @@ module TestDefinitions
     extend Taskinator::Definition
     include Support
 
-    define_process :task_count do
-      before_started :task1, :queue => :foo
+    define_process do
+      before_started :task_before_started
 
-      for_each :iterator do
-        task :task2, :queue => :foo
-      end
+      task :task1
+    end
+  end
+
+  module TaskBeforeStartedSubProcess
+    extend Taskinator::Definition
+    include Support
+
+    define_process do
+      sub_process TaskBeforeStarted
     end
 
   end
@@ -60,12 +86,20 @@ module TestDefinitions
     extend Taskinator::Definition
     include Support
 
-    define_process :task_count do
-      for_each :iterator do
-        task :task1, :queue => :foo
-      end
+    define_process do
+      task :task1
 
-      after_completed :task2, :queue => :foo
+      after_completed :task_after_completed
+    end
+
+  end
+
+  module TaskAfterCompletedSubProcess
+    extend Taskinator::Definition
+    include Support
+
+    define_process do
+      sub_process TaskAfterCompleted
     end
 
   end
@@ -74,12 +108,20 @@ module TestDefinitions
     extend Taskinator::Definition
     include Support
 
-    define_process :task_count do
-      for_each :iterator do
-        task :task1, :queue => :foo
-      end
+    define_process do
+      task :task_fail
 
-      after_failed :task2, :queue => :foo
+      after_failed :task_after_failed
+    end
+
+  end
+
+  module TaskAfterFailedSubProcess
+    extend Taskinator::Definition
+    include Support
+
+    define_process do
+      sub_process TaskAfterFailed
     end
 
   end
