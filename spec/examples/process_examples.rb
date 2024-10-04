@@ -9,5 +9,8 @@ shared_examples_for "a process" do |process_type|
   it { expect(subject.to_s).to match(/#{subject.uuid}/) }
   it { expect(subject.options).to_not be_nil }
   it { expect(subject.tasks).to_not be_nil }
+  it { expect(subject.before_started_tasks).to_not be_nil }
+  it { expect(subject.after_completed_tasks).to_not be_nil }
+  it { expect(subject.after_failed_tasks).to_not be_nil }
 
 end

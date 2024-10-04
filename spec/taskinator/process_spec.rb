@@ -2,7 +2,7 @@ require 'spec_helper'
 
 describe Taskinator::Process do
 
-  let(:definition) { TestDefinition }
+  let(:definition) { TestDefinitions::Definition }
 
   describe "Base" do
 
@@ -33,6 +33,18 @@ describe Taskinator::Process do
 
     describe "#tasks" do
       it { expect(subject.tasks).to be_a(Taskinator::Tasks) }
+    end
+
+    describe "#before_started_tasks" do
+      it { expect(subject.before_started_tasks).to be_a(Taskinator::Tasks) }
+    end
+
+    describe "#after_completed_tasks" do
+      it { expect(subject.after_completed_tasks).to be_a(Taskinator::Tasks) }
+    end
+
+    describe "#after_failed_tasks" do
+      it { expect(subject.after_failed_tasks).to be_a(Taskinator::Tasks) }
     end
 
     describe "#no_tasks_defined?" do
@@ -91,6 +103,14 @@ describe Taskinator::Process do
           subject.start!
           expect(subject.current_state).to eq(:processing)
         }
+
+        it "enqueues before_started_tasks" do
+          task = Class.new(Taskinator::Task).new(subject)
+          expect(task).to receive(:enqueue!)
+          subject.before_started_tasks << task
+
+          subject.start!
+        end
       end
 
       describe "#cancel!" do
@@ -149,6 +169,14 @@ describe Taskinator::Process do
           subject.complete!
           expect(subject.current_state).to eq(:completed)
         }
+
+        it "enqueues after_completed_tasks" do
+          task = Class.new(Taskinator::Task).new(subject)
+          expect(task).to receive(:enqueue!)
+          subject.after_completed_tasks << task
+
+          subject.complete!
+        end
       end
 
       describe "#fail!" do
@@ -164,6 +192,14 @@ describe Taskinator::Process do
           subject.fail!(StandardError.new)
           expect(subject.current_state).to eq(:failed)
         }
+
+        it "enqueues after_failed_tasks" do
+          task = Class.new(Taskinator::Task).new(subject)
+          expect(task).to receive(:enqueue!)
+          subject.after_failed_tasks << task
+
+          subject.fail!(StandardError.new)
+        end
       end
     end
 
@@ -199,7 +235,10 @@ describe Taskinator::Process do
         expect(visitor).to receive(:visit_attribute).with(:uuid)
         expect(visitor).to receive(:visit_args).with(:options)
         expect(visitor).to receive(:visit_task_reference).with(:parent)
-        expect(visitor).to receive(:visit_tasks)
+        expect(visitor).to receive(:visit_tasks).with(subject.tasks)
+        expect(visitor).to receive(:visit_before_started_tasks).with(subject.before_started_tasks)
+        expect(visitor).to receive(:visit_after_completed_tasks).with(subject.after_completed_tasks)
+        expect(visitor).to receive(:visit_after_failed_tasks).with(subject.after_failed_tasks)
         expect(visitor).to receive(:visit_attribute).with(:scope)
         expect(visitor).to receive(:visit_attribute).with(:queue)
         expect(visitor).to receive(:visit_attribute_time).with(:created_at)
@@ -208,13 +247,6 @@ describe Taskinator::Process do
         subject.accept(visitor)
       }
     end
-
-    describe "#tasks_count" do
-      it {
-        expect(subject.tasks_count).to eq(0)
-      }
-    end
-
   end
 
   describe Taskinator::Process::Sequential do
@@ -400,7 +432,10 @@ describe Taskinator::Process do
         expect(visitor).to receive(:visit_attribute).with(:uuid)
         expect(visitor).to receive(:visit_args).with(:options)
         expect(visitor).to receive(:visit_task_reference).with(:parent)
-        expect(visitor).to receive(:visit_tasks)
+        expect(visitor).to receive(:visit_tasks).with(subject.tasks)
+        expect(visitor).to receive(:visit_before_started_tasks).with(subject.before_started_tasks)
+        expect(visitor).to receive(:visit_after_completed_tasks).with(subject.after_completed_tasks)
+        expect(visitor).to receive(:visit_after_failed_tasks).with(subject.after_failed_tasks)
         expect(visitor).to receive(:visit_attribute).with(:scope)
         expect(visitor).to receive(:visit_attribute).with(:queue)
         expect(visitor).to receive(:visit_attribute_time).with(:created_at)
@@ -685,7 +720,10 @@ describe Taskinator::Process do
         expect(visitor).to receive(:visit_attribute_enum).with(:complete_on, Taskinator::CompleteOn)
         expect(visitor).to receive(:visit_args).with(:options)
         expect(visitor).to receive(:visit_task_reference).with(:parent)
-        expect(visitor).to receive(:visit_tasks)
+        expect(visitor).to receive(:visit_tasks).with(subject.tasks)
+        expect(visitor).to receive(:visit_before_started_tasks).with(subject.before_started_tasks)
+        expect(visitor).to receive(:visit_after_completed_tasks).with(subject.after_completed_tasks)
+        expect(visitor).to receive(:visit_after_failed_tasks).with(subject.after_failed_tasks)
         expect(visitor).to receive(:visit_attribute).with(:scope)
         expect(visitor).to receive(:visit_attribute).with(:queue)
         expect(visitor).to receive(:visit_attribute_time).with(:created_at)

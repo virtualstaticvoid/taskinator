@@ -44,7 +44,7 @@ module Taskinator
       # need to cache here, since this method hits redis, so can't be part of multi statement following
       process_key = self.process_key
 
-      tasks_count, processing_count, completed_count, cancelled_count, failed_count = Taskinator.redis do |conn|
+      count, processing, completed, cancelled, failed = Taskinator.redis do |conn|
         conn.hmget process_key,
                    :tasks_count,
                    :tasks_processing,
@@ -53,7 +53,7 @@ module Taskinator
                    :tasks_failed
       end
 
-      tasks_count = tasks_count.to_f
+      count = count.to_f
 
       return OpenStruct.new(
         {
@@ -64,12 +64,12 @@ module Taskinator
           :uuid                   => uuid,
           :options                => options.dup,
           :state                  => state,
-          :percentage_failed      => (tasks_count > 0) ? (failed_count.to_i     / tasks_count) * 100.0 : 0.0,
-          :percentage_cancelled   => (tasks_count > 0) ? (cancelled_count.to_i  / tasks_count) * 100.0 : 0.0,
-          :percentage_processing  => (tasks_count > 0) ? (processing_count.to_i / tasks_count) * 100.0 : 0.0,
-          :percentage_completed   => (tasks_count > 0) ? (completed_count.to_i  / tasks_count) * 100.0 : 0.0,
+          :percentage_failed      => (count > 0) ? (failed.to_i     / count) * 100.0 : 0.0,
+          :percentage_cancelled   => (count > 0) ? (cancelled.to_i  / count) * 100.0 : 0.0,
+          :percentage_processing  => (count > 0) ? (processing.to_i / count) * 100.0 : 0.0,
+          :percentage_completed   => (count > 0) ? (completed.to_i  / count) * 100.0 : 0.0,
         }.merge(additional)
-      ).freeze
+      )
 
     end
 

@@ -3,6 +3,7 @@ require 'yaml'
 require 'securerandom'
 require 'benchmark'
 require 'delegate'
+require 'builder'
 
 require 'taskinator/version'
 
@@ -10,6 +11,7 @@ require 'taskinator/complete_on'
 require 'taskinator/redis_connection'
 require 'taskinator/logger'
 
+require 'taskinator/builder'
 require 'taskinator/definition'
 
 require 'taskinator/workflow'
@@ -33,7 +35,7 @@ require 'taskinator/api'
 module Taskinator
 
   NAME = "Taskinator"
-  LICENSE = 'See LICENSE.txt for licensing details.'
+  LICENSE = 'See LICENSE for licensing details.'
 
   DEFAULTS = {
     # none for now...
@@ -48,7 +50,7 @@ module Taskinator
     end
 
     def generate_uuid
-      SecureRandom.uuid
+      SecureRandom.hex(10)
     end
 
     ##

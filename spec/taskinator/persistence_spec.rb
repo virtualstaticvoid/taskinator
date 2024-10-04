@@ -2,7 +2,7 @@ require 'spec_helper'
 
 describe Taskinator::Persistence, :redis => true do
 
-  let(:definition) { TestDefinition }
+  let(:definition) { TestDefinitions::Definition }
 
   describe "class methods" do
     subject {
@@ -336,7 +336,7 @@ describe Taskinator::Persistence, :redis => true do
 
     describe "#to_xml" do
       it {
-        process = TestFlows::Task.create_process(1)
+        process = TestDefinitions::NestedTask.create_process(1)
         expect(process.to_xml).to match(/xml/)
       }
     end
@@ -493,14 +493,17 @@ describe Taskinator::Persistence, :redis => true do
     describe "#cleanup" do
 
       [
-        TestFlows::Task,
-        TestFlows::Job,
-        TestFlows::SubProcess,
-        TestFlows::Sequential,
-        TestFlows::Concurrent,
-        TestFlows::EmptySequentialProcessTest,
-        TestFlows::EmptyConcurrentProcessTest,
-        TestFlows::NestedTask,
+        TestDefinitions::Task,
+        TestDefinitions::Job,
+        TestDefinitions::SubProcess,
+        TestDefinitions::Sequential,
+        TestDefinitions::Concurrent,
+        TestDefinitions::EmptySequentialProcessTest,
+        TestDefinitions::EmptyConcurrentProcessTest,
+        TestDefinitions::NestedTask,
+        TestDefinitions::TaskBeforeStarted,
+        TestDefinitions::TaskAfterCompleted,
+        TestDefinitions::TaskAfterFailed,
       ].each do |definition|
 
         describe "#{definition.name} expire immediately" do
@@ -531,7 +534,7 @@ describe Taskinator::Persistence, :redis => true do
             # sanity check
             expect(conn.keys).to be_empty
 
-            process = TestFlows::Task.create_process(1)
+            process = TestDefinitions::Task.create_process(1)
 
             # sanity check
             expect(conn.hget(process.key, :uuid)).to eq(process.uuid)
@@ -554,4 +557,5 @@ describe Taskinator::Persistence, :redis => true do
 
     end
   end
+
 end

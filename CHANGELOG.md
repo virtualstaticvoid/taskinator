@@ -1,6 +1,16 @@
 v?.?.? - ?? ??? ????
 ---
 
+v0.6.0 - ?? ??? 2024
+---
+
+* Add `before_started`, `after_completed` and `after_failed` functionality.
+* Add `logger` helper method, available within task methods.
+* Use `SecureRandom.hex(10)` instead of `uuid` for shorter process and tasks IDs.
+* Bug fix for options on `sequential`, `concurrent`, `for_each` and `sub_process` methods.
+* Bug fix instrumentation payload.
+* Documentation updates.
+
 v0.5.2 - 04 Oct 2024
 ---
 * Time arguments fix for Redis 5.0. Fixes #28

@@ -113,7 +113,7 @@ end
 process = MyProcess.create_process Date.today, :option_1 => true
 ```
 
-_NOTE:_ The current implementation performs a naive check on the count of arguments.
+_NOTE:_ The current implementation performs a naïve check on the count of arguments.
 
 Next, specify the tasks with their corresponding implementation methods, that make up the
 process, using the `task` method and providing the `method` to execute for the task.
@@ -291,6 +291,51 @@ module MyProcess
 end
 ```
 
+#### Before Process Started and After Process Completion or Failure
+
+You may want to run further tasks asynchrously before or after a process has completed
+or failed. These tasks provide a way to execute logic independently of the process.
+
+Specify these tasks using the `before_started`, `after_completed` or `after_failed` methods.
+
+For example, using `after_completed` to set off another business process or `after_failed` to 
+send an email to an operator.
+
+```ruby
+module MyProcess
+  extend Taskinator::Definition
+
+  # defines a process
+  define_process do
+
+    # define task to execute on before
+    before_started :slack_notification
+
+    # usual tasks, sub-process, etc.
+
+    # define task to execute on completion
+    after_completed :further_process
+
+    # define task to execute on failure
+    after_failed :email_operations
+
+  end
+
+  def slack_notification
+    # ...
+  end
+
+  def further_process
+    # ...
+  end
+
+  def email_operations
+    # ...
+  end
+
+end
+```
+
 #### Complex Process Definitions
 
 Any combination or nesting of `task`, `sequential`, `concurrent` and `for_each` steps are
@@ -363,12 +408,12 @@ MyProcess.create_process(1, 2, 3, :send_notification => true)
 
 ```
 
-#### Reusing ActiveJob jobs
+#### Reusing `ActiveJob` jobs
 
 It is likely that you already have one or more [jobs](https://guides.rubyonrails.org/active_job_basics.html)
 and want to reuse them within the process definition.
 
-Define a `job` step, providing the class of the Active Job to run and then taskinator will
+Define a `job` step, providing the class of the `ActiveJob` to run and then taskinator will
 invoke that job as part of the process.
 
 The `job` step will be queued and executed on same queue as
@@ -425,7 +470,7 @@ _This may be something that gets refactored down the line_.
 To best understand how arguments are handled, you need to break it down into 3 phases. Namely:
 
   * Definition,
-  * Creation and
+  * Creation, and
   * Execution
 
 Firstly, a process definition is declarative in that the `define_process` and a mix of

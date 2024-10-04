@@ -51,8 +51,24 @@ module Taskinator
       @key = nil # NB: invalidate memoized key
     end
 
+    def sub_process?
+      defined?(@parent)
+    end
+
     def tasks
       @tasks ||= Tasks.new
+    end
+
+    def before_started_tasks
+      @before_started_tasks ||= Tasks.new
+    end
+
+    def after_completed_tasks
+      @after_completed_tasks ||= Tasks.new
+    end
+
+    def after_failed_tasks
+      @after_failed_tasks ||= Tasks.new
     end
 
     def no_tasks_defined?
@@ -64,6 +80,9 @@ module Taskinator
       visitor.visit_task_reference(:parent)
       visitor.visit_type(:definition)
       visitor.visit_tasks(tasks)
+      visitor.visit_before_started_tasks(before_started_tasks)
+      visitor.visit_after_completed_tasks(after_completed_tasks)
+      visitor.visit_after_failed_tasks(after_failed_tasks)
       visitor.visit_args(:options)
       visitor.visit_attribute(:scope)
       visitor.visit_attribute(:queue)
@@ -91,6 +110,9 @@ module Taskinator
 
     def start!
       return if paused? || cancelled?
+
+      # enqueue before started tasks independently
+      before_started_tasks.each(&:enqueue!)
 
       transition(:processing) do
         instrument('taskinator.process.processing', processing_payload) do
@@ -132,10 +154,10 @@ module Taskinator
           end
         end
       end
-    end
 
-    # TODO: add retry method - to pick up from a failed task
-    #  e.g. like retrying a failed job in Resque Web
+      # enqueue completion tasks independently
+      after_completed_tasks.each(&:enqueue!)
+    end
 
     def tasks_completed?
       # TODO: optimize this
@@ -159,10 +181,30 @@ module Taskinator
           parent.fail!(error) unless parent.nil?
         end
       end
+
+      # enqueue completion tasks independently
+      after_failed_tasks.each(&:enqueue!)
+    end
+
+    #--------------------------------------------------
+
+    # TODO: add retry method - to pick up from a failed task
+    #  e.g. like retrying a failed job in Resque Web
+
+    def task_started(task)
+      return if processing? || sub_process?
+
+      transition(:processing) do
+        # enqueue before started tasks independently
+        before_started_tasks.each(&:enqueue!)
+      end
+    end
+
+    def task_cancelled(task)
+      cancel!
     end
 
     def task_failed(task, error)
-      # for now, fail this process
       fail!(error)
     end
 
@@ -247,7 +289,6 @@ module Taskinator
         end
       end
 
-      # this method only called in-process (usually from the console)
       def start
         if tasks.empty?
           complete! # weren't any tasks to start with

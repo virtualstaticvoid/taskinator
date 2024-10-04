@@ -1,12 +1,12 @@
 require 'spec_helper'
 
-describe TestFlows do
+describe TestDefinitions do
 
   [
-    TestFlows::Task,
-    TestFlows::Job,
-    TestFlows::SubProcess,
-    TestFlows::Sequential
+    TestDefinitions::Task,
+    TestDefinitions::Job,
+    TestDefinitions::SubProcess,
+    TestDefinitions::Sequential
   ].each do |definition|
 
     describe definition.name do
@@ -92,10 +92,56 @@ describe TestFlows do
       Taskinator.queue_adapter = :test_queue_worker
     end
 
+    context "before_started" do
+      let(:definition) { TestDefinitions::TaskBeforeStarted }
+      subject { definition.create_process }
+
+      it "invokes before_started task" do
+        expect(subject.before_started_tasks.count).to eq(1)
+        expect_any_instance_of(definition).to receive(:task_before_started)
+
+        expect {
+          subject.enqueue!
+        }.to change { Taskinator.queue.tasks.length }.by(2)
+      end
+    end
+
+    context "after_completed" do
+      let(:definition) { TestDefinitions::TaskAfterCompleted }
+      subject { definition.create_process }
+
+      it "invokes after_completed task" do
+        expect(subject.after_completed_tasks.count).to eq(1)
+        expect_any_instance_of(definition).to receive(:task_after_completed)
+
+        expect {
+          subject.enqueue!
+        }.to change { Taskinator.queue.tasks.length }.by(2)
+      end
+    end
+
+    context "after_failed" do
+      let(:definition) { TestDefinitions::TaskAfterFailed }
+      subject { definition.create_process }
+
+      it "invokes after_failed task" do
+        expect(subject.after_failed_tasks.count).to eq(1)
+        expect_any_instance_of(definition).to receive(:task_after_failed)
+
+        expect {
+          begin
+            subject.enqueue!
+          rescue TestDefinitions::TestTaskFailed
+            # ignore error
+          end
+        }.to change { Taskinator.queue.tasks.length }.by(2)
+      end
+    end
+
     context "empty subprocesses" do
 
       context "sequential" do
-        let(:definition) { TestFlows::EmptySequentialProcessTest }
+        let(:definition) { TestDefinitions::EmptySequentialProcessTest }
         subject { definition.create_process }
 
         it "contains 3 tasks" do
@@ -103,9 +149,9 @@ describe TestFlows do
         end
 
         it "invokes each task" do
-          expect_any_instance_of(definition).to receive(:task_0)
-          expect_any_instance_of(definition).to receive(:task_1)
-          expect_any_instance_of(definition).to receive(:task_2)
+          expect_any_instance_of(definition).to receive(:task0)
+          expect_any_instance_of(definition).to receive(:task1)
+          expect_any_instance_of(definition).to receive(:task2)
 
           expect {
             subject.enqueue!
@@ -114,7 +160,7 @@ describe TestFlows do
       end
 
       context "concurrent" do
-        let(:definition) { TestFlows::EmptyConcurrentProcessTest }
+        let(:definition) { TestDefinitions::EmptyConcurrentProcessTest }
         subject { definition.create_process }
 
         it "contains 3 tasks" do
@@ -122,9 +168,9 @@ describe TestFlows do
         end
 
         it "invokes each task" do
-          expect_any_instance_of(definition).to receive(:task_0)
-          expect_any_instance_of(definition).to receive(:task_1)
-          expect_any_instance_of(definition).to receive(:task_2)
+          expect_any_instance_of(definition).to receive(:task0)
+          expect_any_instance_of(definition).to receive(:task1)
+          expect_any_instance_of(definition).to receive(:task2)
 
           expect {
             subject.enqueue!
@@ -133,6 +179,54 @@ describe TestFlows do
       end
 
     end
+
+    context "subprocesses" do
+
+      context "before_started" do
+        let(:definition) { TestDefinitions::TaskBeforeStartedSubProcess }
+        subject { definition.create_process }
+
+        it "invokes before_started task" do
+          expect_any_instance_of(definition).to receive(:task_before_started)
+
+          expect {
+            subject.enqueue!
+          }.to change { Taskinator.queue.tasks.length }.by(1)
+        end
+      end
+
+      context "after_completed" do
+        let(:definition) { TestDefinitions::TaskAfterCompletedSubProcess }
+        subject { definition.create_process }
+
+        it "invokes after_completed task" do
+          expect_any_instance_of(definition).to receive(:task_after_completed)
+
+          expect {
+            subject.enqueue!
+          }.to change { Taskinator.queue.tasks.length }.by(2)
+        end
+      end
+
+      context "after_failed" do
+        let(:definition) { TestDefinitions::TaskAfterFailedSubProcess }
+        subject { definition.create_process }
+
+        it "invokes after_failed task" do
+          expect_any_instance_of(definition).to receive(:task_after_failed)
+
+          expect {
+            begin
+              subject.enqueue!
+            rescue TestDefinitions::TestTaskFailed
+              # ignore error
+            end
+          }.to change { Taskinator.queue.tasks.length }.by(2)
+        end
+      end
+
+    end
+
   end
 
   describe "statuses" do
@@ -146,7 +240,7 @@ describe TestFlows do
       end
 
       let(:task_count) { 2 }
-      let(:definition) { TestFlows::Task }
+      let(:definition) { TestDefinitions::Task }
       subject { definition.create_process(task_count) }
 
       it "reports process and task state" do
@@ -184,7 +278,7 @@ describe TestFlows do
       pending
     end
 
-    describe "subprocess" do
+    describe "sub_process" do
       pending
     end
   end
@@ -200,7 +294,7 @@ describe TestFlows do
       end
 
       let(:task_count) { 10 }
-      let(:definition) { TestFlows::Task }
+      let(:definition) { TestDefinitions::Task }
       subject { definition.create_process(task_count) }
 
       it "reports task completed" do
@@ -266,7 +360,7 @@ describe TestFlows do
       end
 
       let(:task_count) { 10 }
-      let(:definition) { TestFlows::Job }
+      let(:definition) { TestDefinitions::Job }
       subject { definition.create_process(task_count) }
 
       it "reports task completed" do
@@ -322,7 +416,7 @@ describe TestFlows do
 
     end
 
-    describe "sub process" do
+    describe "sub_process" do
       before do
         # override enqueue
         allow_any_instance_of(Taskinator::Task::Step).to receive(:enqueue!) { |task|
@@ -338,7 +432,7 @@ describe TestFlows do
       end
 
       let(:task_count) { 10 }
-      let(:definition) { TestFlows::SubProcess }
+      let(:definition) { TestDefinitions::SubProcess }
       subject { definition.create_process(task_count) }
 
       it "reports task completed" do
