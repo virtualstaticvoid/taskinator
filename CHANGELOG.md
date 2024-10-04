@@ -1,6 +1,10 @@
 v?.?.? - ?? ??? ????
 ---
 
+v0.5.2 - 04 Oct 2024
+---
+* Time arguments fix for Redis 5.0. Fixes #28
+
 v0.5.1 - 06 Jan 2023
 ---
 * Include process definition in processes, tasks and payloads to aid debugging.
